@@ -1,8 +1,8 @@
-#缓冲区溢出课程2：实验1
+#缓冲区溢出2：分析与触发
 
 ###哈尔滨工业大学 网络与信息安全 张宇 2016
 
-###参考课程: [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm) by Prof. Nickolai Zeldovich
+参考课程: [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm) by Prof. Nickolai Zeldovich
 
 实验资料见[MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)中Lab 1。
 
@@ -29,18 +29,18 @@
 - `/zoobar`目录：zoobar服务实现
 
 ```
-                    +-------+   
-                    |zookld |<--- "zook-*.conf" 
-                    +---+---+                 
-                        |--------------+
+                    +———————+   
+                    |zookld |<——— "zook-*.conf" 
+                    +———+———+                 
+                        |——————————————+
                         |              |
-+------+    HTTP    +---V---+      +---V---+     
-|client| <--------> |zookd  |<---->|zookfs |<--- "/zoobar"
-+------+            +---^---+      +---^---+     
++——————+    HTTP    +———V———+      +———V———+     
+|client| <————————> |zookd  |<————>|zookfs |<——— "/zoobar"
++——————+            +———^———+      +———^———+     
                         |              | (2) http_request_headers()
-(1) http_request_line() |   +------+   | (3) http_serve()
-                        +---| http |---+
-                            +------+
+(1) http_request_line() |   +——————+   | (3) http_serve()
+                        +———| http |———+
+                            +——————+
 ```
 
 
@@ -292,12 +292,13 @@ PASS ./exploit-2b.py
 
 当生成子进程时，`gdb`缺省情况下仍然调试父进程，而不会跟踪子进程。由于`zookfs`为每个服务请求生成一个子进程，为了自动跟踪子进程，使用`set follow-fork-mode child`命令。该命令已经被加入`/home/httpd/lab/.gdbinit`中，`gdb`启动时会自动执行。
 
-在终端1中，重启服务：`$ ./clean-env.sh ./zookld zook-exstack.conf`。
-
-在终端2中，启动`gdb`：`$ gdb -p $(pgrep zookd-exstack)`。
-在设置断点后，在终端3中，运行漏洞触发程序`./exploit-2a.py localhost 8080`。
+在终端1中，重启服务：
+`$ ./clean-env.sh ./zookld zook-exstack.conf`。
+在终端2中，启动`gdb`。在设置断点后，在终端3中，运行漏洞触发程序`./exploit-2a.py localhost 8080`。
 
 ``` sh
+$ gdb -p $(pgrep zookd-exstack)
+...
 (gdb) b http_request_line
 Breakpoint 1 at 0x8049150: file http.c, line 67.
 [运行漏洞触发程序]
@@ -333,17 +334,136 @@ warning: Source file is more recent than executable.
 0xbffff211:     ""
 0xbffff212:     ""
 0xbffff213:     ""
- x/10s buf
- 
- p reqpath
- x/10 env
+(gdb) p sizeof reqpath  [reqpath不会溢出]
+$3 = 2048
+(gdb) p sizeof env      [env不会溢出]
+$4 = 8192
+[继续用n命令执行]
+85          if (sendfd(svcfds[i], env, env_len, fd) <= 0)
+[此时zookd将请求发送给zookfs]
+(gdb) quit
 ```
 
+`zookd`此时并不存在缓冲区溢出，接下来分析`zookfs`。在`zookfs.c`中，`http_serve()`函数以`REQUEST_URI`环境变量为参数。在`http_serve`处设置断点，分析栈结构。
 
+``` sh
+$ gdb -p $(pgrep zookfs-exstack)
+...
+(gdb) b http_serve
+Breakpoint 1 at 0x804951c: file http.c, line 275.
+[运行漏洞触发程序]
+gdb) c
+Continuing.
+[New process 5076]
+[Switching to process 5076]
 
-##课程3：Shellcode与代码注入
+Breakpoint 1, http_serve (fd=3, name=0x80510b4 "/", 'A' <repeats 199 times>...) at http.c:275
+warning: Source file is more recent than executable.
+275         void (*handler)(int, const char *) = http_serve_none;
+(gdb) p $ebp
+$1 = (void *) 0xbfffde08
+(gdb) p &handler
+$2 = (void (**)(int, const char *)) 0xbfffddfc
+(gdb) p &pn
+$3 = (char (*)[1024]) 0xbfffd9fc
+(gdb) p &st
+$4 = (struct stat *) 0xbfffd9a4
+(gdb) p &fd
+$5 = (int *) 0xbfffde10
+(gdb) P &name
+$6 = (const char **) 0xbfffde14
+(gdb) x $ebp+4
+0xbfffde0c:     0x08048d86
+```
 
-### 一个Shellcode例子
+根据上面的调试信息绘制`http_serve()`的栈结构：
+
+```
++———————————————————————-+   
+|          name          |<——— (+12)   =0xbfffde14       
++———————————————————————-+   
+|        fd = 3          |<——— (+8)    =0xbfffde10                                  
++———————————————————————-+                                 
+|     return address     |<——— (+4)    =0xbfffde0c 
++———————————————————————-+                             
+|          ebp           |<——— (0)     =0xbfffde08
++———————————————————————-+
+|                        |
++————————————————————————+
+|    void (*handler)     |<——— (-12)   =0xbfffddfc
++————————————————————————+
+|pn[1023]   ^            |
+|           |            |
+|           |       pn[0]|<——— (-1036) =0xbfffd9fc
++————————————————————————+
+|    struct stat st      | 
+|       (88bytes)        |<——— (-1124) =0xbfffd9a4
++———————————————————————-+
+
+```
+
+继续执行，
+
+``` sh
+(gdb) n
+279         getcwd(pn, sizeof(pn));
+(gdb) n
+280         setenv("DOCUMENT_ROOT", pn, 1);
+(gdb) n
+282         strcat(pn, name);
+(gdb) p pn
+$7 = "/home/httpd/lab\000", 'A' <repeats 504 times>...
+(gdb) p strlen(name)
+$8 = 1025
+(gdb) p sizeof pn
+$9 = 1024
+```
+
+此处将执行`strcat()`，在`pn`中已经包含的来自`getcwd()`的字符串后面加上长度1025的`name`，将超过`pn`所分配的大小1024，导致缓冲区溢出。接着执行一步，并查看缓冲区溢出情况。
+
+``` sh
+(gdb) n
+283         split_path(pn);
+(gdb) x/10s pn
+0xbfffd9fc:     "/home/httpd/lab/", 'A' <repeats 184 times>...
+0xbfffdac4:     'A' <repeats 200 times>...
+0xbfffdb8c:     'A' <repeats 200 times>...
+0xbfffdc54:     'A' <repeats 200 times>...
+0xbfffdd1c:     'A' <repeats 200 times>...
+0xbfffdde4:     'A' <repeats 40 times>
+0xbfffde0d:     "\215\004\b\003"
+0xbfffde12:     ""
+0xbfffde13:     ""
+0xbfffde14:     "\264\020\005\b"
+(gdb) x &handler
+0xbfffddfc:     'A' <repeats 16 times>
+(gdb) x $ebp
+0xbfffde08:     "AAAA"
+(gdb) x $ebp+4
+0xbfffde0c:     ""
+
+```
+
+在`pn`之前的缓冲区，包括`handler`和`$ebp`，已经被字符`A`覆盖。返回地址也写入了0。
+
+``` sh
+(gdb) n
+285         if (!stat(pn, &st))
+(gdb) n
+296         handler(fd, pn);
+(gdb) n
+
+Program received signal SIGSEGV, Segmentation fault.
+0x41414141 in ?? ()
+(gdb) bt
+#0  0x41414141 in ?? ()
+#1  0x080495e8 in http_serve (fd=3, name=0x80510b4 "/", 'A' <repeats 199 times>...) at http.c:296
+#2  0x08048d00 in main (argc=<error reading variable: Cannot access memory at address 0x41414149>,
+    argv=<error reading variable: Cannot access memory at address 0x4141414d>) at zookfs.c:39
+```
+
+继续执行到`handler(fd, pn);`，由于`handler`变量被改写为`0x41414141`，导致程序崩溃。这个示例并没有利用改写返回地址来劫持控制流。
+
 
 
 

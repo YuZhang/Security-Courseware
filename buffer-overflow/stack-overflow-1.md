@@ -1,8 +1,8 @@
-#缓冲区溢出课程1：原理
+#缓冲区溢出1：原理
 
 ###哈尔滨工业大学 网络与信息安全 张宇 2016
 
-###参考课程: [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm) by Prof. Nickolai Zeldovich
+参考课程: [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm) by Prof. Nickolai Zeldovich
 
 **预备知识**: Linux，C语言，x86体系结构，汇编，gcc/gdb
 

