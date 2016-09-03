@@ -201,7 +201,7 @@ End of assembler dump.
 
 查看一下寄存器和栈帧中的内容，以此绘制栈帧结构图。
 
-```
+``` sh
 (gdb) p $ebp
 $1 = (void *) 0xbffff6b8
 (gdb) p $esp
@@ -240,7 +240,7 @@ $4 = (char (*)[128]) 0xbffff62c
 
 继续运行程序，进行缓冲区溢出。
 
-```
+``` c
 (gdb) n [运行gets()]
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 7	    i = atoi(buf);
@@ -248,7 +248,7 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 此时发生了什么？大量的A（0x41）从`buf[0]`开始写入到栈中，从下向上覆盖之前栈中内容。下面查看栈中内容。
 
-``` 
+```  gas
 (gdb) p &buf[0]
 $5 = 0xbffff62c 'A' <repeats 200 times>… [超过了缓冲区大小128字节]
 (gdb) x $ebp [检查$ebp所指向地址内容，已经被AAAA覆盖]
@@ -281,7 +281,7 @@ $8 = 0xbffff62c 'A' <repeats 128 times>
 
 接着执行两个指令到`ret`。由于返回地址被改写，导致`ret`后跳转到错误地址，进而程序崩溃。
 
-```
+``` gas
 (gdb) nexti
 9	}
 (gdb) nexti
@@ -317,7 +317,7 @@ Program received signal SIGSEGV, Segmentation fault.
 
 运行另一个演示，模拟通过缓冲区溢出可以改写返回地址，操纵跳转到指定地址。
 
-```
+``` gas
 (gdb) r
 The program being debugged has been started already.
 Start it from the beginning? (y or n) y
@@ -357,7 +357,7 @@ End of assembler dump.
 
 这里，我们模拟缓冲区溢出时，攻击者精心构造一个输入，在返回地址处写入了预定的指令地址：`main`函数中`printf`之前载入参数的指令。
 
-```
+``` gas
 (gdb) x $esp [$esp指向栈中返回地址被覆盖]
 0xbffff6bc:	0x41414141
 (gdb) disas main

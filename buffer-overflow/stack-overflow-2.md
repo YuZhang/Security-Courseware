@@ -359,7 +359,7 @@ $4 = 8192
 
 在`zookfs.c`中，`http_serve()`函数以`REQUEST_URI`环境变量为参数。在`http_serve`处设置断点，分析栈结构。
 
-``` sh
+``` c
 $ gdb -p $(pgrep zookfs-exstack)
 ...
 (gdb) b http_serve

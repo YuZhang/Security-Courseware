@@ -64,7 +64,7 @@ low address         <———— stack growth ————        high address
 
 查看`shellcode.S`：
 
-``` c
+``` gas
 #include <sys/syscall.h>                /* 系统调用编号表 */
 
 #define STRING  "/bin/sh"
