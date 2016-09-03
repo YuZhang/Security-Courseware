@@ -642,7 +642,7 @@ http.c:344:    strcpy(dst, dirname);</code></pre></div>
     handler(fd, pn);
 }</code></pre></div>
 
-<p><code>handler = http_serve_executable</code>，<code>handler()</code>中的<code>pn</code>长度1024，内容来自<code>getcwd()</code>加上<code>strcat(pn, name)</code>。若<code>name</code>过长，则<code>pn</code>长度也将过长。通过进一步分析<code>http_serve()</code>调用过程，发现<code>name</code>内容来自于环境变量<code>REQUEST_URI</code>。</p>
+<p><code>handler = http_serve_directory</code>，<code>handler()</code>中的<code>pn</code>长度1024，内容来自<code>getcwd()</code>加上<code>strcat(pn, name)</code>。若<code>name</code>过长，则<code>pn</code>长度也将过长。通过进一步分析<code>http_serve()</code>调用过程，发现<code>name</code>内容来自于环境变量<code>REQUEST_URI</code>。</p>
 
 <div><pre class="line-numbers"><code class="language-c">zookfs.c:47:   http_serve(sockfd, getenv(&quot;REQUEST_URI&quot;));</code></pre></div>
 
@@ -650,18 +650,23 @@ http.c:344:    strcpy(dst, dirname);</code></pre></div>
 
 <div><pre class="line-numbers"><code class="language-c">http.c:107:    envp += sprintf(envp, &quot;REQUEST_URI=%s&quot;, reqpath) + 1;</code></pre></div>
 
-<p>我们把这一漏洞命名为“REQUEST_URI”漏洞，回顾分析过程如下：</p>
+<p>在<code>zookd.c</code>中，<code>http_request_line()</code>函数被<code>process_client()</code>函数调用。</p>
+
+<div><pre class="line-numbers"><code class="language-none">zookd.c:70:    if ((errmsg = http_request_line(fd, reqpath, env, &amp;env_len)))</code></pre></div>
+
+<p>我们把这一漏洞命名为“LONG_URI”漏洞，回顾分析过程如下：</p>
 
 <div><pre class="line-numbers"><code class="language-c">http.c:344:    strcpy(dst, dirname) // dst size = ?
- \                                  //  |
-  dir_join(name, pn, indices[i]);   // name size = 1024
-   \                                //  |
-    handler(fd, pn);                // pn size = 1024
-     \
-      zookfs.c:47:    http_serve(sockfd, getenv(&quot;REQUEST_URI&quot;));
-      http.c:107:    envp += sprintf(envp, &quot;REQUEST_URI=%s&quot;, reqpath) + 1;</code></pre></div>
-
-<p><strong>问：</strong> 如何利用这一漏洞？远程用户是否能够直接触发这一漏洞？</p>
+|                                  //  |
+dir_join(name, pn, indices[i]);   // name size = 1024
+|                                //  |
+handler(fd, pn);                // pn size = 1024
+|
+zookfs.c:47:    http_serve(sockfd, getenv(&quot;REQUEST_URI&quot;));
+|      
+http.c:107:    envp += sprintf(envp, &quot;REQUEST_URI=%s&quot;, reqpath) + 1;
+|
+zookd.c:70:    if ((errmsg = http_request_line(fd, reqpath, env, &amp;env_len)))</code></pre></div>
 
 <h3 id="toc_4">练习2：触发缓冲区溢出漏洞</h3>
 
@@ -709,7 +714,7 @@ def build_exploit(shellcode):
             &quot;\r\n&quot;
     return req</code></pre></div>
 
-<p>目前，我们手上有了两个攻击服务器的武器：(1) “REQUEST_URI”缓冲区溢出漏洞，(2)构造请求输入<code>req</code>的脚本。下一步就是要分析<code>http.c</code>中处理该请求的代码，将<code>req</code>中内容和<code>REQUEST_URI</code>对应起来。</p>
+<p>目前，我们手上有了两个攻击服务器的武器：(1) “LONG_URI”缓冲区溢出漏洞，(2)构造请求输入<code>req</code>的脚本。下一步就是要分析<code>http.c</code>中处理该请求的代码，将<code>req</code>中内容和<code>REQUEST_URI</code>对应起来。</p>
 
 <p>通过分析代码可以发现，HTTP请求中的路径，例如<code>/foo.html</code>，被赋予了<code>REQUEST_URI</code>变量，因此可以通过构造较长的HTTP请求路径来令缓冲区溢出。
 下面的代码有删节。</p>
@@ -762,18 +767,25 @@ PASS ./exploit-2a.py
 4442  +++ killed by SIGSEGV +++
 PASS ./exploit-2b.py</code></pre></div>
 
-<p>上面结果表明缓冲区漏洞导致程序因为SIGSEV信号而崩溃，<code>si_addr=0x41414141</code>，并通过(PASS)了检查。
-下面我们看看具体发生了什么。</p>
+<p>该程序并通过(PASS)了检查。缓冲区漏洞导致程序因为SIGSEV信号而崩溃，指令地址被改写为<code>si_addr=0x41414141</code>。下面看看具体发生了什么。</p>
 
-<p>需要使用<code>gdb -p 进程号</code>来调试程序。进程号可以通过两种方法获得：通过观察<code>zookld</code>在终端输出子进程ID；或者使用<code>pgrep</code>，例如<code>gdb -p $(pgrep zookd-exstack)</code>。</p>
+<p>使用<code>gdb -p 进程号</code>来调试程序。进程号可通过两种方法获得：观察<code>zookld</code>在终端输出子进程ID；或者使用<code>pgrep</code>，例如<code>gdb -p $(pgrep zookd-exstack)</code>。</p>
 
-<p>使用<code>gdb</code>过程中，当父进程<code>zookld</code>被<code>^C</code>杀死时，被<code>gdb</code>调试的进程并不会被终止。这将导致无法重启web服务器。因此，在重启<code>zookld</code>之前，应先退出<code>gdb</code>。</p>
+<p>使用<code>gdb</code>过程中，当父进程<code>zookld</code>被<code>^C</code>杀死时，被<code>gdb</code>调试的子进程并不会被终止。这将导致无法重启web服务器。因此，在重启<code>zookld</code>之前，应先退出<code>gdb</code>。</p>
 
 <p>当生成子进程时，<code>gdb</code>缺省情况下仍然调试父进程，而不会跟踪子进程。由于<code>zookfs</code>为每个服务请求生成一个子进程，为了自动跟踪子进程，使用<code>set follow-fork-mode child</code>命令。该命令已经被加入<code>/home/httpd/lab/.gdbinit</code>中，<code>gdb</code>启动时会自动执行。</p>
 
-<p>在终端1中，重启服务：
-<code>$ ./clean-env.sh ./zookld zook-exstack.conf</code>。
-在终端2中，启动<code>gdb</code>。在设置断点后，在终端3中，运行漏洞触发程序<code>./exploit-2a.py localhost 8080</code>。</p>
+<p>调试流程如下：</p>
+
+<ol>
+<li>在终端1中，重启服务：
+<code>$ ./clean-env.sh ./zookld zook-exstack.conf</code>。</li>
+<li>在终端2中，启动<code>gdb</code>（<code>gdb -p PID</code>），并设置断点（<code>b</code>命令）。</li>
+<li>在终端3中，运行漏洞触发程序 <code>./exploit-2a.py localhost 8080</code>。</li>
+<li>返回终端2，继续调试（<code>c</code>命令）。</li>
+</ol>
+
+<p>首先，调试<code>zookd</code>。<code>http_request_line</code>负责处理HTTP请求。</p>
 
 <div><pre class="line-numbers"><code class="language-bash">$ gdb -p $(pgrep zookd-exstack)
 ...
@@ -821,14 +833,16 @@ $4 = 8192
 [此时zookd将请求发送给zookfs]
 (gdb) quit</code></pre></div>
 
-<p><code>zookd</code>此时并不存在缓冲区溢出，接下来分析<code>zookfs</code>。在<code>zookfs.c</code>中，<code>http_serve()</code>函数以<code>REQUEST_URI</code>环境变量为参数。在<code>http_serve</code>处设置断点，分析栈结构。</p>
+<p><code>zookd</code>此时并不存在缓冲区溢出，接下来分析<code>zookfs</code>。</p>
+
+<p>在<code>zookfs.c</code>中，<code>http_serve()</code>函数以<code>REQUEST_URI</code>环境变量为参数。在<code>http_serve</code>处设置断点，分析栈结构。</p>
 
 <div><pre class="line-numbers"><code class="language-bash">$ gdb -p $(pgrep zookfs-exstack)
 ...
 (gdb) b http_serve
 Breakpoint 1 at 0x804951c: file http.c, line 275.
 [运行漏洞触发程序]
-gdb) c
+(gdb) c
 Continuing.
 [New process 5076]
 [Switching to process 5076]
@@ -875,7 +889,7 @@ $6 = (const char **) 0xbfffde14
 +———————————————————————-+
 </code></pre></div>
 
-<p>继续执行，</p>
+<p>继续执行到<code>strcat()</code>，</p>
 
 <div><pre class="line-numbers"><code class="language-bash">(gdb) n
 279         getcwd(pn, sizeof(pn));
@@ -913,7 +927,7 @@ $9 = 1024</code></pre></div>
 0xbfffde0c:     &quot;&quot;
 </code></pre></div>
 
-<p>在<code>pn</code>之前的缓冲区，包括<code>handler</code>和<code>$ebp</code>，已经被字符<code>A</code>覆盖。返回地址也写入了0。</p>
+<p>在<code>pn</code>之前的缓冲区，包括<code>handler</code>和<code>$ebp</code>，已经被字符<code>A</code>覆盖，但返回地址并没有被完全改写。该如何改写?</p>
 
 <div><pre class="line-numbers"><code class="language-bash">(gdb) n
 285         if (!stat(pn, &amp;st))
@@ -929,7 +943,25 @@ Program received signal SIGSEGV, Segmentation fault.
 #2  0x08048d00 in main (argc=&lt;error reading variable: Cannot access memory at address 0x41414149&gt;,
     argv=&lt;error reading variable: Cannot access memory at address 0x4141414d&gt;) at zookfs.c:39</code></pre></div>
 
-<p>继续执行到<code>handler(fd, pn);</code>，由于<code>handler</code>变量被改写为<code>0x41414141</code>，导致程序崩溃。这个示例并没有利用改写返回地址来劫持控制流。</p>
+<p>继续执行到<code>handler(fd, pn);</code>，由于<code>handler</code>变量被改写为<code>0x41414141</code>，导致程序崩溃。这发生在先前发现的<code>strcpy()</code>漏洞之前。这个示例并没有利用改写返回地址来劫持控制流。</p>
+
+<p>总结漏洞触发过程如下：</p>
+
+<p>(1) 构造客户端请求，并发送请求到服务器。</p>
+
+<div><pre class="line-numbers"><code class="language-python">In exploit-template.py: build_exploit()
+
+req =   &quot;GET / HTTP/1.0\r\n&quot; + \
+            &quot;\r\n&quot;</code></pre></div>
+
+<div><pre class="line-numbers"><code class="language-bash">$ ./exploit-2a.py localhost 8080</code></pre></div>
+
+<p>(2) 服务器端<code>zookd</code>处理请求并转发给<code>zookfs</code>。处理请求的代码在<code>http.c</code>中，其中存在缓冲区溢出漏洞。</p>
+
+<div><pre class="line-numbers"><code class="language-c">zookd.c:70:    if ((errmsg = http_request_line(fd, reqpath, env, &amp;env_len)))
+
+zookfs.c:47:    http_serve(sockfd, getenv(&quot;REQUEST_URI&quot;));
+</code></pre></div>
 
 
 
@@ -938,19 +970,19 @@ var _self="undefined"!=typeof window?window:"undefined"!=typeof WorkerGlobalScop
 </script>
 
 <script type="text/javascript">
-!function(e){var t={variable:[{pattern:/\$?\(\([\w\W]+?\)\)/,inside:{variable:[{pattern:/(^\$\(\([\w\W]+)\)\)/,lookbehind:!0},/^\$\(\(/],number:/\b-?(?:0x[\dA-Fa-f]+|\d*\.?\d+(?:[Ee]-?\d+)?)\b/,operator:/--?|-=|\+\+?|\+=|!=?|~|\*\*?|\*=|\/=?|%=?|<<=?|>>=?|<=?|>=?|==?|&&?|&=|\^=?|\|\|?|\|=|\?|:/,punctuation:/\(\(?|\)\)?|,|;/}},{pattern:/\$\([^)]+\)|`[^`]+`/,inside:{variable:/^\$\(|^`|\)$|`$/}},/\$(?:[a-z0-9_#\?\*!@]+|\{[^}]+\})/i]};e.languages.bash={shebang:{pattern:/^#!\s*\/bin\/bash|^#!\s*\/bin\/sh/,alias:"important"},comment:{pattern:/(^|[^"{\\])#.*/,lookbehind:!0},string:[{pattern:/((?:^|[^<])<<\s*)(?:"|')?(\w+?)(?:"|')?\s*\r?\n(?:[\s\S])*?\r?\n\2/g,lookbehind:!0,inside:t},{pattern:/(["'])(?:\\\\|\\?[^\\])*?\1/g,inside:t}],variable:t.variable,"function":{pattern:/(^|\s|;|\||&)(?:alias|apropos|apt-get|aptitude|aspell|awk|basename|bash|bc|bg|builtin|bzip2|cal|cat|cd|cfdisk|chgrp|chmod|chown|chroot|chkconfig|cksum|clear|cmp|comm|command|cp|cron|crontab|csplit|cut|date|dc|dd|ddrescue|df|diff|diff3|dig|dir|dircolors|dirname|dirs|dmesg|du|egrep|eject|enable|env|ethtool|eval|exec|expand|expect|export|expr|fdformat|fdisk|fg|fgrep|file|find|fmt|fold|format|free|fsck|ftp|fuser|gawk|getopts|git|grep|groupadd|groupdel|groupmod|groups|gzip|hash|head|help|hg|history|hostname|htop|iconv|id|ifconfig|ifdown|ifup|import|install|jobs|join|kill|killall|less|link|ln|locate|logname|logout|look|lpc|lpr|lprint|lprintd|lprintq|lprm|ls|lsof|make|man|mkdir|mkfifo|mkisofs|mknod|more|most|mount|mtools|mtr|mv|mmv|nano|netstat|nice|nl|nohup|notify-send|nslookup|open|op|passwd|paste|pathchk|ping|pkill|popd|pr|printcap|printenv|printf|ps|pushd|pv|pwd|quota|quotacheck|quotactl|ram|rar|rcp|read|readarray|readonly|reboot|rename|renice|remsync|rev|rm|rmdir|rsync|screen|scp|sdiff|sed|seq|service|sftp|shift|shopt|shutdown|sleep|slocate|sort|source|split|ssh|stat|strace|su|sudo|sum|suspend|sync|tail|tar|tee|test|time|timeout|times|touch|top|traceroute|trap|tr|tsort|tty|type|ulimit|umask|umount|unalias|uname|unexpand|uniq|units|unrar|unshar|uptime|useradd|userdel|usermod|users|uuencode|uudecode|v|vdir|vi|vmstat|wait|watch|wc|wget|whereis|which|who|whoami|write|xargs|xdg-open|yes|zip)(?=$|\s|;|\||&)/,lookbehind:!0},keyword:{pattern:/(^|\s|;|\||&)(?:let|:|\.|if|then|else|elif|fi|for|break|continue|while|in|case|function|select|do|done|until|echo|exit|return|set|declare)(?=$|\s|;|\||&)/,lookbehind:!0},"boolean":{pattern:/(^|\s|;|\||&)(?:true|false)(?=$|\s|;|\||&)/,lookbehind:!0},operator:/&&?|\|\|?|==?|!=?|<<<?|>>|<=?|>=?|=~/,punctuation:/\$?\(\(?|\)\)?|\.\.|[{}[\];]/};var a=t.variable[1].inside;a["function"]=e.languages.bash["function"],a.keyword=e.languages.bash.keyword,a.boolean=e.languages.bash.boolean,a.operator=e.languages.bash.operator,a.punctuation=e.languages.bash.punctuation}(Prism);
-</script>
-
-<script type="text/javascript">
-Prism.languages.python={"triple-quoted-string":{pattern:/"""[\s\S]+?"""|'''[\s\S]+?'''/,alias:"string"},comment:{pattern:/(^|[^\\])#.*/,lookbehind:!0},string:/("|')(?:\\?.)*?\1/,"function":{pattern:/((?:^|\s)def[ \t]+)[a-zA-Z_][a-zA-Z0-9_]*(?=\()/g,lookbehind:!0},"class-name":{pattern:/(\bclass\s+)[a-z0-9_]+/i,lookbehind:!0},keyword:/\b(?:as|assert|async|await|break|class|continue|def|del|elif|else|except|exec|finally|for|from|global|if|import|in|is|lambda|pass|print|raise|return|try|while|with|yield)\b/,"boolean":/\b(?:True|False)\b/,number:/\b-?(?:0[bo])?(?:(?:\d|0x[\da-f])[\da-f]*\.?\d*|\.\d+)(?:e[+-]?\d+)?j?\b/i,operator:/[-+%=]=?|!=|\*\*?=?|\/\/?=?|<[<=>]?|>[=>]?|[&|^~]|\b(?:or|and|not)\b/,punctuation:/[{}[\];(),.:]/};
-</script>
-
-<script type="text/javascript">
 Prism.languages.clike={comment:[{pattern:/(^|[^\\])\/\*[\w\W]*?\*\//,lookbehind:!0},{pattern:/(^|[^\\:])\/\/.*/,lookbehind:!0}],string:{pattern:/(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/,greedy:!0},"class-name":{pattern:/((?:\b(?:class|interface|extends|implements|trait|instanceof|new)\s+)|(?:catch\s+\())[a-z0-9_\.\\]+/i,lookbehind:!0,inside:{punctuation:/(\.|\\)/}},keyword:/\b(if|else|while|do|for|return|in|instanceof|function|new|try|throw|catch|finally|null|break|continue)\b/,"boolean":/\b(true|false)\b/,"function":/[a-z0-9_]+(?=\()/i,number:/\b-?(?:0x[\da-f]+|\d*\.?\d+(?:e[+-]?\d+)?)\b/i,operator:/--?|\+\+?|!=?=?|<=?|>=?|==?=?|&&?|\|\|?|\?|\*|\/|~|\^|%/,punctuation:/[{}[\];(),.:]/};
 </script>
 
 <script type="text/javascript">
 Prism.languages.c=Prism.languages.extend("clike",{keyword:/\b(asm|typeof|inline|auto|break|case|char|const|continue|default|do|double|else|enum|extern|float|for|goto|if|int|long|register|return|short|signed|sizeof|static|struct|switch|typedef|union|unsigned|void|volatile|while)\b/,operator:/\-[>-]?|\+\+?|!=?|<<?=?|>>?=?|==?|&&?|\|?\||[~^%?*\/]/,number:/\b-?(?:0x[\da-f]+|\d*\.?\d+(?:e[+-]?\d+)?)[ful]*\b/i}),Prism.languages.insertBefore("c","string",{macro:{pattern:/(^\s*)#\s*[a-z]+([^\r\n\\]|\\.|\\(?:\r\n?|\n))*/im,lookbehind:!0,alias:"property",inside:{string:{pattern:/(#\s*include\s*)(<.+?>|("|')(\\?.)+?\3)/,lookbehind:!0},directive:{pattern:/(#\s*)\b(define|elif|else|endif|error|ifdef|ifndef|if|import|include|line|pragma|undef|using)\b/,lookbehind:!0,alias:"keyword"}}},constant:/\b(__FILE__|__LINE__|__DATE__|__TIME__|__TIMESTAMP__|__func__|EOF|NULL|stdin|stdout|stderr)\b/}),delete Prism.languages.c["class-name"],delete Prism.languages.c["boolean"];
+</script>
+
+<script type="text/javascript">
+!function(e){var t={variable:[{pattern:/\$?\(\([\w\W]+?\)\)/,inside:{variable:[{pattern:/(^\$\(\([\w\W]+)\)\)/,lookbehind:!0},/^\$\(\(/],number:/\b-?(?:0x[\dA-Fa-f]+|\d*\.?\d+(?:[Ee]-?\d+)?)\b/,operator:/--?|-=|\+\+?|\+=|!=?|~|\*\*?|\*=|\/=?|%=?|<<=?|>>=?|<=?|>=?|==?|&&?|&=|\^=?|\|\|?|\|=|\?|:/,punctuation:/\(\(?|\)\)?|,|;/}},{pattern:/\$\([^)]+\)|`[^`]+`/,inside:{variable:/^\$\(|^`|\)$|`$/}},/\$(?:[a-z0-9_#\?\*!@]+|\{[^}]+\})/i]};e.languages.bash={shebang:{pattern:/^#!\s*\/bin\/bash|^#!\s*\/bin\/sh/,alias:"important"},comment:{pattern:/(^|[^"{\\])#.*/,lookbehind:!0},string:[{pattern:/((?:^|[^<])<<\s*)(?:"|')?(\w+?)(?:"|')?\s*\r?\n(?:[\s\S])*?\r?\n\2/g,lookbehind:!0,inside:t},{pattern:/(["'])(?:\\\\|\\?[^\\])*?\1/g,inside:t}],variable:t.variable,"function":{pattern:/(^|\s|;|\||&)(?:alias|apropos|apt-get|aptitude|aspell|awk|basename|bash|bc|bg|builtin|bzip2|cal|cat|cd|cfdisk|chgrp|chmod|chown|chroot|chkconfig|cksum|clear|cmp|comm|command|cp|cron|crontab|csplit|cut|date|dc|dd|ddrescue|df|diff|diff3|dig|dir|dircolors|dirname|dirs|dmesg|du|egrep|eject|enable|env|ethtool|eval|exec|expand|expect|export|expr|fdformat|fdisk|fg|fgrep|file|find|fmt|fold|format|free|fsck|ftp|fuser|gawk|getopts|git|grep|groupadd|groupdel|groupmod|groups|gzip|hash|head|help|hg|history|hostname|htop|iconv|id|ifconfig|ifdown|ifup|import|install|jobs|join|kill|killall|less|link|ln|locate|logname|logout|look|lpc|lpr|lprint|lprintd|lprintq|lprm|ls|lsof|make|man|mkdir|mkfifo|mkisofs|mknod|more|most|mount|mtools|mtr|mv|mmv|nano|netstat|nice|nl|nohup|notify-send|nslookup|open|op|passwd|paste|pathchk|ping|pkill|popd|pr|printcap|printenv|printf|ps|pushd|pv|pwd|quota|quotacheck|quotactl|ram|rar|rcp|read|readarray|readonly|reboot|rename|renice|remsync|rev|rm|rmdir|rsync|screen|scp|sdiff|sed|seq|service|sftp|shift|shopt|shutdown|sleep|slocate|sort|source|split|ssh|stat|strace|su|sudo|sum|suspend|sync|tail|tar|tee|test|time|timeout|times|touch|top|traceroute|trap|tr|tsort|tty|type|ulimit|umask|umount|unalias|uname|unexpand|uniq|units|unrar|unshar|uptime|useradd|userdel|usermod|users|uuencode|uudecode|v|vdir|vi|vmstat|wait|watch|wc|wget|whereis|which|who|whoami|write|xargs|xdg-open|yes|zip)(?=$|\s|;|\||&)/,lookbehind:!0},keyword:{pattern:/(^|\s|;|\||&)(?:let|:|\.|if|then|else|elif|fi|for|break|continue|while|in|case|function|select|do|done|until|echo|exit|return|set|declare)(?=$|\s|;|\||&)/,lookbehind:!0},"boolean":{pattern:/(^|\s|;|\||&)(?:true|false)(?=$|\s|;|\||&)/,lookbehind:!0},operator:/&&?|\|\|?|==?|!=?|<<<?|>>|<=?|>=?|=~/,punctuation:/\$?\(\(?|\)\)?|\.\.|[{}[\];]/};var a=t.variable[1].inside;a["function"]=e.languages.bash["function"],a.keyword=e.languages.bash.keyword,a.boolean=e.languages.bash.boolean,a.operator=e.languages.bash.operator,a.punctuation=e.languages.bash.punctuation}(Prism);
+</script>
+
+<script type="text/javascript">
+Prism.languages.python={"triple-quoted-string":{pattern:/"""[\s\S]+?"""|'''[\s\S]+?'''/,alias:"string"},comment:{pattern:/(^|[^\\])#.*/,lookbehind:!0},string:/("|')(?:\\?.)*?\1/,"function":{pattern:/((?:^|\s)def[ \t]+)[a-zA-Z_][a-zA-Z0-9_]*(?=\()/g,lookbehind:!0},"class-name":{pattern:/(\bclass\s+)[a-z0-9_]+/i,lookbehind:!0},keyword:/\b(?:as|assert|async|await|break|class|continue|def|del|elif|else|except|exec|finally|for|from|global|if|import|in|is|lambda|pass|print|raise|return|try|while|with|yield)\b/,"boolean":/\b(?:True|False)\b/,number:/\b-?(?:0[bo])?(?:(?:\d|0x[\da-f])[\da-f]*\.?\d*|\.\d+)(?:e[+-]?\d+)?j?\b/i,operator:/[-+%=]=?|!=|\*\*?=?|\/\/?=?|<[<=>]?|>[=>]?|[&|^~]|\b(?:or|and|not)\b/,punctuation:/[{}[\];(),.:]/};
 </script>
 
 <script type="text/javascript">

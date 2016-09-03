@@ -79,16 +79,14 @@
 
 * caller调用者规则：
 
-	1. `eax`, `ecx`, `edx`寄存器入栈
 	1. 子函数参数入栈，从右向左
 	1. `call`指令，将返回地址入栈后执行函数
-	1. 子函数返回，`eax`中返回地址，清除栈中参数，恢复寄存器值
+	1. 子函数返回，返回值在`eax`中，清除栈中参数，恢复寄存器值
 
 * callee被调用者规则：
 
 	1. 保存caller的栈基址，设定callee新的栈基址为当前栈指针（`ebp`入栈，拷贝`esp`到`ebp`中）
 	1. 为局部变量分配栈空间
-	1. 寄存器`ebx`,`edi`,`esi`入栈
 	1. 执行函数，结果保存在`eax`中，恢复寄存器，清除局部变量，执行`ret`指令
 
 ###栈缓冲区溢出演示：
@@ -115,7 +113,7 @@ int main(int ac, char **av) {
 
 编译命令：
 
-```
+``` sh
 $ cat Makefile
 objects = readreq
 cc = gcc -m32 -static -g -Wno-deprecated-declarations -fno-stack-protector
@@ -133,7 +131,7 @@ clean :
 
 编译并运行程序，查看不同输入下的输出。
 
-```
+``` sh
 $ make
 gcc -m32 -static -g -Wno-deprecated-declarations -fno-stack-protector readreq.c -o readreq
 /tmp/ccXK2Fse.o: In function `read_req':
@@ -151,7 +149,7 @@ Segmentation fault
 
 下面用gdb调试程序，通过反汇编技术研究缓冲区溢出细节。
 
-``` 
+```  gas
 $ gdb ./readreq
 (gdb) b read_req [在read_req函数设置断点]
 Breakpoint 1 at 0x8048e4d: file readreq.c, line 6.
@@ -185,8 +183,8 @@ Dump of assembler code for function read_req:
 => 0x08048e4d <+9>:	lea    -0x8c(%ebp),%eax [将&buf[0]地址…*]
    0x08048e53 <+15>: mov    %eax,(%esp) [移入栈顶，向gets传递参数]
    0x08048e56 <+18>: call   0x804fc90 <gets> [将%eip入栈并调用]
-   0x08048e5b <+23>: lea    -0x8c(%ebp),%eax 
-   0x08048e61 <+29>: mov    %eax,(%esp)   [传递参数&buf[0]]
+   0x08048e5b <+23>: lea    -0x8c(%ebp),%eax [将&buf[0]地址]
+   0x08048e61 <+29>: mov    %eax,(%esp)   [移入栈顶，传递参数]
    0x08048e64 <+32>: call   0x804dd10 <atoi>
    0x08048e69 <+37>: mov    %eax,-0xc(%ebp) [将atoi结果写入i]
    0x08048e6c <+40>: mov    -0xc(%ebp),%eax [将i写入函数返回值]
@@ -198,7 +196,7 @@ End of assembler dump.
 * `push`指令将操作数压入栈中。在压栈前，将`esp`值减4（X86栈增长方向与内存地址编号增长方向相反），然后将操作数压入`esp`指示位置。
 * `pop`指令与`push`指令相反。先将`esp`指示地址中内容出栈，然后将`esp`值加4。
 * 栈增长（168 bytes）要超过局部变量大小之和（4+128 bytes），并按16 bytes对齐
-* `lea`: load effective address
+* `lea`: load effective address, 拷贝地址(而不是内容)
 * `leave`相当于`mov %ebp,%esp`, `pop %ebp`，此时`esp`指向返回地址。之后，`ret`执行`pop %eip`，将返回地址写入`$eip`
 
 查看一下寄存器和栈帧中的内容，以此绘制栈帧结构图。
@@ -250,7 +248,7 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 此时发生了什么？大量的A（0x41）从`buf[0]`开始写入到栈中，从下向上覆盖之前栈中内容。下面查看栈中内容。
 
-```
+``` 
 (gdb) p &buf[0]
 $5 = 0xbffff62c 'A' <repeats 200 times>… [超过了缓冲区大小128字节]
 (gdb) x $ebp [检查$ebp所指向地址内容，已经被AAAA覆盖]
