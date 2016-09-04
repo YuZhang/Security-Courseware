@@ -4,11 +4,13 @@
 
 参考课程: [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm) by Prof. Nickolai Zeldovich
 
+---
+
+### 实验预备
+
 实验资料见[MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)中Lab 1。
 
 本实验中，我们通过缓冲区溢出漏洞来攻击一个web服务器`zookws`。该服务器上运行一个Python的web应用`zoobar`，用户之间转移一种称为“zoobars”的货币。
-
-### 准备实验环境
 
 实验环境为Ubuntu，在VMware Player (VMware Fusion)虚拟机中运行。系统中有两个账号，`root`，口令6858，用来安装软件；`httpd`，口令6858，用来运行Web服务器和实验程序。
 
@@ -60,8 +62,55 @@ httpd     4448  2493  0 15:44 pts/3    S+     0:00 /home/httpd/lab/zookld zook-e
 httpd     4453  4448  0 15:44 pts/3    S+     0:00 zookd-exstack 5
 httpd     4454  4448  0 15:44 pts/3    S+     0:00 zookfs-exstack 6
 ```
+---
 
-### 练习1：寻找缓冲区溢出漏洞
+###HTTP简介
+
+请求格式：
+
+```
+[METH] [REQUEST-URI] HTTP/[VER]
+Field1: Value1
+Field2: Value2
+
+[request body, if any]
+```
+请求例子：
+
+```
+GET / HTTP/1.0
+User-Agent: Mozilla/3.0 (compatible; Opera/3.0; Windows 95/NT4)
+Accept: */*
+Host: birk105.studby.uio.no:81
+```
+
+应答格式：
+
+```
+HTTP/[VER] [CODE] [TEXT]
+Field1: Value1
+Field2: Value2
+
+...Document content here...
+```
+应答例子：
+
+```
+HTTP/1.0 200 OK
+Server: Netscape-Communications/1.1
+Date: Tuesday, 25-Nov-97 01:22:04 GMT
+Last-modified: Thursday, 20-Nov-97 10:44:53 GMT
+Content-length: 6372
+Content-type: text/html
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+...followed by document content...
+```
+
+---
+
+### 寻找漏洞
 
 需要研究服务器代码找到 **至少5处** 缓冲区溢出漏洞。
 
@@ -181,10 +230,10 @@ http.c:107:    envp += sprintf(envp, "REQUEST_URI=%s", reqpath) + 1;
 |
 zookd.c:70:    if ((errmsg = http_request_line(fd, reqpath, env, &env_len)))
 ```
+---
+### 触发漏洞
 
-### 练习2：触发缓冲区溢出漏洞
-
-本练习中每个人挑选两个缓冲区溢出漏洞。首先，该漏洞必须能改写栈中的一个返回地址；其次，改写一些数据结构来用于夺取程序的控制流。撰写触发该漏洞的程序，并验证改程序可以导致web服务器崩溃（通过`dmesg | tail`, 使用`gdb`, 或直接观察）。
+首先，该漏洞必须能改写栈中的一个返回地址；其次，改写一些数据结构来用于夺取程序的控制流。撰写触发该漏洞的程序，并验证改程序可以导致web服务器崩溃（通过`dmesg | tail`, 使用`gdb`, 或直接观察）。
 
 漏洞利用程序模板为`exploit-template.py`，该程序向服务器发送特殊请求。改写模板来利用漏洞，将两个漏洞利用程序分别命名为`exploit-2a.py`和`exploit-2b.py`。最后，用`make check-crash`命令来验证是否能够令服务器崩溃。
 
@@ -307,7 +356,7 @@ PASS ./exploit-2b.py
 
 首先，调试`zookd`。`http_request_line`负责处理HTTP请求。
 
-``` sh
+``` gas
 $ gdb -p $(pgrep zookd-exstack)
 ...
 (gdb) b http_request_line
@@ -359,7 +408,7 @@ $4 = 8192
 
 在`zookfs.c`中，`http_serve()`函数以`REQUEST_URI`环境变量为参数。在`http_serve`处设置断点，分析栈结构。
 
-``` c
+``` gas
 $ gdb -p $(pgrep zookfs-exstack)
 ...
 (gdb) b http_serve
@@ -417,7 +466,7 @@ $6 = (const char **) 0xbfffde14
 
 继续执行到`strcat()`，
 
-``` sh
+``` gas
 (gdb) n
 279         getcwd(pn, sizeof(pn));
 (gdb) n
@@ -434,7 +483,7 @@ $9 = 1024
 
 此处将执行`strcat()`，在`pn`中已经包含的来自`getcwd()`的字符串后面加上长度1025的`name`，将超过`pn`所分配的大小1024，导致缓冲区溢出。接着执行一步，并查看缓冲区溢出情况。
 
-``` sh
+``` gas
 (gdb) n
 283         split_path(pn);
 (gdb) x/10s pn
@@ -459,7 +508,7 @@ $9 = 1024
 
 在`pn`之前的缓冲区，包括`handler`和`$ebp`，已经被字符`A`覆盖，但返回地址并没有被完全改写。该如何改写?
 
-``` sh
+``` gas
 (gdb) n
 285         if (!stat(pn, &st))
 (gdb) n
@@ -477,28 +526,12 @@ Program received signal SIGSEGV, Segmentation fault.
 
 继续执行到`handler(fd, pn);`，由于`handler`变量被改写为`0x41414141`，导致程序崩溃。这发生在先前发现的`strcpy()`漏洞之前。这个示例并没有利用改写返回地址来劫持控制流。
 
-总结漏洞触发过程如下：
+---
 
-(1) 构造客户端请求，并发送请求到服务器。
+### 作业：寻找并触发漏洞
 
-``` python
-In exploit-template.py: build_exploit()
+寻找并触发2个缓冲区溢出漏洞，详细描述漏洞并触发过程。
 
-req =   "GET / HTTP/1.0\r\n" + \
-            "\r\n"
-```
-``` sh
-$ ./exploit-2a.py localhost 8080
-```
-
-(2) 服务器端`zookd`处理请求并转发给`zookfs`。处理请求的代码在`http.c`中，其中存在缓冲区溢出漏洞。
-
-``` c
-zookd.c:70:    if ((errmsg = http_request_line(fd, reqpath, env, &env_len)))
-
-zookfs.c:47:    http_serve(sockfd, getenv("REQUEST_URI"));
-
-```
 
 
 

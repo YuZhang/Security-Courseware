@@ -4,6 +4,10 @@
 
 参考课程: [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm) by Prof. Nickolai Zeldovich
 
+---
+
+###背景知识
+
 **预备知识**: Linux，C语言，x86体系结构，汇编，gcc/gdb
 
 **缓冲区溢出（buffer overflow）**：在计算机安全和程序设计中的一种异常，当一个程序向缓冲区写入数据时，超出了缓冲区边界并且覆盖了相邻内存。
@@ -12,7 +16,7 @@
 
 **调用栈（call stack）**：用于存储程序中运行子例程信息的栈数据结构，先入后出。
 
-###Linux进程内存布局
+**Linux进程内存布局**
 
 ```
 +——————————————+ 0xFFFFFFFF (high address)
@@ -51,7 +55,7 @@
 低地址 —————> 高地址
 ```
 
-###栈帧（stack frame）：函数调用数据结构单元
+**栈帧（stack frame）**：函数调用数据结构单元
 
 ```
 +———————————————————————-+    caller’s stack pointer (old %esp) 
@@ -89,6 +93,7 @@
 	1. 为局部变量分配栈空间
 	1. 执行函数，结果保存在`eax`中，恢复寄存器，清除局部变量，执行`ret`指令
 
+---
 ###栈缓冲区溢出演示：
 
 readreq程序读入用户输入的数字后，打印输出。
@@ -201,7 +206,7 @@ End of assembler dump.
 
 查看一下寄存器和栈帧中的内容，以此绘制栈帧结构图。
 
-``` sh
+``` gas
 (gdb) p $ebp
 $1 = (void *) 0xbffff6b8
 (gdb) p $esp
@@ -240,7 +245,7 @@ $4 = (char (*)[128]) 0xbffff62c
 
 继续运行程序，进行缓冲区溢出。
 
-``` c
+``` gas
 (gdb) n [运行gets()]
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 7	    i = atoi(buf);
@@ -391,6 +396,7 @@ main (ac=<error reading variable: Cannot access memory at address 0x41414149>,
 
 但程序最后还是崩溃了，为什么？因为`main`的调用者返回地址也被改写了，`main`返回后就崩溃了。上面输出显示`main`参数都被改写了。
 
+---
 ###问答
 
 **问1**：如果栈生长方向相反，即从低地址向高地址生长，对于本程序还会发生问题吗？
