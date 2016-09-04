@@ -2,7 +2,7 @@
 
 ###哈尔滨工业大学 网络与信息安全 张宇 2016
 
-参考课程: [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm) by Prof. Nickolai Zeldovich
+参考课程: [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)
 
 ---
 
@@ -529,6 +529,8 @@ Program received signal SIGSEGV, Segmentation fault.
 ---
 
 ### 作业：寻找并触发漏洞
+
+实验资料: [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)中Lab 1。
 
 寻找并触发2个缓冲区溢出漏洞，详细描述漏洞并触发过程。
 
