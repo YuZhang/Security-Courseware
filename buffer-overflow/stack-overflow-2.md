@@ -534,6 +534,8 @@ Program received signal SIGSEGV, Segmentation fault.
 
 寻找并触发2个缓冲区溢出漏洞，详细描述漏洞并触发过程。
 
+**提示**：HTTP请求不只包括URL。
+
 
 
 

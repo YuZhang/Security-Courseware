@@ -8,13 +8,13 @@
 
 ###背景知识
 
-**预备知识**: Linux，C语言，x86体系结构，汇编，gcc/gdb
+**预备知识**: Linux，x86体系结构，x86汇编，C语言，gcc/gdb
 
 **缓冲区溢出（buffer overflow）**：在计算机安全和程序设计中的一种异常，当一个程序向缓冲区写入数据时，超出了缓冲区边界并且覆盖了相邻内存。
 
-**栈缓冲区溢出（stack buffer overflow）**：程序向调用栈中原本缓冲区之外的内存地址写入数据，意图获取对指令指针的控制，将其指向恶意代码。
-
 **调用栈（call stack）**：用于存储程序中运行子例程信息的栈数据结构，先入后出。
+
+**栈缓冲区溢出（stack buffer overflow）**：程序向调用栈中原本缓冲区之外的内存地址写入数据，意图获取对指令指针的控制，将其指向恶意代码。
 
 **Linux进程内存布局**
 
@@ -52,7 +52,7 @@
   +——+——+——+——+
   |B0|B1|B2|B3|
   +——+——+——+——+
-低地址 —————> 高地址
+low  —————>  high address
 ```
 
 **栈帧（stack frame）**：函数调用数据结构单元
@@ -67,7 +67,7 @@
 +———————————————————————-+
 |    local variables     |
 +————————————————————————+
-| callee saved registers |<——— callee’s stack pointer (new %esp)
+|                        |<——— callee’s stack pointer (new %esp)
 +———————————————————————-+
 |           |            |
 |           v            |
@@ -202,7 +202,8 @@ End of assembler dump.
 * `pop`指令与`push`指令相反。先将`esp`指示地址中内容出栈，然后将`esp`值加4。
 * 栈增长（168 bytes）要超过局部变量大小之和（4+128 bytes），并按16 bytes对齐
 * `lea`: load effective address, 拷贝地址(而不是内容)
-* `leave`相当于`mov %ebp,%esp`, `pop %ebp`，此时`esp`指向返回地址。之后，`ret`执行`pop %eip`，将返回地址写入`$eip`
+* `leave`相当于`mov %ebp,%esp`, `pop %ebp`，此时`esp`指向返回地址
+* `ret`执行`pop %eip`，将返回地址写入`eip`
 
 查看一下寄存器和栈帧中的内容，以此绘制栈帧结构图。
 

