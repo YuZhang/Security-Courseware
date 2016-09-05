@@ -112,10 +112,6 @@ Content-type: text/html
 
 ### 寻找漏洞
 
-需要研究服务器代码找到 **至少5处** 缓冲区溢出漏洞。
-
-下面演示一个例子（作业中不能使用本示例）：
-
 首先，我们看看缓冲区溢出存在的要素：数组（字符串），串处理/读取函数（写操作）。
 
 数组：`char * s`, `char s[128]`, `int a[128]`, `void * p`。
@@ -532,9 +528,9 @@ Program received signal SIGSEGV, Segmentation fault.
 
 实验资料: [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)中Lab 1。
 
-寻找并触发2个缓冲区溢出漏洞，详细描述漏洞并触发过程。
+寻找并触发2个新的缓冲区溢出漏洞，详细描述漏洞并触发过程。
 
-**提示**：HTTP请求不只包括URL。
+**提示**：HTTP请求中不只包括URL。
 
 
 

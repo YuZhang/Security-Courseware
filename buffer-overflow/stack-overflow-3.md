@@ -382,10 +382,10 @@ warning: Source file is more recent than executable.
 0xbfffde21:     ""
 (gdb) p handler     [查看handler是否被改写]
 $1 = (void (*)(int, const char *)) 0x80495ea <http_serve_none>
-(gdb) x/4x $ebp+4     [查看返回地址]
-0xbfffde0c:     0x50    0x81    0x05    0x40
-(gdb) x/4x $ebp+12    [查看exit()参数]
-0xbfffde14:     0x01    0x01    0x01    0x01
+(gdb) x/wx $ebp+4     [查看返回地址]
+0xbfffde0c:     0x40058150
+(gdb) x $ebp+12    [查看exit()参数]
+0xbfffde14:     0x01010101
 (gdb) n
 285         if (!stat(pn, &st))
 (gdb)
@@ -428,7 +428,7 @@ __GI_exit (status=16843009) at exit.c:103
 
 将攻击程序命名为`exploit-4a.py`和`exploit-4b.py`，用`make check-libc`来检查攻击是否成功。
 
-**提示：**libc中`unlink()`函数参数是一个指向以`'\0'`结尾字符串的指针。因此，需在栈中注入字符串。
+**提示：**libc中`unlink()`函数参数是一个指向以`'\0'`结尾字符串的指针。因此，需在栈中注入字符串，并保证在漏洞触发时，该字符串结尾为`'\0'`。
 
 
 

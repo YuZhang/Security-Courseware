@@ -11,6 +11,7 @@
 	1. [原理](buffer-overflow/stack-overflow-1.md)
 	1. [分析与触发](buffer-overflow/stack-overflow-2.md)
 	1. [Shellcode与漏洞利用](buffer-overflow/stack-overflow-3.md)
+	1. [防御对策](buffer-overflow/stack-overflow-4.md) 
 	1. [辅助材料](buffer-overflow/supplyments) 
 
 
