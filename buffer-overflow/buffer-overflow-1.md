@@ -180,6 +180,10 @@ ds             0x7b	123  [数据段]
 es             0x7b	123  [附加段]
 fs             0x0	0    [无明确定义，字母表中f在e之后]
 gs             0x33	51   [无明确定义, g在f之后]
+```
+反汇编：
+
+```gas
 (gdb) disass read_req   [反汇编，AT&T风格]
 Dump of assembler code for function read_req:
    0x08048e44 <+0>:	push   %ebp   [将旧%ebp入栈*]
