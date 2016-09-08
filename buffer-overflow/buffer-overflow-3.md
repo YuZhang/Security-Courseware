@@ -6,11 +6,15 @@
 
 ---
 
-###Shellcode原理
+本节课学习shellcode原理，并利用漏洞在服务器上运行shellcode，以及return-to-libc攻击。
 
-参考资料：[Smashing The Stack For Fun And Profit](http://phrack.org/issues/49/14.html#article)
+##Shellcode原理
 
-利用缓冲区溢出漏洞改写函数返回地址来劫持程序控制流，令其指向预执行代码。通常该代码会启动一个shell，称作"shellcode"。下面是一个C语言程序启动shell的例子。
+参考资料：[Smashing The Stack For Fun And Profit](supplyments/Smashing-The-Stack-For-Fun-And-Profit.pdf) [[online]](http://phrack.org/issues/49/14.html#article)
+
+利用缓冲区溢出漏洞改写函数返回地址来劫持程序控制流，令其指向预执行代码。通常该代码会启动一个shell，称作"shellcode"。
+
+下面是一个C语言程序启动shell的例子。
 
 ``` c
 #include <stdio.h>void main() {   char *name[2];   name[0] = "/bin/sh";   name[1] = NULL;
@@ -19,7 +23,9 @@
    exit(0);}
 ```
 
-`execve()`在父进程中fork一个子进程，在子进程中调用`exec()`函数启动新的程序。`exec`系列函数中`execve()`为内核级系统调用。 `execve()`执行第一个参数`filename`字符串所指文件，第二个参数是利用数组指针来传递命令行参数(第一个元素是命令本身)，并且要以空指针`null`结束，最后一个参数则为传递给执行文件的新环境变量数组。Linux的`execve()`通过寄存器传递参数，由0x80软中断触发`syscall()`调用，过程如下：
+`execve()`在父进程中fork一个子进程，在子进程中调用`exec()`函数启动新的程序。`exec`系列函数中`execve()`为内核级系统调用。 `execve()`执行第一个参数`filename`字符串所指文件，第二个参数是利用数组指针来传递命令行参数(第一个元素是命令本身)，并且要以空指针`null`结束，最后一个参数则为传递给执行文件的新环境变量数组。
+
+Linux的`execve()`通过寄存器传递参数，由0x80软中断触发`syscall()`调用，过程如下：
 
 1. 内存中存在`null`结尾字符串`"/bin/sh"`
 1. 内存中存在`"/bin/sh"的地址`后加一个`null long word`1. 拷贝`execve`调用编号(`0xb`)到`eax`1. 拷贝`"/bin/sh"的地址`到`ebx`1. 拷贝`"/bin/sh"的地址的地址`到`ecx`1. 拷贝`null long word的地址`到`edx`1. 执行`int $0x80`调用`syscall()`
@@ -30,9 +36,13 @@
 2. 拷贝`0x0`到`exb`
 3. 执行`int $0x80`调用`syscall()`
 
-在shellcode中，多处需要用到地址，一个问题是事先并不知道代码和字符串会被放置在哪里。解决该问题的一种方法是用`jmp`和`call`指令，通过指令指针相对寻址来跳到特定位置，而不需要事先知道准确地址。
+在shellcode中，多处需要用到地址，一个问题是事先并不知道代码和字符串会被放置在哪里。
 
-首先，在通过改写返回地址来跳转到shellcode后，利用`jmp`指令跳转到`call`指令。将`call`指令放在`"/bin/sh"`字符串之前，当执行`call`指令时，字符串地址将被入栈，作为`call`被执行时的返回地址。`call`指令只需简单的跳转到`jmp`之后的代码，执行`pop`指令将栈中的`call`的返回地址，即字符串地址，拷贝到一个寄存器使用。下面是程序描述与跳转示意图。
+解决该问题的一种方法是用`jmp`和`call`指令，通过指令指针相对寻址来跳到特定位置，而不需要事先知道准确地址。
+
+首先，在通过改写返回地址来跳转到shellcode后，利用`jmp`指令跳转到`call`指令。将`call`指令放在`"/bin/sh"`字符串之前，当执行`call`指令时，字符串地址将被入栈，作为`call`被执行时的返回地址。`call`指令只需简单的跳转到`jmp`之后的代码，执行`pop`指令将栈中的`call`的返回地址，即字符串地址，拷贝到一个寄存器使用。
+
+下面是程序描述与跳转示意图：
 
 1. 返回地址跳转到shellcode（跳转1）
 2. `jmp`跳转到`call`（跳转2）
@@ -109,6 +119,8 @@ low address         <———— stack growth ————        high address
 - 反编译：`objdump -D -b binary -mi386 shellcode.bin`
 - 执行：`./run-shellcode shellcode.bin`
 
+下面是反编译的结果：
+
 ``` gas
 $ objdump -D -b binary -mi386 shellcode.bin
 
@@ -145,7 +157,8 @@ $ ./run-shellcode shellcode.bin
 $ 
 ```
 ---
-###代码注入
+
+##代码注入
 
 利用之前的漏洞将shellcode注入到web服务器并启动shell。回顾之前的漏洞触发过程：
 
@@ -256,7 +269,7 @@ def build_exploit(shellcode):
 
 ---
 
-### Return-to-libc攻击
+## Return-to-libc攻击
 
 参考资料：[Bypassing non-executable-stack during exploitation using return-to-libc](http://css.csail.mit.edu/6.858/2014/readings/return-to-libc.pdf)
 
@@ -282,7 +295,9 @@ $1 = {<text variable, no debug info>} 0x40065100 <__libc_system>
 $2 = {<text variable, no debug info>} 0x40058150 <__GI_exit>
 ``` 
 
-得到了`system()`地址为`0x40065100`。但其中最后一个字节的`0x00`导致其不能在字符串中出现。因此，在本漏洞中无法直接使用，而改为调用`exit(16843009)`(`16843009`=`0x01010101`)来做演示，函数地址`0x40058150`。
+得到了`system()`地址为`0x40065100`。但其中最后一个字节的`0x00`导致其不能在字符串中出现。因此，在本漏洞中无法直接使用，下一节课我们会学习这意味着什么。
+
+下面用`exit(16843009)`(`16843009`=`0x01010101`)来演示，函数地址`0x40058150`。
 
 为了令`http_serve()`正常执行后返回，不能改写`handler`。记录`handler`初始值备用。
 
@@ -293,7 +308,6 @@ $2 = (void (*)(int, const char *)) 0x80495ea <http_serve_none>
 
 
 [](为了执行`system("/bin/sh")`，还需要一个`"/bin/sh"`字符串。有些情况下，该字符串在环境变量`SHELL`的值中，而环境变量在启动进程时已经被作为参数压入栈底，可用`gdb`在栈中搜索，例如`x/1000s $esp`。本例中未载入该环境变量，需在缓冲区中添加。)
-
 
 
 然后，在栈中布置参数为调用做准备。当漏洞函数返回时，根据返回地址跳转到libc函数，libc函数从栈中读取参数。
@@ -403,7 +417,7 @@ __GI_exit (status=16843009) at exit.c:103
 
 ---
 
-###作业：删除敏感文件
+##作业：删除敏感文件
 
 实验资料：[MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)中Lab 1。
 

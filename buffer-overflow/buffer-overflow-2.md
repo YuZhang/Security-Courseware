@@ -6,13 +6,20 @@
 
 ---
 
-### 实验预备
+本节课中熟悉实验环境，分析一个Web服务器的逻辑，寻找缓冲区溢出漏洞并触发该漏洞。
+
+## 实验预备
 
 实验资料见[MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)中Lab 1。
 
-本实验中，我们通过缓冲区溢出漏洞来攻击一个web服务器`zookws`。该服务器上运行一个Python的web应用`zoobar`，用户之间转移一种称为“zoobars”的货币。
+实验环境为Ubuntu，在VMware Player (VMware Fusion)虚拟机中运行。系统中有两个账号：
 
-实验环境为Ubuntu，在VMware Player (VMware Fusion)虚拟机中运行。系统中有两个账号，`root`，口令6858，用来安装软件；`httpd`，口令6858，用来运行Web服务器和实验程序。
+- `root`，口令6858，用来安装软件
+- `httpd`，口令6858，运行Web服务器和实验程序
+
+本课程实验研究一个web服务器`zookws`。该服务器上运行一个Python的web应用`zoobar`，用户之间转移一种称为“zoobars”的货币。
+
+
 
 1. 在VMware里用`httpd`账号登录后，运行`ifconfig`查看IP地址
 1. 用终端软件通过SSH登录系统`ssh httpd@IP地址`
@@ -22,6 +29,8 @@
 4. 启动服务器`./clean-env.sh ./zookld zook-exstack.conf`
 5. 用浏览器访问zook服务`http://虚拟机IP地址:8080/`
 
+服务器端包含以下主要文件：
+
 - `clean-env.sh`脚本令程序每次运行时栈和内存布局都相同
 - `zookld.c`: 启动`zook.conf`中所配置服务，如`zookd`和`zookfs`
 - `zookd.c`: 将HTTP请求路由到相应服务，如`zookfs`
@@ -30,23 +39,25 @@
 - `index.html`: Web服务器首页
 - `/zoobar`目录：zoobar服务实现
 
+
+
 ```
-                    +———————+   
-                    |zookld |<——— "zook-*.conf" 
-                    +———+———+                 
+                    +—————————+   
+                    |zookld.c |<—— "zook-*.conf" 
+                    +———+—————+                 
                         |——————————————+
                         |              |
-+——————+    HTTP    +———v———+      +———v———+     
-|client| <————————> |zookd  |<————>|zookfs |<——— "/zoobar"
-+——————+            +———^———+      +———^———+     
++——————+    HTTP    +———v———+      +———v————+    CGI, Databse
+|client| <————————> |zookd.c|<————>|zookfs.c|<——— "/zoobar"
++——————+            +———^———+      +———^————+     
                         |              | (2) http_request_headers()
 (1) http_request_line() |   +——————+   | (3) http_serve()
-                        +———| http |———+
+                        +———|http.c|———+
                             +——————+
 ```
 
 
-服务器端采用CGI (Common Gateway Interface)技术，将客户端请求URL映射到脚本或者普通HTML文件。CGI脚本可以由任意程序语言实现，脚本只需将HTTP头部和HTML文档输出到标准输出。本例CGI由`/zoobar`目录中的python脚本实现。目前，我们不需要关心具体zoobar服务内容。
+服务器端采用CGI (Common Gateway Interface)技术，将客户端请求URL映射到脚本或者普通HTML文件。CGI脚本可以由任意程序语言实现，脚本只需将HTTP头部和HTML文档输出到标准输出。本例CGI由`/zoobar`目录中的python脚本实现，其中也包含一个数据库。目前，我们不需要关心具体zoobar服务内容。
 
 `zookd`和`zookfs`执行程序分别有两个版本：
 
@@ -62,11 +73,16 @@ httpd     4448  2493  0 15:44 pts/3    S+     0:00 /home/httpd/lab/zookld zook-e
 httpd     4453  4448  0 15:44 pts/3    S+     0:00 zookd-exstack 5
 httpd     4454  4448  0 15:44 pts/3    S+     0:00 zookfs-exstack 6
 ```
+
+服务器采用这一架构的原因会在之后的课程中学习。
+
 ---
 
-###HTTP简介
+##HTTP简介
 
-请求格式：
+参考资料：[How the web works: HTTP and CGI explained](supplyments/How-the-web-works.pdf)
+
+HTTP请求格式：
 
 ```
 [METH] [REQUEST-URI] HTTP/[VER]
@@ -75,7 +91,7 @@ Field2: Value2
 
 [request body, if any]
 ```
-请求例子：
+HTTP请求例子：
 
 ```
 GET / HTTP/1.0
@@ -84,7 +100,7 @@ Accept: */*
 Host: birk105.studby.uio.no:81
 ```
 
-应答格式：
+HTTP应答格式：
 
 ```
 HTTP/[VER] [CODE] [TEXT]
@@ -93,7 +109,7 @@ Field2: Value2
 
 ...Document content here...
 ```
-应答例子：
+HTTP应答例子：
 
 ```
 HTTP/1.0 200 OK
@@ -112,7 +128,7 @@ Content-type: text/html
 
 ### 寻找漏洞
 
-首先，我们看看缓冲区溢出存在的要素：数组（字符串），串处理/读取函数（写操作）。
+缓冲区溢出存在的要素：数组（字符串），串处理/读取函数（写操作）。
 
 数组：`char * s`, `char s[128]`, `int a[128]`, `void * p`。
 
@@ -120,7 +136,7 @@ Content-type: text/html
 
 除了调用函数外，还可能通过`for/while {}`循环的方式来访问缓冲区。
 
-接着，试着搜索一个‘危险’函数`strcpy()`。
+在源码中搜索一个‘危险’函数`strcpy()`。
 
 ``` c
 $ grep -n 'strcpy' *.c
@@ -227,11 +243,11 @@ http.c:107:    envp += sprintf(envp, "REQUEST_URI=%s", reqpath) + 1;
 zookd.c:70:    if ((errmsg = http_request_line(fd, reqpath, env, &env_len)))
 ```
 ---
-### 触发漏洞
+## 触发漏洞
 
 首先，该漏洞必须能改写栈中的一个返回地址；其次，改写一些数据结构来用于夺取程序的控制流。撰写触发该漏洞的程序，并验证改程序可以导致web服务器崩溃（通过`dmesg | tail`, 使用`gdb`, 或直接观察）。
 
-漏洞利用程序模板为`exploit-template.py`，该程序向服务器发送特殊请求。改写模板来利用漏洞，将两个漏洞利用程序分别命名为`exploit-2a.py`和`exploit-2b.py`。最后，用`make check-crash`命令来验证是否能够令服务器崩溃。
+漏洞利用程序模板为`exploit-template.py`，该程序向服务器发送特殊请求。
 
 首先启动服务：`./clean-env.sh ./zookld zook-exstack.conf`。
 下面是是未改写的`exploit-template.py`执行结果。
@@ -524,11 +540,13 @@ Program received signal SIGSEGV, Segmentation fault.
 
 ---
 
-### 作业：寻找并触发漏洞
+## 作业：寻找并触发漏洞
 
-实验资料: [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)中Lab 1。
+实验资料：[MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)中Lab 1。
 
 寻找并触发2个新的缓冲区溢出漏洞，详细描述漏洞并触发过程。
+
+改写漏洞利用模板`exploit-template.py`，将两个漏洞利用程序分别命名为`exploit-2a.py`和`exploit-2b.py`。最后，用`make check-crash`命令来验证是否能够令服务器崩溃。
 
 **提示**：HTTP请求中不只包括URL。
 

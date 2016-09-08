@@ -1,4 +1,4 @@
-缓冲区溢出4：Baggy与BROP
+缓冲区溢出4：攻防对抗
 ===
 ###哈尔滨工业大学 网络与信息安全 张宇 2016
 
@@ -6,13 +6,15 @@
 
 ---
 
-本节学习一种防御缓冲区溢出攻击的边界检查机制Baggy，以及一种破解地址空间布局随机化的攻击技术BROP。回顾缓冲区溢出攻击要点：
+本节学习缓冲区溢出攻击的防御方案与新型攻击技术，重点介绍一种边界检查机制Baggy，以及一种破解地址空间布局随机化的攻击技术BROP。
+
+##避免攻击
+
+回顾缓冲区溢出攻击要点：
 
 1. **较长输入**通过缓冲区溢出来**改写栈中数据**
 - **改写指令指针**劫持控制流
 - 执行后注入或已存在**恶意指令**
-
-##避免攻击：
 
 避免缓冲区溢出，来从源头上杜绝**较长输入**通过缓冲区溢出来**改写栈中数据**。
 
@@ -196,7 +198,37 @@ int *ptr = malloc(sizeof(int) * 2);while(1){     *ptr = 42;    <———    
 
 第3行代码将检查指针当前地址并确保其在界内。因此，当循环到第3次时会发生故障。问题是每次解引用都检查代价太大！而且胖指针与许多存在的程序都不兼容，不能用在固定大小结构中，指针更新也不再是原子操作。
 
-####[Baggy Bounds Checking (2009)](https://www.usenix.org/legacy/events/sec09/tech/full_papers/akritidis.pdf)：
+后面会详细介绍一种边界检查方案：Baggy。
+
+###对策3：不可执行内存
+
+硬件支持对内存读、写、执行的权限说明。例如，AMD的NX位，Intel的XD位，Windows DEP（Data Execution Prevention），Linux的Pax。可将栈标记为不可执行。一些系统强制“W^X”，即可写和可执行不能同时存在，但也不支持动态生成代码（同时需要写和执行）。详见[可执行空间保护](https://en.wikipedia.org/wiki/Executable_space_protection)。
+
+###对策4：随机化内存地址
+
+许多攻击需要在shellcode中编入地址。这些地址通过gdb等工具获得。因此，可通过地址随机化令攻击者难以猜测地址。
+
+**栈随机化**：将栈移动到随机位置，或在栈中变量之间随机填充。攻击者难以猜测返回地址的位置，以及shellcode将会被插入到哪里。
+
+**[ASLR (Address Space Layout Randmization)](https://en.wikipedia.org/wiki/Address_space_layout_randomization)**：随机布置栈，堆，动态库。动态链接器为每个库选择随机位置，攻击者难以找到`system()`位置。但也存在以下问题：
+
+- 在32位机器上，可随机比特不够大（1比特用于区分内核/用户模式，12比特用于内存映射页与页边界对齐），攻击者可能蛮力猜测位置。
+- 攻击者利用`usleep()`函数，该函数可能位置有2^16个或2^28个。猜测`usleep(16)`地址并写入返回地址，观察程序是否挂起了16秒。
+- 程序产生栈trace或错误消息包含指针。
+- 攻击者利用“Heap spraying”将shellcode填满内存，很可能随机跳到shellcode。
+
+
+**实践中缓冲区溢出防御**：
+
+- gcc和MSVC缺省启用金丝雀
+- Linux和Windows缺省包含ASLR和NX
+- 界限检查不太常用，因为：性能代价，需重编译，误报。有时，有些漏报但零误报 好于 零漏报但有些误报
+
+---
+
+##Baggy Bounds Checking
+
+参考资料：[Baggy Bounds Checking (2009)](supplyments/baggy-bound-checking-USENIX2009.pdf) [[online]](https://www.usenix.org/legacy/events/sec09/tech/full_papers/akritidis.pdf)
 
 思想：为每个分配的对象，通过malloc或编译器来确定对象大小，并把对象大小记录下来。在两种指针操作中，检查指针是否出界：
 
@@ -324,37 +356,15 @@ char *p = malloc(32);char *q = p + 32;char ch = *q;```
 - 第2行：`q`由于越界，OOB位被置1，但在slot大小一半之内，未引发错误。
 - 第3行：解引用时OOB位=1相当于访问内存空间禁止访问的上半部分，引发故障。
 
-###对策3：不可执行内存
-
-硬件支持对内存读、写、执行的权限说明。例如，AMD的NX位，Intel的XD位，Windows DEP（Data Execution Prevention），Linux的Pax。可将栈标记为不可执行。一些系统强制“W^X”，即可写和可执行不能同时存在，但也不支持动态生成代码（同时需要写和执行）。详见[可执行空间保护](https://en.wikipedia.org/wiki/Executable_space_protection)。
-
-###对策4：随机化内存地址
-
-许多攻击需要在shellcode中编入地址。这些地址通过gdb等工具获得。因此，可通过地址随机化令攻击者难以猜测地址。
-
-**栈随机化**：将栈移动到随机位置，或在栈中变量之间随机填充。攻击者难以猜测返回地址的位置，以及shellcode将会被插入到哪里。
-
-**[ASLR (Address Space Layout Randmization)](https://en.wikipedia.org/wiki/Address_space_layout_randomization)**：随机布置栈，堆，动态库。动态链接器为每个库选择随机位置，攻击者难以找到`system()`位置。但也存在以下问题：
-
-- 在32位机器上，可随机比特不够大（1比特用于区分内核/用户模式，12比特用于内存映射页与页边界对齐），攻击者可能蛮力猜测位置。
-- 攻击者利用`usleep()`函数，该函数可能位置有2^16个或2^28个。猜测`usleep(16)`地址并写入返回地址，观察程序是否挂起了16秒。
-- 程序产生栈trace或错误消息包含指针。
-- 攻击者利用“Heap spraying”将shellcode填满内存，很可能随机跳到shellcode。
-
-
-**实践中缓冲区溢出防御**：
-
-- gcc和MSVC缺省启用金丝雀
-- Linux和Windows缺省包含ASLR和NX
-- 界限检查不太常用，因为：性能代价，需重编译，误报。有时，有些漏报但零误报 好于 零漏报但有些误报
-
 ---
 
 ##Blind Return-Oriented Programming
 
+参考资料：[Hacking Blind (2014)](supplyments/blind-return-oriented-programming.pdf) [[Slides]](blind-return-oriented-programming-slides.pdf) [[online]](http://www.scs.stanford.edu/brop/bittau-brop-slides.pdf)
+
 假设目标系统实现了DEP和ASLR，那么缓冲区溢出攻击还能实施吗？如目标系统只实现了DEP而没有实现ASLR，可实施ROP攻击。若也实现了ASLR，则可实施BROP攻击。
 
-###[ROP](http://cseweb.ucsd.edu/~hovav/talks/blackhat08.html)：
+###ROP [(Blackhat08)](http://cseweb.ucsd.edu/~hovav/talks/blackhat08.html)
 
 之前我们已经学习过Return-to-libc攻击，该攻击通过改写返回值，调用了libc中函数，绕过不可执行栈防御。ROP是一连串利用函数返回来操纵控制流的技术。例如，攻击者打算多次重复调用某个libc函数`func(char * str)`。首先，需要3个地址：
 
@@ -400,7 +410,7 @@ char *p = malloc(32);char *q = p + 32;char ch = *q;```
 
 ###Blind ROP：
 
-若采用了ASLR，则地址被随机化难以实现ROP。Blind ROP（BROP）能够在源代码未知、随机地址未知的条件下实施攻击。参考资料[Hacking Blind (2014)](http://www.scs.stanford.edu/brop/bittau-brop-slides.pdf)。
+若采用了ASLR，则地址被随机化难以实现ROP。Blind ROP（BROP）能够在源代码未知、随机地址未知的条件下实施攻击。
 
 BROP攻击分为三个阶段：
 
@@ -446,13 +456,11 @@ stop gadget是一个指向令程序停止代码（例如`sleep()`）的返回地
 
 
 ```
-                        +->sleep(5)<-++——— pop eax            |            ||    ret                |            ||     \———>[stop]      0x5....       0x5.... 
-|          [crash]     0x0           0x0    <—————————————————+
-+——————————[probe]     0x4...8       0x4...c -->xor eax, eax  |                         [return addr]          ret           |
+                        +->sleep(5)<-++——— pop eax        ^   |            ||    ret            |   |            ||     \———>[stop]   |  0x5....       0x5.... 
+|          [crash]  |  0x0           0x0    <—————————————————+
++——————————[probe]  |  0x4...8       0x4...c -->xor eax, eax  |                    |                           ret           |
                                                    \__________|
 ```
-
-
 
 此时，攻击者找到了一些pop gadget，但不知道其中所使用的寄存器，也不知道`syscall`指令的地址。
 
@@ -501,12 +509,22 @@ syscall
 每次服务崩溃重新随机化canary和地址空间！
 
 - 用`exec()`替代`fork()`，由于`fork()`拷贝父进程地址空间
-- Windows不怕BROP，因为Windows里没有`fork()`
+- Windows不怕BROP，因为Windows里没有类似`fork()`的调用
 
 ---
 
+##作业
 
+阅读论文：
 
+- [Baggy Bounds Checking (2009)](supplyments/baggy-bound-checking-USENIX2009.pdf) [[online]](https://www.usenix.org/legacy/events/sec09/tech/full_papers/akritidis.pdf)
+- [Hacking Blind (2014)](supplyments/blind-return-oriented-programming.pdf) [[Slides]](blind-return-oriented-programming-slides.pdf) [[online]](http://www.scs.stanford.edu/brop/bittau-brop-slides.pdf)
+
+回答以下开放问题：
+
+- 你认为论文中最核心的创新点是什么？攻击/防御技巧？
+- 你认为论文中最主要的局限性是什么？很容易防御？更好的攻击？
+- 针对这一局限性，你有什么改进建议？
 
 
 
