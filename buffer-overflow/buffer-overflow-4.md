@@ -65,7 +65,7 @@ void foo(int *p){     int offset;     int *z = p + offset;     if(offset > 7)
 - 将恶意代码安置在**可预测位置**，令代码指针指向该位置
 
 
-###对策1：[金丝雀（canaries）](https://en.wikipedia.org/wiki/Buffer_overflow_protection#Canaries)
+###对策1：金丝雀（canaries）[[参考](https://en.wikipedia.org/wiki/Buffer_overflow_protection#Canaries)]
 
 在被改写的代码指针被调用之前发现它。其思想是编译器在程序中安放canary变量，并检测canary变量是否被改写。类似用金丝雀在煤矿中检测一氧化碳。此类工作包括[StackGuard](https://www.usenix.org/legacy/publications/library/proceedings/sec98/full_papers/cowan/cowan.pdf)和[GCC的SSP（Stack Smashing Protector）]()。
 
@@ -228,7 +228,7 @@ int *ptr = malloc(sizeof(int) * 2);while(1){     *ptr = 42;    <———    
 
 ##Baggy Bounds Checking
 
-参考资料：[Baggy Bounds Checking (2009)](supplyments/baggy-bound-checking-USENIX2009.pdf) [[online]](https://www.usenix.org/legacy/events/sec09/tech/full_papers/akritidis.pdf)
+阅读资料：[Baggy Bounds Checking (2009)](supplyments/baggy-bound-checking-USENIX2009.pdf) [[online]](https://www.usenix.org/legacy/events/sec09/tech/full_papers/akritidis.pdf)
 
 思想：为每个分配的对象，通过malloc或编译器来确定对象大小，并把对象大小记录下来。在两种指针操作中，检查指针是否出界：
 
@@ -360,7 +360,7 @@ char *p = malloc(32);char *q = p + 32;char ch = *q;```
 
 ##Blind Return-Oriented Programming
 
-参考资料：[Hacking Blind (2014)](supplyments/blind-return-oriented-programming.pdf) [[Slides]](blind-return-oriented-programming-slides.pdf) [[online]](http://www.scs.stanford.edu/brop/bittau-brop-slides.pdf)
+阅读资料：[Hacking Blind (2014)](supplyments/blind-return-oriented-programming.pdf) [[Slides]](blind-return-oriented-programming-slides.pdf) [[online]](http://www.scs.stanford.edu/brop/bittau-brop-slides.pdf)
 
 假设目标系统实现了DEP和ASLR，那么缓冲区溢出攻击还能实施吗？如目标系统只实现了DEP而没有实现ASLR，可实施ROP攻击。若也实现了ASLR，则可实施BROP攻击。
 
@@ -513,18 +513,6 @@ syscall
 
 ---
 
-##作业
-
-阅读论文：
-
-- [Baggy Bounds Checking (2009)](supplyments/baggy-bound-checking-USENIX2009.pdf) [[online]](https://www.usenix.org/legacy/events/sec09/tech/full_papers/akritidis.pdf)
-- [Hacking Blind (2014)](supplyments/blind-return-oriented-programming.pdf) [[Slides]](blind-return-oriented-programming-slides.pdf) [[online]](http://www.scs.stanford.edu/brop/bittau-brop-slides.pdf)
-
-回答以下开放问题：
-
-- 你认为论文中最核心的创新点是什么？攻击/防御技巧？
-- 你认为论文中最主要的局限性是什么？很容易防御？更好的攻击？
-- 针对这一局限性，你有什么改进建议？
 
 
 

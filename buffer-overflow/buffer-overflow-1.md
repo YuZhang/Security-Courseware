@@ -104,7 +104,6 @@ low  —————>  high address
 研究一个存在缓冲区溢出漏洞的程序`readreq.c`，该程序读入用户输入的数字后，打印输出。
 
 ``` c
-$ cat readreq.c 
 #include <stdio.h>
 
 int read_req(void) {

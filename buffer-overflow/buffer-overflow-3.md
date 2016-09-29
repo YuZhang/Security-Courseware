@@ -53,7 +53,7 @@ Linux的`execve()`通过寄存器传递参数，由0x80软中断触发`syscall()
 1. 字符串`"/bin/sh"`
 
 ```
-low address         <———— stack growth ————        high address
+low address         <———— stack growth ————              high address
                       
           +—————————(3)—————————+
           V                     | 
