@@ -38,7 +38,7 @@ X——>S :            ACK(ISN_S+1), SRC=T      —————> +————�
 
 	- 最早的TCP协议标准RFC793中，为减少旧连接中的分段被新连接接收的几率，建议全局32比特ISN生成器以1/4ms的速度单调递增
 	- 若攻击者先连接一次并观察`ISN_S`，就可以已很高的可信度来预测下一次连接的`ISN_S'`
-	- 1985年，Morris首次描述了通过预测TCP初始序列号ISN来伪装成一台受害主机
+	- 1985年，Morris首次描述了通过预测TCP初始序列号ISN来伪装成一台受害主机，可攻破基于IP地址的访问控制/认证服务，例如Berkeley的rlogin和rsh （目前已被废弃）
 
 - 如何防御这一攻击？
 
@@ -50,10 +50,9 @@ X——>S :            ACK(ISN_S+1), SRC=T      —————> +————�
 		- `secretkey`在重启时、一段时间后、充分使用后，需更换
 		- 攻击者先连接一次获得的ISN用处不大，因为`sip`和`sport`与受害者不同
 
-###Blind In-Window攻击
+###Blind In-Window Attacks
 
-参考资料：[Off-Path TCP Exploits: Global Rate Limit Considered Dangerous (2016)]
-(https://www.usenix.org/conference/usenixsecurity16/technical-sessions/presentation/cao)
+####在传统TCP上的攻击
 
 ```
  +—————+      +—————+      +—————+     
@@ -64,35 +63,42 @@ X——>S :            ACK(ISN_S+1), SRC=T      —————> +————�
  exists?       Reset       Hijacking
 ```
 
-- 攻击者向一个TCP连接插入报文来打断连接或注入恶意数据
-	- 攻击者知道TCP四元组（主要是源端口`SPORT`），实施SYN攻击，重置连接
-	- +额外知道落在接收窗口内的序列号`SEQ#`，实施RST攻击，重置连接
-	- ++额外知道ACK号`ACK#`，实施DATA攻击注入数据
-	- 上述攻击可能实现，因为许多TCP长连接，例如BGP会话，的四元组较易被猜测，且高带宽延迟乘积连接的接收窗口范围很大
+攻击者向一个TCP连接插入报文来打断连接或注入恶意数据:
 
-防御方案：[RFC5961: Improving TCP's Robustness to Blind In-Window Attacks (2010)](https://tools.ietf.org/html/rfc5961))
+- 攻击者知道TCP四元组（主要是源端口`SPORT`），实施SYN攻击，重置连接
+- +额外知道落在接收窗口内的序列号`SEQ#`，实施RST攻击，重置连接
+- ++额外知道ACK号`ACK#`，实施DATA攻击注入数据
+- 上述攻击可能实现，因为许多TCP长连接，例如BGP会话，的四元组较易被猜测，且高带宽延迟乘积连接的接收窗口范围很大
+
+####RFC5961的防御方案：
+
+参考资料：[RFC5961: Improving TCP's Robustness to Blind In-Window Attacks (2010)](https://tools.ietf.org/html/rfc5961))
 
 ```
+———————————————————————————————————————————————         
 SEQ#  | Out-of-Win| In-Window |   
 ———————————————————————————————
       |      ACK  |   Reset   |  Before RFC5961
 SYN   —————————————————————————
       |    C-ACK  |   C-ACK   |   After RFC5961
+———————————————————————————————————————————————
 
-
+—————————————————————————————————————————————           
 SEQ#  | Out-of-Win|   Exact   |   In-Window
 —————————————————————————————————————————————           
       |    Drop   |         Reset
 RST   ———————————————————————————————————————
       |    Drop   |   Reset   |   C-ACK
+—————————————————————————————————————————————           
 
-
+—————————————————————————————————————————————
                   |       In-Apt-Win
-ACK#  | Out-of-Win|           | Challenge-Win
+ACK#  | Out-of-Win| In-Apt-Win| Challenge-Win
 —————————————————————————————————————————————           
       |   Drop    |        Process     
 DATA  ———————————————————————————————————————           
       |   Drop    |  Process  |   C-ACK
+—————————————————————————————————————————————
 ```
 
 - 挑战ACK包（C-ACK）：确认是否真的发送方
@@ -103,29 +109,30 @@ DATA  ————————————————————————�
 		- 对于合法发送方，根据挑战ACK号应答一个序列号正确的RST包
 		- 对于攻击者，不会接收到挑战包，也就无法正确应答
 	- 若序列号在接收窗口外，则丢弃
-- 当接收到一个DATA包时，
+- 当接收到一个DATA包时，从原接收窗口中划分出一个挑战窗口，减小了接收窗口
 	- 若`ACK#`在接收窗口内，则处理数据包
-	- **若`ACK#`在挑战窗口内（接收窗口之后的一段空间），则发送C-ACK包**
-	- 若接收+挑战窗口外，则丢弃 
+	- **若`ACK#`在挑战窗口内，则发送C-ACK包**
+	- 若接收+挑战窗口（原接收窗口）外，则丢弃 
 - **为避免挑战ACK机制占用过多资源，设定单位时间内挑战ACK包数上限**
 
-新攻击技术：
+####基于全局速率限制的攻击技术
 
-- 漏洞：Linux 3.6+（2012年9月发布）中TCP旁路漏洞（CVE-2016-5696）
-	- 全局系统变量C-ACK包数上限=100/秒（缺省）
+参考资料：[Off-Path TCP Exploits: Global Rate Limit Considered Dangerous (2016)](supplyments/tcp-hijacking.pdf) [[online]
+(https://www.usenix.org/conference/usenixsecurity16/technical-sessions/presentation/cao)]
+
+**TCP旁路漏洞（CVE-2016-5696）**：Linux 3.6+（2012年9月发布）中全局系统变量C-ACK包数上限缺省为100/秒
 
 ```
                 1 C-ACK
 Sender     <———————————————    Reciever
                                /   ^
-                              /   /
-                    99 C-ACK /   /
-          Attacker  <———————/   /
-                   \———————————/
-                    100 Bad packets
+                     99 C-ACK /   /
+           Attacker  <———————/   /
+                    \———————————/
+                    100 bad packets
 ```
 
-- 为利用100个C-ACK包/秒的漏洞，每步攻击在单位时间窗口内进行，因此预先与接收者时间同步
+- 为利用每秒C-ACK包数上限的漏洞，下面每步攻击需在单位时间窗口内进行，因此预先与接收者的秒对齐，具体方法略。
 - 攻击步骤1：推测两点间是否有连接，即确定`SPORT`
 	1. 攻击者以发送方为源地址，以`SPORT`为源端口，发送一个SYN包
 		- 若有连接，即SPORT猜测正确，则接收方发送一个挑战ACK包
@@ -154,18 +161,64 @@ Sender     <———————————————    Reciever
 		
 ###2. 路由安全
 
+####源路由（source routing）攻击：
+
+- IP loose source and record route (LSRR) 选项（参考[RFC1812:   Requirements for IP Version 4 Routers](https://tools.ietf.org/html/rfc1812)）可指定包经过路径/返回路径
+	- 源地址始终为最初发包者，目的地址在每一跳都更新为LSRR选项中下一地址
+	- 最终接收者用LSRR选项以源路径的逆序来应答
+
+- 攻击者A冒充节点V（源地址欺骗），令目的IP地址为T的数据包经过A
+- T上的防火墙或应用以为是V来访问，T以A为中间节点将应答包发送给V
+
+```                 src  dst  LSRR             
+                     |    |     | 
+                from V to T via A
+ Attacker (A)   —————————————————>   Target (T)  
+       ^                                 |
+       |        from T to V via A        |
+       +—————————————————————————————————+ 
+```
+- 防御：禁止LSRR
+
+
+####其他路由相关攻击
+
+- [RIP协议](https://en.wikipedia.org/wiki/Routing_Information_Protocol)中伪造路由消息
+- [ICMP](https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol)重定向攻击，目标不可达，TTL超时等等
+- [BGP安全](bgp-sec.pptx)后面课程会学习
 
 ###3. “认证”服务器
 
-###4. 恶龙在此
+一种替代基于地址的认证的方法是使用“认证服务器”。该认证服务器为客户提供认证服务，与其他服务器进行认证。显然，通过其他机器来实现认证不是好主意！
+
+###4. 龙出没
+
+- [finger协议](https://en.wikipedia.org/wiki/Finger_protocol)所提供的用户信息，例如姓名、电话号码，可能被口令破解器所利用
+- 电子邮件中发件人地址缺乏认证，邮件内容缺乏保护
+	- 旧的[POP](https://en.wikipedia.org/wiki/Post_Office_Protocol)中，用户名和口令在一条命令中，容易被窃听或泄露
+	- 现在推荐使用[IMAP](https://en.wikipedia.org/wiki/Internet_Message_Access_Protocol)-over-SSL，PGP
+- FTP认证，匿名FTP
+- SNMP认证
+- 远程启动认证：RARP+TFTP，BOOTP+TFTP，DHCP
+- [DNS安全](dns-sec.pptx)后面课程会学习
 
 ###5. 简单攻击
 
+- 局域网内：窃听，ARP欺骗，广播风波（1个ICMP echo触发N个reply）
+- TFTP无认证
+- 特权端口只能被分配给特权进程，但以此作为认证机制的一部分并不安全
+
 ###6. 全面防御
 
-###7. 结论
+- 认证：密码学与TCP/IP结合
+- 加密：链路级加密，TCP
+- [可信系统（Trusted System）](https://en.wikipedia.org/wiki/Trusted_system)：用于实现特定安全策略的系统
 
+###7. 结论与反思
 
+- 1989年互联网简单的多，友好的多。今天的关键问题不是认证（authentication），而是授权（authorization）:如何知道某一方是否允许行使某一行为？
+- 多数安全问题源于有bug的代码
+- 攻击通常需要一些辅助数据。只能创建一个TCP连接的攻击者不能猜测正确的序列号
 
 
 

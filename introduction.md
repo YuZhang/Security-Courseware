@@ -13,21 +13,7 @@
 
 ##安全概述
 
-- **安全**：在敌手出现时实现目标，或者说在敌手出现时，系统可正常工作
-- 安全思维：
-	- Policy（政策）：欲达成的目标，例如CIA：机密性（Confidentiality），完整性（integrity），可用性（availability）
-	- Threat model（威胁模型）：关于敌手能力的假设
-	- Mechianism（机制）：系统中用于实现政策的组件
-	- Resulting goal（结果目标）：在**威胁模型**下，攻击者无法违反**政策**
-- 安全是一个**否定**目标（保证不存在攻击）
-	- 难以考虑到攻击者所有可能的攻击方式
-	- 真实的威胁模型是开放的
-- 若无法做到**完美安全**，为什么还要做安全？
-	- 了解系统的安全边界
-	- 每个系统可能都有可利用弱点，理解系统能做的和不能做的
-	- 管理安全风险 vs. 收益
-
-###计算机安全（Computer Security）
+###计算机安全（Computer Security）[[参考](https://en.wikipedia.org/wiki/Computer_security)]
 
 也称为网络空间安全（cybersecurity）或IT安全，保护信息系统中软件、硬件、信息及服务。
 
@@ -37,14 +23,40 @@
 - 互联网安全（Internet security）：互联网相关安全，包括浏览器安全以及网络安全等等
 - 移动安全（Mobile security）：移动计算安全，特别是智能手机
 
+典型漏洞与攻击：后门（Backdoor），拒绝服务（DoS），直接访问（Direct-access），窃听（Eavesdropping），伪装欺骗（Spoofing），篡改（Tampering），特权提升（Privilege escalation），钓鱼（Phishing），点击劫持（Clickjacking），社交工程（Social engineering），木马（Trojan），僵尸网络（Zombie/botnet），病毒/蠕虫/恶意软件（virus/worm/malware），高级持续性威胁（Advanced Persistent Threat）
 
-典型漏洞与攻击：后门（Backdoor），拒绝服务（DoS），直接访问（Direct-access），窃听（Eavesdropping），伪造（Spoofing），篡改（Tampering），特权提升（Privilege escalation），钓鱼（Phishing），点击劫持（Clickjacking），社交工程（Social engineering），木马（Trojan），僵尸网络（Zombie/botnet），病毒/蠕虫/恶意软件（virus/worm/malware）
+典型安全机制：认证（Authentication），授权（Authorization），访问控制（Access Control），防火墙（Firewall），反病毒（Antivirus），入侵检测/阻止系统（Intrusion detection/prevention system），移动安全网关（Mobile secure gateway），沙箱（Sandboxing），纵深防御（Defense in depth），设计出安全（Security by design）
 
-###不同产品上漏洞统计
+###安全事件统计
 
-CVE（Common Vulnerabilities & Exposures，通用漏洞披露）中[2016弱点最多的50个产品](http://www.cvedetails.com/top-50-products.php?year=2016):
+[Verizon 2016 Data Breach Inveistigations Report](http://www.verizonenterprise.com/resources/reports/rp_dbir-2016-executive-summary_xg_en.pdf)：
 
-- 前五名：Andriod（385个漏洞），Debian（290），Ubuntu（254），Flash（226），Opensuse（220）
+- 已确认的数据泄露中63%与弱口令，缺省口令和口令被盗相关
+- 95%的泄露和86%的事故，可分为9中模式：
+	- Miscellaneous errors - 17.7% (事故%)
+		- 除损失资产之外，破坏安全的无意行为或错误
+	- Insider and Privilege misuse - 16.3%
+		- 内部人员滥用，以及赋予系统特权的共谋外部人员和合作人员
+	- Phyical theft and loss - 15.1%
+		- 笔记本，U盘，打印纸等丢失或盗窃
+	- Denial of service - 15.0%
+		- 使用僵尸网络来产生恶意流量
+	- Crimeware - 12.4%
+		- 没有进一步归类的恶意软件
+	- Web app attacks - 8.3%
+		- 例如内容管理系统或电子商务平台
+	- Point-of-sale intrusions - 0.8%
+		- 攻击者攻破运行POS应用的计算机或服务器，来获取付费信息
+	- Cyber-espionage - 0.4%
+		- 国家相关的间谍活动，通常获取知识产权
+	- Payment card skimmers - 0.2%
+		- 在ATM，加油站，POS终端上安装物理设备获取消费卡数据
+	- 其他 - 13.8%
+
+CVE（Common Vulnerabilities & Exposures，通用漏洞披露）中2016弱点最多的:
+
+- [50个产品](http://www.cvedetails.com/top-50-products.php?year=2016)中前五名：Andriod（385个漏洞），Debian（290），Ubuntu（254），Flash（226），Opensuse（220）
+- [50个厂商](http://www.cvedetails.com/top-50-vendors.php?year=2016)中前五名：Oracle (569)，Google (546)，Adobe (418)，Microsoft（348），Novell（347）
 
 ###漏洞买卖
 
@@ -60,12 +72,41 @@ CVE（Common Vulnerabilities & Exposures，通用漏洞披露）中[2016弱点�
 	- Firefox/Safari: $60k-$150k
 	- Windows: $60-120k
 
-###肉鸡市场：
+###僵尸网络：
 
-[PPI (Pay-per-install)](http://www.icir.org/vern/papers/ppi-usesec11.pdf) ：
+[史上最大规模DDoS](http://arstechnica.com/security/2016/09/botnet-of-145k-cameras-reportedly-deliver-internets-biggest-ddos-ever/)：根据2016年9月19日报道，超过14.5万被劫持摄像头发动了1.1Tbps的DDoS攻击
 
-- 美国：$100-180 / 千台
+[2015年Level3 Botnet Research Report](http://www.level3.com/~/media/files/white-paper/en_secur_wp_botnetresearchreport.pdf)：
+
+- C&C流量最高国家：美国，乌克兰，俄罗斯，荷兰，德国，土耳其，法国，英国，越南，罗马尼亚
+- 平均大小1700，平均存活38天
+- 1000个bots，美国\$190/月，英国\$120/月
+
+[2010年PPI (Pay-per-install)](http://www.icir.org/vern/papers/ppi-usesec11.pdf) ：
+
+- 美国/英国：$100-180 / 千台
 - 亚洲：$7-8 / 千台
+
+
+
+###安全概念
+
+- **安全**：在敌手出现时实现目标，或者说在敌手出现时，系统可正常工作
+- 安全思维：
+	- Policy（策略）：欲达成的目标，例如CIA：机密性（Confidentiality），完整性（integrity），可用性（availability）
+	- Threat model（威胁模型）：关于敌手能力的假设
+	- Mechianism（机制）：系统中用于实现政策的组件
+	- Resulting goal（结果目标）：在**威胁模型**下，攻击者无法违反**策略**
+- 安全是一个**否定**目标（保证不存在攻击）
+	- 难以考虑到攻击者所有可能的攻击方式
+	- 真实的威胁模型是开放的
+- 若无法做到**完美安全**，为什么还要做安全？
+	- 了解系统的安全边界
+	- 每个系统可能都有可利用弱点，理解系统能做的和不能做的
+	- 管理安全风险 vs. 收益
+
+- 从信息论的角度理解Trust（信任）：“Information is what you do not expect and trust is what you know”. Trust is seen as “qualified reliance on received information”
+
 
 ---
 ##安全问题1：违背政策
