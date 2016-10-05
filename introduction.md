@@ -2,7 +2,7 @@
 
 ###哈尔滨工业大学 网络与信息安全 张宇 2016
 
-课件：https://github.com/YuZhang/Security-Courseware
+课件网址：[https://github.com/YuZhang/Security-Courseware](https://github.com/YuZhang/Security-Courseware)
 
 参考课程: 
 
@@ -87,8 +87,6 @@ CVE（Common Vulnerabilities & Exposures，通用漏洞披露）中2016弱点最
 - 美国/英国：$100-180 / 千台
 - 亚洲：$7-8 / 千台
 
-
-
 ###安全概念
 
 - **安全**：在敌手出现时实现目标，或者说在敌手出现时，系统可正常工作
@@ -104,9 +102,6 @@ CVE（Common Vulnerabilities & Exposures，通用漏洞披露）中2016弱点最
 	- 了解系统的安全边界
 	- 每个系统可能都有可利用弱点，理解系统能做的和不能做的
 	- 管理安全风险 vs. 收益
-
-- 从信息论的角度理解Trust（信任）：“Information is what you do not expect and trust is what you know”. Trust is seen as “qualified reliance on received information”
-
 
 ---
 ##安全问题1：违背政策
@@ -201,7 +196,7 @@ Reflections on Trusting Trust by Ken Thompson
 
 ###认为自主开发软件/系统更安全
 
-- [XcodeGhost](https://en.wikipedia.org/wiki/XcodeGhost)在Apple的Xcode开发环境中注入恶意代码，并感染超过4000个应用，包括微博和网易云音乐。这些应用开发者从百度云和迅雷下载Xcode。
+- [XcodeGhost](https://en.wikipedia.org/wiki/XcodeGhost)在Apple的Xcode开发环境中注入恶意代码，并感染超过4000个应用，包括微博和网易云音乐。这些应用开发者从百度云和迅雷下载Xcode。尽管软件是自主开发的，但开发系统不是。
 
 ###不上网/隔离就安全了？
 
@@ -241,3 +236,7 @@ Reflections on Trusting Trust by Ken Thompson
 ###缓冲区溢出（buffer overflow）
 
 - 下面开始学习[缓冲区溢出课程](buffer-overflow/buffer-overflow-1.md)
+
+---
+
+

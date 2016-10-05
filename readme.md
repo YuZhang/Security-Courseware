@@ -10,17 +10,20 @@
 教学大纲：
 
 1. [安全简介](introduction.md)
-1. [缓冲区溢出](buffer-overflow)  
-	1. [原理](buffer-overflow/buffer-overflow-1.md)
-	- [分析与触发](buffer-overflow/buffer-overflow-2.md)
-	- [Shellcode与漏洞利用](buffer-overflow/buffer-overflow-3.md) (实验1)
-	- [防御、Baggy、BROP](buffer-overflow/buffer-overflow-4.md) (实验1)
+1. [缓冲区溢出](buffer-overflow) (实验1) 
+	1. [原理与实验](buffer-overflow/buffer-overflow-1.md)
+	- [Shellcode与漏洞利用](buffer-overflow/buffer-overflow-2.md)
+	- [攻防技术（Baggy、BROP）](buffer-overflow/buffer-overflow-3.md)
 - [漏洞防御](vulnerability-defense)
-	1. [特权分离](vulnerability-defense/privilege-separation.md) 
+	1. [特权分离（OKWS）](vulnerability-defense/privilege-separation.md) 
 	2. [沙箱与隔离](vulnerability-defense/sandboxing-isolation.md)
 	3. [符号执行](vulnerability-defense/symbolic-execution.md)
 - [网络安全](network-security)
- 	1. [TCP/IP安全](network-security/tcp-ip-sec.md)
+ 	1. [TCP/IP安全（TCP劫持）](network-security/tcp-ip-sec.md)
 	- [关键互联网基础设施安全——DNS安全](network-security/dns-sec.pptx)
-	- 	[关键互联网基础设施安全——BGP安全](network-security/bgp-sec.pptx)
+	- [关键互联网基础设施安全——BGP安全](network-security/bgp-sec.pptx)
+	- [分布式拒绝服务(DDoS)攻防](network-security/ddos.md)
 - [Web安全](web-security) 
+	1. 1
+	- 2 
+- [总结](summary.md)
