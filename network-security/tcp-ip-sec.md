@@ -4,7 +4,7 @@
 
 ---
 
-阅读材料：[A Look Back at “Security Problems in the TCP/IP Protocol Suite”](supplyments/TCP-IP-Sec.pdf)
+阅读材料：[A Look Back at “Security Problems in the TCP/IP Protocol Suite” (ACSAC 2016)](supplyments/TCP-IP-Sec.pdf)
 
 作者Steven M. Bellovin在15年前（1989年）撰写了一篇关于TCP/IP协议族安全问题的论文。在2004年，撰写本文以反思之前的分析是对是错。
 
@@ -115,7 +115,7 @@ DATA  ————————————————————————�
 
 ####基于全局速率限制的攻击技术
 
-参考资料：[Off-Path TCP Exploits: Global Rate Limit Considered Dangerous (2016)](supplyments/tcp-hijacking.pdf) [[online]
+参考资料：[Off-Path TCP Exploits: Global Rate Limit Considered Dangerous (USENIX Security 2016)](supplyments/tcp-hijacking.pdf) [[online]
 (https://www.usenix.org/conference/usenixsecurity16/technical-sessions/presentation/cao)]
 
 **TCP旁路漏洞（CVE-2016-5696）**：Linux 3.6+（2012年9月发布）中全局系统变量C-ACK包数上限缺省为100/秒

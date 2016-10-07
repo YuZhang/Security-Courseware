@@ -82,7 +82,7 @@ CVE（Common Vulnerabilities & Exposures，通用漏洞披露）中2016弱点最
 - 平均大小1700，平均存活38天
 - 1000个bots，美国\$190/月，英国\$120/月
 
-[2010年PPI (Pay-per-install)](http://www.icir.org/vern/papers/ppi-usesec11.pdf) ：
+[PPI (Pay-per-install) (USENIX Security 2011)](http://www.icir.org/vern/papers/ppi-usesec11.pdf) ：
 
 - 美国/英国：$100-180 / 千台
 - 亚洲：$7-8 / 千台
@@ -164,7 +164,7 @@ if ((options == (__WCLONE|__WALL)) && (current->uid = 0))                  			r
 
 ###1983年图灵演说
 
-Reflections on Trusting Trust by Ken Thompson
+[Reflections on Trusting Trust by Ken Thompson](http://www.ece.cmu.edu/~ganger/712.fall02/papers/p761-thompson.pdf)
 > To what extent should one trust a statement that a program is free of Trojan horses? Perhaps it is more important to trust the people who wrote the software.
 
 - 在发明C语言过程中，有一个“鸡生蛋，蛋生鸡”问题，即如何用C语言来实现C语言的编译器。
@@ -192,7 +192,7 @@ Reflections on Trusting Trust by Ken Thompson
 
 ###假设密码学中充分的随机性
 
-- 由于产生密钥或签名时熵不足，研究者发现0.75%的TLS证书共享密钥，获得0.5%的TLS主机和0.03%的SSH主机的RSA私钥，1.03%的SSH主机的DSA私钥，详见[Mining Your Ps and Qs: Detection of Widespread Weak Keys in Network Devices](https://factorable.net/weakkeys12.extended.pdf)
+- 由于产生密钥或签名时熵不足，研究者发现0.75%的TLS证书共享密钥，获得0.5%的TLS主机和0.03%的SSH主机的RSA私钥，1.03%的SSH主机的DSA私钥，详见[Mining Your Ps and Qs: Detection of Widespread Weak Keys in Network Devices (USENIX Security 2012)](https://factorable.net/weakkeys12.extended.pdf)
 
 ###认为自主开发软件/系统更安全
 
