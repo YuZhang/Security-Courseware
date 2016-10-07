@@ -168,7 +168,8 @@ Sender     <———————————————    Reciever
 - 攻击者A冒充节点V（源地址欺骗），令目的IP地址为T的数据包经过A
 - T上的防火墙或应用以为是V来访问，T以A为中间节点将应答包发送给V
 
-```                 src  dst  LSRR             
+```
+                    src  dst  LSRR             
                      |    |     | 
                 from V to T via A
  Attacker (A)   —————————————————>   Target (T)  
@@ -176,6 +177,7 @@ Sender     <———————————————    Reciever
        |        from T to V via A        |
        +—————————————————————————————————+ 
 ```
+
 - 防御：禁止LSRR
 
 
