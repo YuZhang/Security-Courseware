@@ -27,6 +27,8 @@
 
 典型安全机制：认证（Authentication），授权（Authorization），访问控制（Access Control），防火墙（Firewall），反病毒（Antivirus），入侵检测/阻止系统（Intrusion detection/prevention system），移动安全网关（Mobile secure gateway），沙箱（Sandboxing），纵深防御（Defense in depth），设计出安全（Security by design）
 
+互联网安全术语表：[RFC4949: Internet Security Glossary, Version 2](https://tools.ietf.org/html/rfc4949)
+
 ###安全事件统计
 
 [Verizon 2016 Data Breach Inveistigations Report](http://www.verizonenterprise.com/resources/reports/rp_dbir-2016-executive-summary_xg_en.pdf)：
@@ -106,9 +108,9 @@ CVE（Common Vulnerabilities & Exposures，通用漏洞披露）中2016弱点最
 ---
 ##安全问题1：违背政策
 
-###Sarah Palin的email账号破解 [[详情](https://en.wikipedia.org/wiki/Sarah_Palin_email_hack)]
+###Sarah Palin的email账号破解
 
-2008年9月，美国共和党副总统候选人莎拉·佩林的雅虎私人电子邮箱遭黑客入侵。黑客可能是一名田纳西州民主党议员正在念大学的儿子戴维·克内尔。
+2008年9月，美国共和党副总统候选人莎拉·佩林的雅虎私人电子邮箱遭黑客入侵。黑客可能是一名田纳西州民主党议员正在念大学的儿子戴维·克内尔。[[相关报道]](https://en.wikipedia.org/wiki/Sarah_Palin_email_hack)
 
 攻击者利用雅虎密码遗忘提示功能和网络搜索引擎：佩林的邮箱密码提示问题包括她的生日，以及她和丈夫托德在何处相识。为副总统候选人的佩林已无太多隐私可言，可在谷歌上轻松找到答案。
 
@@ -116,9 +118,9 @@ FBI发现了攻击者在代理服务器上的踪迹。
 
 **政策违背：真正用户需要知道用户名与口令 --> 知道密码提示问题答案**
 
-###Mat Honan的Apple和Amazon账号破解 [[详情](https://www.wired.com/2012/08/apple-amazon-mat-honan-hacking/all/)]
+###Mat Honan的Apple和Amazon账号破解
+2012年一位网站主编Mat Honan的Google，Twitter, Apple账号都被破解。攻击者用这些账号发表种族言论，并删除了其iPhone等设备上数据。[[相关报道]](https://www.wired.com/2012/08/apple-amazon-mat-honan-hacking/all/)
 
-2012年一位网站主编Mat Honan的Google，Twitter, Apple账号都被破解。攻击者用这些账号发表种族言论，并删除了其iPhone等设备上数据。
 
 - Twitter账号：采用Gmail邮箱
 - Gmail密码重置：发送一个验证链接到备份邮箱。Mat的备份邮箱是Apple的me.com账号
@@ -127,9 +129,9 @@ FBI发现了攻击者在代理服务器上的踪迹。
 
 **政策违背：邮箱安全-->备份邮箱-->账单地址+信用卡末4位-->Amazon密码-->任意信用卡**
 
-###Twitter上@N 账号劫持 [[详情](https://medium.com/@N/how-i-lost-my-50-000-twitter-username-24eb09e026dd#.d7lhyudko)]
+###Twitter上@N 账号劫持
 
-2014年，Twitter上的 @N 账号（有人出价$50000）被劫持。账号所有者（受害者）Naoki Hiroshima在尝试夺回账号失败后，将用户名改为@N\_is\_stolen。Naoki通过与攻击者的邮件交流了解了其攻击过程。
+2014年，Twitter上的 @N 账号（有人出价$50000）被劫持。账号所有者（受害者）Naoki Hiroshima在尝试夺回账号失败后，将用户名改为@N\_is\_stolen。Naoki通过与攻击者的邮件交流了解了其攻击过程。[[相关报道]](https://medium.com/@N/how-i-lost-my-50-000-twitter-username-24eb09e026dd#.d7lhyudko)
 
 - @N 账号邮箱是受害者在GoDaddy上个人域名
 - 个人域名被劫持，因而邮件服务器被更改，账号邮箱也就被劫持
@@ -137,18 +139,15 @@ FBI发现了攻击者在代理服务器上的踪迹。
 - 攻击者打电话给PayPal，获得了信用卡末4位
 - 攻击者打电话给GoDaddy，说信用卡丢了，但记得末4位；GoDaddy让攻击者来回忆前2位，可以一直猜，直到猜对（攻击者只猜了两次就蒙对了）
 
-
 **政策违背：账号安全-->邮箱安全-->域名安全-->信用卡末6位-->信用卡末4位**
 
-
-###2003年Linux后门事件 [[详情](https://freedom-to-tinker.com/2013/10/09/the-linux-backdoor-attempt-of-2003/)]
-
+###2003年Linux后门事件
 2003年时，Linux采用代码维护系统BitKeeper，提交代码需经过审查。部分开发者为了方便另建立了一个CVS来维护源代码。攻击者在CVS所维护源码中插入如下代码，将无效调用`wait4()`的进程赋予root权限。
 
 ```c
 if ((options == (__WCLONE|__WALL)) && (current->uid = 0))                  			retval = -EINVAL;        
 ```
-不过，由于这个修改未经过审批流程，随后被发现。
+不过，由于这个修改未经过审批流程，随后被发现。[[相关报道]](https://freedom-to-tinker.com/2013/10/09/the-linux-backdoor-attempt-of-2003/)
 
 **政策违背：BitKeeper --> CVS**
 
@@ -183,11 +182,12 @@ if ((options == (__WCLONE|__WALL)) && (current->uid = 0))                  			r
 - 多数浏览器相信上百个CA，任何一个CA被攻破，可伪造任何站点证书
 - 2011年，两个CA，[DigiNotar](http://en.wikipedia.org/wiki/DigiNotar)和[Comodo](http://en.wikipedia.org/wiki/Comodo_Group)，发布了包括google, yahoo等的假证书
 - 2012年，一个CA，[Trustwave](http://www.h-online.com/security/news/item/Trustwave-issued-a-man-in-the-middle-certificate-1429982.html)发布了一个对任意网站都有效的根证书
-- 2015年，埃及MSC Holding使用CNNIC签发的中级证书签发gmail假证书，导致Chrome和Firefox移除的CNNIC根证书 [[详情](https://en.wikipedia.org/wiki/China_Internet_Network_Information_Center)]
+- 2015年，埃及MSC Holding使用CNNIC签发的中级证书签发gmail假证书，导致Chrome和Firefox移除的CNNIC根证书 [[相关报道]](https://en.wikipedia.org/wiki/China_Internet_Network_Information_Center)
 
 ###假设硬件是可信的
 
 - 若NSA要干坏事，则该假设很可能不成立。NSA下属的网络攻击部门TAO(Office of Tailored Access Operations，定制接入行动办公室)掌握大量硬件攻击手段，详见[NSA ANT目录](https://en.wikipedia.org/wiki/NSA_ANT_catalog)
+- 2016年9月，Cisco在一个关于路由器故障报告中提到宇宙辐射可能是原因之一。这类故障称为[“Single event upset (单粒子翻转)”](https://en.wikipedia.org/wiki/Single_event_upset)。[[英文报道]](http://www.networkworld.com/article/3122864/hardware/cisco-says-router-bug-could-be-result-of-cosmic-radiation-seriously.html)，与[[中文报道]](http://www.leiphone.com/news/201609/AtW1F5zt6GS1ru9Y.html)
 
 
 ###假设密码学中充分的随机性
@@ -207,12 +207,12 @@ if ((options == (__WCLONE|__WALL)) && (current->uid = 0))                  			r
 ##安全问题3：机制问题（bug）
 
 
-###Apple iCloud 口令猜测速率限制 [[详情](https://github.com/hackappcom/ibrute)]
+###Apple iCloud 口令猜测速率限制 
 
 - 人们通常采用弱密码，可以通过1K-1M次猜测得到
-- iCloud有速率限制功能，但iCloud有许多API，其中“Find my iPhone”服务中的API忘了实现速率限制
+- iCloud有速率限制功能，但iCloud有许多API，其中“Find my iPhone”服务中的API忘了实现速率限制 [[详情]](https://github.com/hackappcom/ibrute)
 
-###在花旗集团信用卡站点缺失访问控制检查 [[详情](https://bitcoin.org/en/alert/2013-08-11-android)]
+###在花旗集团信用卡站点缺失访问控制检查 
 
 - 花旗集团允许信用卡用户来在线访问其信用卡账户（用户名+口令）
 - 账户信息页的URL中包括一些数字，这些数字与账号有关，而服务器不检查用户是否真的已经登录
@@ -220,18 +220,19 @@ if ((options == (__WCLONE|__WALL)) && (current->uid = 0))                  			r
 - 错误威胁模型？
 	- 若攻击者通过浏览器访问站点，则系统是安全的
 	- 若攻击者自己构造新的URL，则系统不安全
-- 很难说是错误威胁模型，还是bug
+- 很难说是错误威胁模型，还是bug [[详情]](https://bitcoin.org/en/alert/2013-08-11-android)
 
-###安卓Java SecureRandom弱点导致比特币盗窃 [[详情](https://bitcoin.org/en/alert/2013-08-11-android)]
+###安卓Java SecureRandom弱点导致比特币盗窃
 
 - 在安卓中许多比特币钱包应用使用Java的SecureRandom API
 - 系统有时忘记给PRNG设定种子
-- 导致用户私钥容易被猜中，攻击者将用户的比特币转给自己
+- 导致用户私钥容易被猜中，攻击者将用户的比特币转给自己 [[详情]](https://bitcoin.org/en/alert/2013-08-11-android)
 
 
-###心脏出血（Heartbleed）[[详情](https://en.wikipedia.org/wiki/Heartbleed)]
+###心脏出血（Heartbleed）
+
 - TLS的心跳扩展中，一方（客户端）发送心跳请求，包含一个负载+负载长度，另一方（服务器）用相同内容做应答
-- 实现中，服务器未检查长度是否正确，过长的长度会导致服务器内存中数据被当做负载传递给客户端
+- 实现中，服务器未检查长度是否正确，过长的长度会导致服务器内存中数据被当做负载传递给客户端 [[详情]](https://en.wikipedia.org/wiki/Heartbleed)
 
 ###缓冲区溢出（buffer overflow）
 

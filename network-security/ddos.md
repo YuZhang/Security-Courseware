@@ -48,8 +48,8 @@ US-CERT定义的DoS攻击症状：网络性能恶化、特定网站不可用、�
 - DDoS攻击工具：
 	- [Trinoo](https://en.wikipedia.org/wiki/Trinoo)：主从式DDoS攻击程序集 
 	- [Tribe Flood Network](https://en.wikipedia.org/wiki/Tribe_Flood_Network)：实施ICMP/SYN/UDP flood等多种攻击的程序集
-	- [LOIC低轨道粒子炮](https://en.wikipedia.org/wiki/Low_Orbit_Ion_Cannon)：开源工具被用于匿名者的“报复行动”
-	- [HOIC高轨道粒子炮](https://en.wikipedia.org/wiki/High_Orbit_Ion_Cannon)：2012年开发以取代LOIC，匿名者用其攻击美国司法部
+	- [LOIC低轨道离子炮](https://en.wikipedia.org/wiki/Low_Orbit_Ion_Cannon)：开源工具被用于匿名者的“报复行动”
+	- [HOIC高轨道离子炮](https://en.wikipedia.org/wiki/High_Orbit_Ion_Cannon)：2012年开发以取代LOIC，匿名者用其攻击美国司法部
 
 --
 ###Shrew Attack
