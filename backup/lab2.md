@@ -1,4 +1,4 @@
-# 特权分离1：
+
 
 ##Zoobar特权分离实验
 
@@ -107,4 +107,49 @@ $ sudo ./zookld zook.conf
 使用`sudo make check `来验证。
 
 
+##Python沙箱实验
 
+zoobar应用需要被扩展来支持‘可执行profile’，该扩展允许用户使用Python代码作为其profile。当其他用户浏览该用户的Python profile，服务器会执行其中的代码来生成profile输出。由此，用户可在profile中实现不同功能：
+
+- 用用户名来欢迎访客
+- 追踪最近几位访客
+- 赠予每位访客一个zoobar（每分钟1个）
+
+为安全支持这一功能需要在服务器上用沙箱来装载profile代码，使得profile代码不能执行任意操作或访问任意文件。这些代码需要跟踪一些文件中的持久化数据，或者访问存在的zoobar数据库。需要使用RPC库和一些现成的填充代码来将可执行代码沙箱化。
+
+`profiles/`目录：
+
+- `profiles/hello-user.py`是一个简单的profile，打印访客名字与当前时间
+- `profiles/visit-tracker.py`跟踪每位访客最近一次查看profile的时间
+- `profiles/last-visits.py`记录最后三个访客，并打印
+- `profiles/xfer-tracker.py`打印profile拥有者和访客间最近一次交易
+- `profiles/granter.py`给访客一个zoobar，条件是profile拥有者还有剩余的zoobar，访客的zoobar少于20，而且距离上次获得一个zoobar的时间至少一分钟
+
+`zoobar/sanboxlib.py`是实现针对不可信profile的沙箱的模块。`Sandbox`类中`run()`方法执行沙箱中函数。`run`方法fork一个进程并在子进程中执行代码之前调用`setresuid`，令不可信代码没有任何特权。父进程从子进程读取输出，并返回给`run()`的调用者。若子进程在短时间内（5秒）未退出，则父进程杀死子进程。
+
+`Sandbox.run`使用`chroot`来将不可信代码限制在指定目录，向`Sandbox`构造器传递一个参数。这允许不可信profile代码来形式一些有限的文件系统访问，但`Sandbox`的创建者来决定哪个目录能够被访问。
+
+`Sandbox`只使用一个UID来运行不可信profile。为避免两个沙箱进程同时运行，使用了一个锁文件。当沙箱执行前，先锁定这个所文件，在沙箱进程退出后释放。若两个进程同时运行沙箱代码，只有一个进程会锁定文件。使用相同UID的所有用户应指定相同的所文件。
+
+为阻止不可信代码fork其他进程，`Sandbox`使用Unix的资源限制机制：使用`setrlimit`来限制指定UID的进程数量，所以沙箱化代码不能fork。
+
+`zoobar/profile-server.py`：一个RPC服务器接收运行某用户profile代码的请求，从执行代码中返回输出。
+
+服务器使用`sandboxlib.py`来创建一个`Sandbox`，执行profile（通过`run_profile`函数）。`profile-server.py`创建一个RPC服务器来允许profile代码访问沙箱之外的对象，例如不同用户的zoobar余额。`ProfileAPIServer`实现这一接口；`profile-server.py`fork一个进程来运行`ProfileAPIServer`，将一个连接到服务器的RPC客户端传递给沙箱化代码。
+
+因为`profile-server.py`使用`sandboxlib.py`，需要调用`setresuid`来沙箱化进程，所以主进程需要以root来运行。
+
+若通过以一个不同UID来运行不可信代码来提高安全，必须以root来运行一部分代码。
+
+将`profile-server.py`加入到`zook.conf`中，更改`chroot-setup.sh`来为其套接字创建一个目录`/jail/profilesvc`。`profile-server.py`需要以root运行，将`zook.conf`中UID设定为0.
+
+- 更改`ProfileServer.rpc_run()`中`uid`从0到其他值
+- 保证可以支持5个profile。需要调整`ProfileAPIServer`实现`rpc_get_xfers`或`rpc_xfer`。
+
+运行`sudo make check`来测试，遇到问题时检查profiel输出`/tmp/html.out`以及服务器输出`/tmp/zookld.out`。
+
+由于所有用户的profile访问相同文件，`ProfileServer.rpc_run()`设定`userdir`到`/tmp`，并传递给沙箱，一个用户profile可能损坏其他用户profile。
+
+更改`profile-server.py`中`rpc_run`使得每个用户profile只能访问自己的文件，不能篡改其他用户文件。
+
+更改`profile-server.py`中`ProfileAPIServer`来避免其以root运行。在`ProfileAPIServer.__init__`，切换到不同UID。

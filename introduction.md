@@ -93,7 +93,7 @@ CVE（Common Vulnerabilities & Exposures，通用漏洞披露）中2016弱点最
 
 - **安全**：在敌手出现时实现目标，或者说在敌手出现时，系统可正常工作
 - 安全思维：
-	- Policy（策略）：欲达成的目标，例如CIA：机密性（Confidentiality），完整性（integrity），可用性（availability）
+	- Policy（策略）：欲达成的目标，例如CIA：机密性（Confidentiality），完整性（Integrity），可用性（Availability）
 	- Threat model（威胁模型）：关于敌手能力的假设
 	- Mechianism（机制）：系统中用于实现政策的组件
 	- Resulting goal（结果目标）：在**威胁模型**下，攻击者无法违反**策略**
@@ -232,7 +232,14 @@ if ((options == (__WCLONE|__WALL)) && (current->uid = 0))                  			r
 ###心脏出血（Heartbleed）
 
 - TLS的心跳扩展中，一方（客户端）发送心跳请求，包含一个负载+负载长度，另一方（服务器）用相同内容做应答
-- 实现中，服务器未检查长度是否正确，过长的长度会导致服务器内存中数据被当做负载传递给客户端 [[详情]](https://en.wikipedia.org/wiki/Heartbleed)
+- CVE-2014-0160: 服务器未检查长度是否正确，过长的长度会导致服务器内存中数据被当做负载传递给客户端 [[详情]](https://en.wikipedia.org/wiki/Heartbleed)
+
+###Shellshock
+
+- 2014年9月24日公开的Bash shell中一系列安全漏洞，利用处理环境变量中函数定义之后的命令，攻击者可执行任意代码 [[详情]](https://en.wikipedia.org/wiki/Shellshock_(software_bug))
+- CVE-2014-6271: 环境变量声明中，函数之后命令会被执行
+	- `env x='() { :;}; echo vulnerable' bash -c "echo test"`
+	- 有漏洞Bash会输出`vulnerable`；否则，输出`test`
 
 ###缓冲区溢出（buffer overflow）
 
