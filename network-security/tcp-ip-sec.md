@@ -4,7 +4,7 @@
 
 ---
 
-阅读材料：[A Look Back at “Security Problems in the TCP/IP Protocol Suite” (ACSAC 2016)](supplyments/TCP-IP-Sec.pdf)
+阅读材料：[A Look Back at “Security Problems in the TCP/IP Protocol Suite” (ACSAC 2004)](supplyments/TCP-IP-Sec.pdf)
 
 作者Steven M. Bellovin在15年前（1989年）撰写了一篇关于TCP/IP协议族安全问题的论文。在2004年，撰写本文以反思之前的分析是对是错。
 
@@ -70,7 +70,7 @@ X——>S :            ACK(ISN_S+1), SRC=T      —————> +————�
 
 ####RFC5961的防御方案：
 
-参考资料：[RFC5961: Improving TCP's Robustness to Blind In-Window Attacks (2010)](https://tools.ietf.org/html/rfc5961))
+参考资料：[RFC5961: Improving TCP's Robustness to Blind In-Window Attacks (2010)](https://tools.ietf.org/html/rfc5961)
 
 ```
 ———————————————————————————————————————————————         

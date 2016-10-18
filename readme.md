@@ -6,6 +6,8 @@
 
 - [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm) 
 - [Stanford CS155 Computer and Network Security](https://crypto.stanford.edu/cs155/)
+- [Berkley CS161 Computer Security](http://inst.eecs.berkeley.edu/~cs161/fa16/)
+- [Berkley CS 261N Internet/Network Security](http://www.icir.org/vern/cs261n/)
 
 教学大纲：
 
@@ -14,13 +16,14 @@
 	1. [原理与实验](buffer-overflow/buffer-overflow-1.md)
 	- [漏洞利用](buffer-overflow/buffer-overflow-2.md) (Shellcode)
 	- [攻防技术](buffer-overflow/buffer-overflow-3.md) (Baggy, BROP)
-- [漏洞防御](vulnerability-defense)
-	1. [特权分离](vulnerability-defense/privilege-separation.md) (OKWS) 
-	2. [沙箱](vulnerability-defense/sandboxing-isolation.md) (Capsicum)
+- [系统安全](system-security)
+	1. [特权分离](system-security/privilege-separation.md) (OKWS) 
+	2. [能力与沙箱](system-security/capabilities-sandbox.md) (Capsicum)
+	3. [移动系统安全](system-security/ios-security.md) (Apple iOS)
 - [网络安全](network-security)
  	1. [TCP/IP安全](network-security/tcp-ip-sec.md) (TCP Hijack)
-	- [DNS安全](network-security/dns-sec.pptx) (DNSSEC)
-	- [BGP安全](network-security/bgp-sec.pptx) (RPKI)
+	- [DNS安全](network-security/dns-sec.pptx) (Cache Poisoning, DNSSEC)
+	- [BGP安全](network-security/bgp-sec.pptx) (Prefix Hijack, RPKI)
 	- [分布式拒绝服务(DDoS)](network-security/ddos.md) (Shrew, IP-Traceback)
 - [Web安全](web-security) 
 	1. 1

@@ -2,8 +2,6 @@
 ===
 ###哈尔滨工业大学 网络与信息安全 张宇 2016
 
-参考课程: [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm) 
-
 ---
 
 本节学习缓冲区溢出攻击的防御方案与新型攻击技术，重点介绍一种边界检查机制Baggy，以及一种破解地址空间布局随机化的攻击技术BROP。

@@ -1,9 +1,7 @@
-# 沙箱
+# 能力与沙箱
 
 
 ###哈尔滨工业大学 网络与信息安全 张宇 2016
-
-参考课程: [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm) 
 
 ---
 
@@ -13,17 +11,24 @@
 
 ###糊涂副手问题
 
-[环境权威（ambient authority）](https://en.wikipedia.org/wiki/Ambient_authority)：这是目前操作系统所采用的主要访问控制形式，指权威在一个环境中被隐式行使。
+[环境权威（ambient authority）](https://en.wikipedia.org/wiki/Ambient_authority)：这是目前主流的访问控制形式，指权威在一个环境中被隐式行使。
 
 访问请求只需要给出对象的名字和操作，是否允许操作依赖于执行程序的全局属性，如身份或角色。例如，C语言里`open("filename", O_RDONLY, 0)`，其中`filename`本身不具有权威信息，这个操作是否可行依赖于环境权威。
+
+- 例如Unix中UID，GID机制
+- 防火墙根据IP地址/端口号来过滤流量
+- HTTP Cookie
 
 [糊涂副手问题（confused deputy problem）](https://en.wikipedia.org/wiki/Confused_deputy_problem)：在环境权威系统中，一个“糊涂”的特权程序被其他用户/程序“欺骗”来滥用其权利，导致特权扩大。
 
 - 一个计算机安全例子：一个FORTRAN编译服务将用户指定的输入文件编译为指定的输出文件，并在一个账单文件中记录此次服务。一个恶意用户指定账单文件为输出文件来篡改账单，尽管该恶意用户并没有修改账单文件的权限。
 - 一个现实安全例子：超市里一个小偷将一个商品的条形码替换成更便宜商品的条形码。“糊涂的收银员“被欺骗直接扫描条码，并按更便宜商品价格收款。小偷的特权被扩大，收银员的特权被滥用。
 
+参考资料：[The Confused Deputy (or why capabilities might have been invented) (1970) [local]](supplyments/confused-deputy.pdf)
 
-参考资料：[The Confused Deputy (or why capabilities might have been invented) (1988)](supplyments/The-Confused-Deputy.pdf)
+- 问：是编译器的问题？或收银员的问题？其他问题？
+	- 编译器需要检查所有可能写入文件的权限与用户关系；收银员需要检查所有商品标签与商品是否相符；这能做到吗？有可能，但代价太大，容易有其他漏洞
+	- 问题本质是难以明确特权：编译器执行承担双重角色：编译器拥有者和用户；超市收银员承担双重工作：根据标签确定价格，检查标签是否和商品相符
 
 ###基于能力的安全
 
@@ -45,8 +50,8 @@
 
 **糊涂副手问题的解决方案：**
 
-- 对于糊涂编译器例子：用户向编译服务传递输入/输出文件被打开的文件描述符，而不是文件名。文件描述符可以看做是用户能力的一个凭证。
-- 对于超市收款问题，一种解决方案。
+- 对于糊涂编译器例子：用户向编译服务传递输入/输出文件被打开的文件描述符，而不是文件名；文件描述符可以看做是用户能力的一个凭证
+- 对于糊涂收银员例子：商品上的条形码若能被替换（伪造），则不能作为一种能力；一种解决方案是令条形码为包装的一部分，不可替换
 
 注意：Capability-based security不同于[POSIX/Linux capabilities](http://man7.org/linux/man-pages/man7/capabilities.7.html)，后者是对特权的细分。
 
@@ -56,21 +61,46 @@
 
 [沙箱（sandbox）](https://en.wikipedia.org/wiki/Sandbox_(computer_security))：一种隔离运行程序的安全机制，常用于执行未测试或不可信程序，避免对操作系统或主机安全造成威胁，可被看做是虚拟化(virtualization)技术的一个特例。
 
-- [jail](https://en.wikipedia.org/wiki/Operating-system-level_virtualization)：一种操作系统级虚拟化，例如限制文件系统访问的chroot，以及[FreeBSD jail](https://en.wikipedia.org/wiki/FreeBSD_jail)（chroot+网络限制），
-- 容器：一种操作系统级虚拟化，利用Linux内核的资源分离机制实现独立应用容器，例如[LXC](https://en.wikipedia.org/wiki/LXC)和[Docker](https://en.wikipedia.org/wiki/Docker_(software))
+- [完全虚拟化的虚拟机](https://en.wikipedia.org/wiki/Virtual_machine)：在虚拟硬件上模拟一个真实操作系统，客户机通过模拟器访问宿主机资源。宿主机与客户机操作系统可以不同。
+- 容器：一种操作系统级虚拟化实现独立应用容器，例如[LXC](https://en.wikipedia.org/wiki/LXC)和[Docker](https://en.wikipedia.org/wiki/Docker_(software))利用Linux内核的资源分离机制：
+	- [namespaces](https://en.wikipedia.org/wiki/Linux_namespaces)：轻量级进程虚拟化，令每个进程有不同系统视图；六个名字空间：
+		- 挂载 (mnt)：创建不同的文件系统布局
+		- 进程号 (pid)：隔离进程号，父名字空间可以看见子名字空间，兄弟名字空间之间隔离
+		- 网络 (net)：隔离网络栈，网络接口，iptables, 路由表等
+		- 进程间通信（ipc）：System V IPC， 消息队列
+		- Unix时间戳（uts）：主机名，域名
+		- 用户ID（user）：隔离UID/GID
+		- `SHELL=/bin/sh unshare --fork --pid chroot "${chrootdir}" "$@"`
+	- [cgroup (control groups)](https://en.wikipedia.org/wiki/Cgroups)：隔离进程组的资源（CPU，内存，I/O，网络）使用
+		- 资源限制：例如内存大小
+		- 优先级：CPU份额，I/O吞吐量
+		- 记账：测量资源使用
+		- 控制：冻结，检查点，重启
+	- 优点：轻量级，性能代价小，更多的虚拟机，更快的启动关闭
+- [jail](https://en.wikipedia.org/wiki/Operating-system-level_virtualization)：一种操作系统级虚拟化
+	- 例如限制文件系统访问的chroot
+	- [FreeBSD jail](https://en.wikipedia.org/wiki/FreeBSD_jail)（chroot+网络限制）
+		- `jail jail-path hostname IP-addr cmd`
+		- 调用增强的chroot (无法用  “../../”  逃离)
+		- 职能绑定socket到指定IP地址和授权端口		- 只能与jail内进程通信		- root被限制，例如不能载入内核模块
+	- 优点：简单，不需要修改程序
+	- 缺点：粗粒度，不能阻止访问网络或令宿主操作系统崩溃
 - 基于规则的执行：通过一个明确的规则集来强制限制用户或程序访问（MAC），例如Linux安全模块（Linux Security Module，LSM）框架下的[SELinux](https://en.wikipedia.org/wiki/SELinux)和[Apparmor](https://en.wikipedia.org/wiki/Apparmor)
-- [虚拟机](https://en.wikipedia.org/wiki/Virtual_machine)：模拟一个真实操作系统，客户机通过模拟器访问宿主机资源
+	- [基于角色的访问控制](https://en.wikipedia.org/wiki/Role-based_access_control)：加入角色概念，可定义每个角色的权限（类似组的概念）
+	- [类型增强（type enforcement）](https://en.wikipedia.org/wiki/Type_enforcement)：加入域(domain），对应主体（如进程）)，和类型(type），对应客体（如文件）概念，描述域和类型的访问规则
+- [seccomp (Secure Computing Mode)](https://en.wikipedia.org/wiki/Seccomp)：Linux内核中一种应用沙箱机制
+	- 传统seccomp模式：进程只允许执行`exit()`, `sigreturn()`, 以及对已打开的文件描述符执行`read()` and `write()`, 而禁止其他系统调用
+	- seccomp-bpf：程序自定义允许的系统调用
+	- Mac OS X沙箱("Seatbelt")有类似功能
 - [capability](https://en.wikipedia.org/wiki/Capability-based_security)：通过token来表示程序所具备能力
-- [seccomp (Secure Computing Mode)](https://en.wikipedia.org/wiki/Seccomp)：Linux内核中一种应用沙箱机制。在该模式下，进程只允许执行`exit()`, `sigreturn()`, 以及对已打开的文件描述符执行`read()` and `write()`, 而禁止其他系统调用
-- [JVM（java virtual machines）](https://en.wikipedia.org/wiki/Java_virtual_machine)包括一个沙箱来运行不可信代码，例如Java applet
 
 ---
 
 ##Capsicum
 
-参考资料：[Capsicum: practical capabilities for UNIX (USENIX Security 2010)](supplyments/Capsicum.pdf)
+参考资料：[Capsicum: practical capabilities for UNIX (USENIX Security 2010) [local]](supplyments/Capsicum.pdf)
 
-一种轻量级操作系统能力和沙箱框架（for FreeBSD9）
+一种轻量级操作系统能力和沙箱框架（for FreeBSD）
 
 - 通过增加内核组件和用户空间库来扩展UNIX API
 - 可逐渐修改应用程序来采用该框架
@@ -97,7 +127,7 @@
 - 通过`fexecve`来清洗地址空间
 - 沙箱返回一个UNIX domain套接字用于与主机通信，或获得额外权利
 
-###TCPDUMP例子
+###应用于TCPDUMP例子
 - `tcpdump`将一个模式编译为一个BPF过滤器，配置一个BPF设备为输入源，将捕到的包输出为文本
 - 沙箱化：先以环境特权获得资源，之后进入能力模式
 
@@ -125,7 +155,26 @@
   1272 tcpdump CALL  open(0x80092477c,O_RDONLY,<unused>0x1b6)  1272 tcpdump NAMI  "/etc/resolv.conf"  1272 tcpdump RET   connect -1 errno 78 Function not implemented  1272 tcpdump CALL  socket(PF_INET,SOCK_DGRAM,IPPROTO_UDP)  1272 tcpdump RET   socket 4  1272 tcpdump CALL  connect(0x4,0x7fffffffe080,0x10)  1272 tcpdump RET   connect -1 errno 78 Function not implemented
 ```
 
-###与其他沙箱技术在实现Google Chromium浏览器时的比较
+###应用于GZIP的例子
+
+- `gzip`以环境用户特权运行，没有隔离机制
+- 分离两部分代码：
+	- 需要环境特权的部分（打开文件，建立网络连接）
+		- 主循环：读取命令行参数，识别处理和发送结果的流和对象，将输入输出文件描述符交给压缩例程
+	- 执行有风险活动的（处理数据，管理缓冲区）
+		- 沙箱化压缩例程
+			- `gz_compress` - RPC `PROXIED_GZ_COMPRESS`
+			- `gz_uncompress` - RPC `PROXIED_GZ_UNCOMPRESS`
+			- `unbzip2` - RPC `PROXIED_UNBZIP2`
+		- 每个RPC向沙箱传递输入/输出两个能力，以及返回大小，源文件名，修改时间等
+- 修改16%的`gzip`代码（409行），主要是与RPC相关
+- 其他方案：
+	- Principle of Least Authority Shell (PLASH)：shell以环境特权运行，管道组件沙箱化；这适合`gzip`以管道方式运行，但以非管道方式运行时需要一些环境特权
+	- 沙箱化库`libz`：问题是`libz`提供基于buffer的API，通过RPC传递代价较高
+
+###Google Chromium
+
+与其他沙箱技术在实现Google Chromium浏览器时的比较
 
 ```
 OS        Model        Loc       Description
@@ -140,9 +189,6 @@ Linux     seccomp      11,301    seccomp and userspace syscall wrapper
 FreeBSD   Capsicum     100       Capsicum sanboxing using cap_enter
 
 ```
-
 ---
-
-
 
 

@@ -8,6 +8,7 @@
 
 - [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)
 - [Stanford CS155 Computer and Network Security](https://crypto.stanford.edu/cs155/)
+- [UC Berkely CS 161 : Computer Security](http://www-inst.eecs.berkeley.edu/~cs161/sp16/)
 
 ---
 
@@ -54,6 +55,19 @@
 	- Payment card skimmers - 0.2%
 		- 在ATM，加油站，POS终端上安装物理设备获取消费卡数据
 	- 其他 - 13.8%
+
+CWE (Common Weakness Enumberation, 通用弱点列表)中[2011年Top25最危险软件错误](http://cwe.mitre.org/top25/index.html)中前10：
+
+1. CWE-89: 不正确地无害化（neutralize）SQL命令中特殊元素 ('SQL注入')
+- CWE-78: 不正确地无害化操作系统命令中特殊元素 ('操作系统命令注入')
+- CWE-120: 未检查输入大小的缓冲区拷贝 ('经典缓冲区溢出')
+- CWE-79: 不正确地无害化（neutralize）生成网页的输入 ('跨站点脚本' XSS)
+- CWE-306: 关键功能缺乏认证(authentication)
+- CWE-862: 缺乏授权(authorization)
+- CWE-798: 采用硬编码的凭证（credentials)
+- CWE-311: 敏感数据缺乏加密
+- CWE-434: 危险类型文件无限制上传
+- CWE-807: 安全决策中相信不可信输入
 
 CVE（Common Vulnerabilities & Exposures，通用漏洞披露）中2016弱点最多的:
 

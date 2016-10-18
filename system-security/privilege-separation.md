@@ -1,21 +1,36 @@
 # 特权分离
 
-
 ###哈尔滨工业大学 网络与信息安全 张宇 2016
-
-参考课程: [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm) 
 
 ---
 
 本节课学习特权分离概念，一种web服务器安全体系OKWS。
 
-##UNIX操作系统中的特权
 
-[访问控制（access control (AC)）](https://en.wikipedia.org/wiki/Access_control)：对资源消耗，访问，使用的的选择性限制。对访问资源的许可称为“授权（authorization）”。
+##访问控制
+
+[访问控制（access control (AC)）](https://en.wikipedia.org/wiki/Access_control)：对资源消耗，访问，使用的的选择性限制。
 
 - “访问”包含三个元素：主体，对象（客体），操作
+- 认证（authentication）过程识别主体的真正身份
+	- “你知道的”：例如网站口令
+	- “你拥有的”：例如手机sim卡
+	- “你是什么”：例如指纹，虹膜
+	- 恢复机制：口令恢复通道（email，短信）；你所知道的其他知识
+	- 双因子（two-factor）认证：例如在ATM上取款需要银行卡和口令
+- 对访问资源的许可称为“授权（authorization）”
 - 强制访问控制（Mandatory Access Control，MAC），系统强制执行，例如特权用户与非特权用户
 - 自主访问控制（Discretionary Access Control，DAC），资源拥有者自定义，例如文件权限
+
+实现访问控制依赖于 [引用监视器（reference monitor）](https://en.wikipedia.org/wiki/Reference_monitor)：在操作系统中，对引用验证机制（reference validation mechanism，RVM）的一个设计需求集合，来强制实现访问控制策略，需满足一下需求：
+
+- 不可绕过（Non-bypassable）：RVM必须始终被调用（always invoked），完全介入（complete mediation）
+- 防篡改（tamperproof）：否则，不能保证不可绕过
+- 可验证（verifiable）：RVM必须足够小，以进行分析，测试，确保不可绕过
+
+实现引用监视器依赖于 [可信计算基（trusted computing base）](https://en.wikipedia.org/wiki/Trusted_computing_base)：实现安全策略的关键硬件、固件、软件的集合，若发生故障则无法实现安全；区别于其他即使发生故障也不会影响安全的组件
+
+##UNIX操作系统中的特权
 
 [特权（privilege）](https://en.wikipedia.org/wiki/Privilege_(computing))：允许用户（主体）对一个计算机系统（客体）执行特定操作的授权。
 
@@ -82,7 +97,10 @@ Unix系统采用强制访问控制，**‘root’**特权用户（UID=0）拥有
 - 进程`fork`或`exec`时，继承或保留3个uid
 - `setuid`调用：实际情况比较复杂，详见[Setuid Demystified (2002)](supplyments/setuid-usenix02.pdf)
 - `sudo`命令：临时以特定用户（缺省root）特权来执行命令。例如，`sudo apt-get`
-- [`chroot`](https://en.wikipedia.org/wiki/Chroot)命令：改变当前进程的根目录，将进程文件系统特权限制在指定jail目录下；该命令只有root可以执行
+- [`chroot`](https://en.wikipedia.org/wiki/Chroot)命令：
+	- 该命令只有root可以执行：`chroot /tmp/guest`, `su guest`
+	- 改变当前进程的根目录，将进程文件系统特权限制在指定jail目录下
+	- `open("/etc/passwd", "r")` -> 		    `open("/tmp/guest/etc/passwd", "r")`
 
 [特权扩大（priviledge escalation）](https://en.wikipedia.org/wiki/Privilege_escalation)：利用操作系统或软件应用中的bug、设计缺陷或配置疏漏来获得访问被保护资源的特权。
 
@@ -111,7 +129,7 @@ Unix系统采用强制访问控制，**‘root’**特权用户（UID=0）拥有
 
 ##OKWS
 
-参考文献：[Building Secure High-Performance Web Services with OKWS (USENIX ATC 2004)](supplyments/okws.pdf)
+参考文献：[Building Secure High-Performance Web Services with OKWS (USENIX ATC 2004) [local]](supplyments/okws.pdf)
 
 实验系统`zookws`源自于OKWS，一个特权分离web服务器。OKWS实现以下目标：
 
@@ -120,7 +138,7 @@ Unix系统采用强制访问控制，**‘root’**特权用户（UID=0）拥有
 - 每个服务以一个唯一的非特权用户来运行
 	- 即使在`chroot`环境下，特权用户可以绑定端口，跟踪系统调用或发送信号。
 - 服务器进程应只具有最小数据库访问特权
-	- 在web服务和数据库之间插入一个结构化RPC接口，使用简单的认证机制来在不同进程划分上划分数据库访问方法。
+	- 在web服务和数据库之间插入一个结构化RPC接口，替代直接SQL查询接口，使用简单的认证机制来在不同进程划分上划分数据库访问方法。
 - 独立的功能应分离到独立的进程
 	- 每个web服务作为一个独立进程。否则，攻击者可以查看内存中数据结构，其中可能包括会话管理数据，或用于认证的秘密token；攻击者劫持存在的数据库连接；监控改变网络流量。
 
@@ -150,7 +168,7 @@ OKWS体系结构：
                            +———————+      +———————+
 ```
 
-每个服务一个进程，而不是每个客户一个进程。OKWS权限分离方案：
+考虑到安全和性能之间的取舍，每个服务一个进程，而不是每个客户一个进程。OKWS权限分离方案：
 
 ```
 |—————————|——————————————————|———————————————|——————|——————|
@@ -164,23 +182,18 @@ OKWS体系结构：
 |—————————|——————————————————|———————————————|——————|——————|
 ```
 
-OKWS优点：
+OKWS安全优点：
 
 - 本地文件系统：除了执行定制代码，几乎不访问文件系统
 - 其他特权：进程间彼此分离，除了`okld`，没有进程能绑定特权端口
 - 数据库访问：所有数据库访问通过RPC通道使用独立鉴别机制；攻击者直接面对RPC协议声明，无法用SQL客户端访问
 - 进程隔离与特权分离：将容易出bug的HTTP语法分析与其他敏感区域分离，并赋予最低特权；拥有特权的`okld`只处理信号，不处理其他消息
 
-OKWS缺点：
+OKWS安全缺点：
 
 - 目前只支持C++来开发服务；需要安全字符串类来生成输出，不能阻止程序员是使用不安全编程技术
-- 一旦被攻破，攻击者可以访问其他用户的在内存中的状态
+- 一旦被攻破，攻击者可以访问其他用户的在内存中的状态（因为相同服务的用户共享一个进程）
 - 仍然受核心库中bug影响
 
 ---
-
-
-
-
-
 
