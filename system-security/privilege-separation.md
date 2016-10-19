@@ -30,6 +30,29 @@
 
 实现引用监视器依赖于 [可信计算基（trusted computing base）](https://en.wikipedia.org/wiki/Trusted_computing_base)：实现安全策略的关键硬件、固件、软件的集合，若发生故障则无法实现安全；区别于其他即使发生故障也不会影响安全的组件
 
+[TOCTOU (time-of-check-time-of-use)](https://en.wikipedia.org/wiki/Time_of_check_to_time_of_use)：指访问控制的检查时刻与使用时刻之间相关资源已改变。
+
+受害程序：
+
+```c
+if (access("file", W_OK) != 0) {
+   exit(1);
+}
+
+fd = open("file", O_WRONLY);
+// Actually writing over /etc/passwd
+write(fd, buffer, sizeof(buffer));
+```
+
+攻击程序：
+
+```c
+// After the access check
+symlink("/etc/passwd", "file");
+// Before the open, "file" points to the password database
+```
+
+
 ##UNIX操作系统中的特权
 
 [特权（privilege）](https://en.wikipedia.org/wiki/Privilege_(computing))：允许用户（主体）对一个计算机系统（客体）执行特定操作的授权。

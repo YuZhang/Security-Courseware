@@ -203,7 +203,6 @@ if ((options == (__WCLONE|__WALL)) && (current->uid = 0))                  			r
 - 若NSA要干坏事，则该假设很可能不成立。NSA下属的网络攻击部门TAO(Office of Tailored Access Operations，定制接入行动办公室)掌握大量硬件攻击手段，详见[NSA ANT目录](https://en.wikipedia.org/wiki/NSA_ANT_catalog)
 - 2016年9月，Cisco在一个关于路由器故障报告中提到宇宙辐射可能是原因之一。这类故障称为[“Single event upset (单粒子翻转)”](https://en.wikipedia.org/wiki/Single_event_upset)。[[英文报道]](http://www.networkworld.com/article/3122864/hardware/cisco-says-router-bug-could-be-result-of-cosmic-radiation-seriously.html)，与[[中文报道]](http://www.leiphone.com/news/201609/AtW1F5zt6GS1ru9Y.html)
 
-
 ###假设密码学中充分的随机性
 
 - 由于产生密钥或签名时熵不足，研究者发现0.75%的TLS证书共享密钥，获得0.5%的TLS主机和0.03%的SSH主机的RSA私钥，1.03%的SSH主机的DSA私钥，详见[Mining Your Ps and Qs: Detection of Widespread Weak Keys in Network Devices (USENIX Security 2012)](https://factorable.net/weakkeys12.extended.pdf)
@@ -216,10 +215,13 @@ if ((options == (__WCLONE|__WALL)) && (current->uid = 0))                  			r
 
 - 攻击伊朗核设施的[震网蠕虫（Stuxnet）](https://en.wikipedia.org/wiki/Stuxnet)通过U盘传播 -> Windows感染 -> Siemens PCS 7 SCADA工控软件 -> Siemens设备控制器
 
+###没有电就安全了？
+
+- [金唇 (The Thing，the Great Seal bug)](https://en.wikipedia.org/wiki/The_Thing_(listening_device))：1945年前苏联在赠送给美国大使馆的一个国徽礼物中安装了窃听器，该窃听器利用外部电磁波来获取能量，并将窃听到的信息发送出去（一种射频技术，是RFID的前身）
+
 ---
 
 ##安全问题3：机制问题（bug）
-
 
 ###Apple iCloud 口令猜测速率限制 
 
@@ -257,7 +259,7 @@ if ((options == (__WCLONE|__WALL)) && (current->uid = 0))                  			r
 
 ###缓冲区溢出（buffer overflow）
 
-- 下面开始学习[缓冲区溢出课程](buffer-overflow/buffer-overflow-1.md)
+- 下节课学习[缓冲区溢出](buffer-overflow/buffer-overflow-1.md)
 
 ---
 

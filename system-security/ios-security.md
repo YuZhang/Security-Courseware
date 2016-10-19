@@ -13,6 +13,7 @@
 - [The iPhone Wiki](https://www.theiphonewiki.com/wiki/Main_Page)
 - [Hacking from iOS8 to iOS9 (Pangu Team @ RUXCON 2015 / POC 2015)](http://blog.pangu.io/wp-content/uploads/2015/11/POC2015_RUXCON2015.pdf)
 
+
 ##iOS安全体系结构
 
 
@@ -177,7 +178,7 @@
 	- CK被由UID和passcode得到密钥来加密保护
 	- 在设备锁定很短时间后，解密后的CK被丢弃
 	- 直到用户输入passcode或用TouchID解锁设备，此前该类数据无法访问
-- Protected Unless Open ：
+- Protected Unless Open（PUO）：
 	- 一些文件需要在设备锁定时创建，例如后台下载的电子邮件附件
 	- 问题：在创建文件时，因为没解锁，不能获得加密FK用的CK，该怎么办？
 	- 用非对称密码ECDH over Curve25519实现（[NIST SP 800-56A](http://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-56Ar2.pdf)）：创建文件时不需要CK，打开文件时才需要CK
@@ -185,7 +186,7 @@
 		- 创建文件时，为文件生成临时公私钥F-PK/SK；用F-SK + C-PK协商出一个共享密钥SK
 		- SK将FK加密封装；F-PK与封装的FK一起存储；F-SK可以丢弃
 		- 需打开文件时，解锁系统获得C-SK，用C-SK + F-PK重新生成相同的SK，解密FK
-- Protect Until First User Anthentication ：
+- Protect Until First User Anthentication（PUFUA） ：
 	- 与完全保护类一样，除了当设备锁定后，并不从内存中丢弃CK
 	- 用于系统软件Calendar, Contacts, Reminders, Notes, Messages, Photos
 	- 用于所有未分配DP类的第三方应用数据
@@ -193,6 +194,29 @@
    - 若文件没有分配DP类，仍然以加密形式存储
 	- 只使用UID来保护CK，并将封装的CK存储在ES中
 	- 主要目的是方便实现快速删除
+
+###密钥链数据保护（Keychain Data Protection）
+
+许多应用需要处理口令和小块的敏感数据，例如密钥和登录令牌。Keychain提供了一种安全存储方案。
+
+- Keychain实现为文件系统中的一个SQLite数据库，只有一个
+- `securityd`精灵进程确定每个进程或App能够访问的Keychain条目
+- 访问组允许Keychain条目在同一开发者的App间共享
+- Keychain数据采用与文件DP类似的类结构
+	- iOS创建的一些条目，例如Wi-Fi口令，邮箱账户，社交网络账号令牌，采用PUFUA类
+- Keychain可以采用ACL来设置访问和认证策略
+
+###密钥包（Keybags）
+
+文件和Keychain DP类密钥在Keybag中管理。
+
+- iOS有5个Keybag：user，device，backup，escrow，iCloud Backup
+	- user：设备正常操作所用的类密钥，通常被passcode保护
+	- device：设备相关数据所用类密钥，单用户时，与user是同一个Keybag
+	- backup：当iTunes做加密备份时创建，存储在计算机上；备份数据用新生成的密钥来重新加密
+	- escrow：用于iTunes同步，允许iTunes在用户不输入passcode时备份和同步，存储在计算机上
+	- iCloud backup：与backup类似，其中的类密钥都是非对称的，类似PUO类
+		- 为什么用非对称？因为假设iCloud上不可信的
 
 ##App安全
 
@@ -235,7 +259,7 @@ iOS允许一个App通过Extension为其他App提供功能，扩展是一个专�
 	- 不能访问网络
 	- 不能代替一个进程来访问网络操作服务
 	- 不能访问运行撤销键入数据的API
-- 定制键盘开发者可以申请扩展具有Open Access，在用户同意后可在缺省沙箱内运行 
+- 定制键盘开发者可以申请开放访问（Open Access），在用户同意后可在缺省沙箱内运行 
 
 ###附件
 
@@ -244,7 +268,6 @@ MFi（Made for iPhone/iPod/iPad）许可计划为附件制造商提供了iAP（i
 - MFi附件与iOS设备通过Lightning接口或蓝牙通讯时，需提供Apple颁发的证书
 - 验证过程通过定制继承电路实现，由Apple提供给制造商，对附件本身透明
 - 若附件不能提供认证，则只能访问模拟音频，和串行音频播放控制的一个子集
-
 - AirPlay/CarPlay利用授权IC来验证接收者是否被Apple批准
 - AirPlay音频/CarPlay视频流利用MFi-SAP（Secure Associateion Protocol）实现加密通信
 	- 采用AES-128 CTR模式加密

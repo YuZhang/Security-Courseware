@@ -6,8 +6,8 @@
 
 - [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm) 
 - [Stanford CS155 Computer and Network Security](https://crypto.stanford.edu/cs155/)
-- [Berkley CS161 Computer Security](http://inst.eecs.berkeley.edu/~cs161/fa16/)
-- [Berkley CS 261N Internet/Network Security](http://www.icir.org/vern/cs261n/)
+- [UCBerkley CS161 Computer Security](http://inst.eecs.berkeley.edu/~cs161/fa16/)
+- [UCBerkley CS261N Internet/Network Security](http://www.icir.org/vern/cs261n/)
 
 教学大纲：
 

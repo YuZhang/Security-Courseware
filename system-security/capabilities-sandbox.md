@@ -172,9 +172,45 @@
 	- Principle of Least Authority Shell (PLASH)：shell以环境特权运行，管道组件沙箱化；这适合`gzip`以管道方式运行，但以非管道方式运行时需要一些环境特权
 	- 沙箱化库`libz`：问题是`libz`提供基于buffer的API，通过RPC传递代价较高
 
-###Google Chromium
+##Google Chromium沙箱
 
-与其他沙箱技术在实现Google Chromium浏览器时的比较
+参考资料：[The Chromium Projects - Sandbox](https://www.chromium.org/developers/design-documents/sandbox)
+
+###设计原则
+
+- 不要重新发明车轮：利用操作系统现有安全机制
+	- 虽然用更好的安全模型来扩展OS内核看上去很诱人，但千万不要！
+	- 让操作系统将其安全机制应用于它控制的对象
+	- 可以创建应用级对象具有定制的安全模型
+- 最小特权原则：
+	- 应该应用于沙箱化代码，以及控制沙箱的代码 
+- 假设沙箱化代码是恶意代码：
+	- 威胁模型是一旦执行路径到达了`main()`函数中前几个调用之后，沙箱中就会运行恶意代码
+	- 实践中是在第一个外部输入被接受时，或在进入主循环之前
+- 快捷（Be nimble）：
+	- 非恶意代码不会访问不能获得的资源，因此沙箱对性能影响接近零
+	- 敏感资源被访问时的例外情况有性能损失是可接受的
+- 仿真不是安全（Emulation is not security）：
+	- 仿真和虚拟机解决方案本身并不提供安全
+	- 沙箱不应该依赖于代码仿真，代码转换，或打补丁来提供安全
+
+###Linux沙箱技术
+
+采用多进程模型，为浏览器中不同部分分配不同特权。用于Zygote进程（渲染器，[PPAPI](https://en.wikipedia.org/wiki/Google_Native_Client#Pepper)，[NaCl](https://en.wikipedia.org/wiki/Google_Native_Client)，等）。[[参考]](https://chromium.googlesource.com/chromium/src/+/master/docs/linux_sandboxing.md)
+
+
+####分层法
+
+- Layer-1 (“语义层（semantics）”)： 采用setuid（旧内核）和namespaces（新内核）沙箱阻止进程访问绝大多数资源
+	- 用于保证运行不同Seccomp-BPF策略的进程完整性
+	- 用于限制网络访问
+- Layer-2 (“攻击面缩减层（attack surface reduction）” )：采用Seccomp-BPF限制进程访问内核的攻击面
+	- 过滤系统调用接口
+	- 难以保证运行不同Seccomp-BPF策略的进程间不相互干扰
+	- 与Layer-1一起沙箱化GPU进程 
+- 曾经采用，被已废弃的技术：Seccomp-legacy, SELinux, Apparmor
+
+####在实现Chromium浏览器时比较（来自[Capsicum 2004](supplyments/Capsicum.pdf)）：
 
 ```
 OS        Model        Loc       Description
@@ -190,5 +226,7 @@ FreeBSD   Capsicum     100       Capsicum sanboxing using cap_enter
 
 ```
 ---
+
+
 
 
