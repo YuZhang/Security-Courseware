@@ -19,12 +19,10 @@
 - 防火墙根据IP地址/端口号来过滤流量
 - HTTP Cookie
 
-[糊涂副手问题（confused deputy problem）](https://en.wikipedia.org/wiki/Confused_deputy_problem)：在环境权威系统中，一个“糊涂”的特权程序被其他用户/程序“欺骗”来滥用其权利，导致特权扩大。
+[糊涂副手问题（confused deputy problem）](https://en.wikipedia.org/wiki/Confused_deputy_problem)：在环境权威系统中，一个“糊涂”的特权程序被其他用户/程序“欺骗”来滥用其权利，导致特权扩大。该概念在[The Confused Deputy (or why capabilities might have been invented) (1970)](http://people.csail.mit.edu/alinush/6.858-fall-2014/papers/confused-deputy.pdf)论文中提出。
 
 - 一个计算机安全例子：一个FORTRAN编译服务将用户指定的输入文件编译为指定的输出文件，并在一个账单文件中记录此次服务。一个恶意用户指定账单文件为输出文件来篡改账单，尽管该恶意用户并没有修改账单文件的权限。
 - 一个现实安全例子：超市里一个小偷将一个商品的条形码替换成更便宜商品的条形码。“糊涂的收银员“被欺骗直接扫描条码，并按更便宜商品价格收款。小偷的特权被扩大，收银员的特权被滥用。
-
-参考资料：[The Confused Deputy (or why capabilities might have been invented) (1970) [local]](supplyments/confused-deputy.pdf)
 
 - 问：是编译器的问题？或收银员的问题？其他问题？
 	- 编译器需要检查所有可能写入文件的权限与用户关系；收银员需要检查所有商品标签与商品是否相符；这能做到吗？有可能，但代价太大，容易有其他漏洞
@@ -90,7 +88,7 @@
 	- [类型增强（type enforcement）](https://en.wikipedia.org/wiki/Type_enforcement)：加入域(domain），对应主体（如进程）)，和类型(type），对应客体（如文件）概念，描述域和类型的访问规则
 - [seccomp (Secure Computing Mode)](https://en.wikipedia.org/wiki/Seccomp)：Linux内核中一种应用沙箱机制
 	- 传统seccomp模式：进程只允许执行`exit()`, `sigreturn()`, 以及对已打开的文件描述符执行`read()` and `write()`, 而禁止其他系统调用
-	- seccomp-bpf：程序自定义允许的系统调用
+	- [seccomp-bpf](https://www.kernel.org/doc/Documentation/prctl/seccomp_filter.txt)：程序自定义允许的系统调用（Linux内核3.5）
 	- Mac OS X沙箱("Seatbelt")有类似功能
 - [capability](https://en.wikipedia.org/wiki/Capability-based_security)：通过token来表示程序所具备能力
 

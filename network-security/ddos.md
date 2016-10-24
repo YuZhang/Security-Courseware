@@ -16,6 +16,7 @@ US-CERT定义的DoS攻击症状：网络性能恶化、特定网站不可用、�
 - 2014年2月，[CloudFlare客户遭受400G的NTP Flood攻击](https://blog.cloudflare.com/technical-details-behind-a-400gbps-ntp-amplification-ddos-attack/)
 - 2015年3月末，GitHub上反审查工具遭受最大规模DDoS攻击，[相关报道](http://arstechnica.com/security/2015/03/github-battles-largest-ddos-in-sites-history-targeted-at-anti-censorship-tools/)，[攻击时GitHub状态页](https://status.github.com/messages/2015-03-30)
 - 2016年9月中旬，超过14.5万被劫持闭路电视摄像头发动了1.1Tbps的DDoS攻击，成为[史上最大规模DDoS](http://arstechnica.com/security/2016/09/botnet-of-145k-cameras-reportedly-deliver-internets-biggest-ddos-ever/)；实施攻击的恶意软件名为[“Mirai”](https://krebsonsecurity.com/2016/10/who-makes-the-iot-things-under-attack/)
+- 
 
 [Qsmind DDoS攻击年鉴](http://www.qsmind.com/index.html)
 
@@ -272,15 +273,16 @@ NDSS'2007上的文章提出，利用针对TCP的低速DoS攻击，使得一对BG
 - 隔离路由器到路由器流量：即分离控制面与数据面流量
 
 - 尽早清除坏流量：源地址伪造包入口过滤
-	- [RFC2827: Network Ingress Filtering: Defeating Denial of Service Attacks which employ IP Source Address Spoofing (2000)](https://tools.ietf.org/html/rfc2827)
-	- [RFC3704: Ingress Filtering for Multihomed Networks (2004)](https://tools.ietf.org/html/rfc3704)
+	- [RFC2827: Network Ingress Filtering: Defeating Denial of Service Attacks which employ IP Source Address Spoofing (BCP38) (2000)](https://tools.ietf.org/html/rfc2827)
+	- [RFC3704: Ingress Filtering for Multihomed Networks (BCP84) (2004)](https://tools.ietf.org/html/rfc3704)
 		- Ingress Access Lists：静态列表
 		- Strict RPF (Reverse Path Forwarding)：检查数据包的入口是否与FIB中以源地址为目的的下一跳接口相同
 			- Cisco IOS中，`ip verify unicast reverse-path`
 		- Feasbile RPF：入口为可行下一跳接口之一
 		- Loose RPF：只检查是否存在路由，无真正RPF
 		- Loose RPF ignoring default routes：检查除缺省路由外，是否存在路由，无真正RPF
-	- 局限性：对自己没帮助，需要大家都这么做才有效
+	- 局限性：对自己帮助很小，需要大家都这么做才有效
+		- [Anti-Spoofing, BCP 38, and the Tragedy of the Commons](http://www.internetsociety.org/deploy360/blog/2014/07/anti-spoofing-bcp-38-and-the-tragedy-of-the-commons/)
 - 建立监测框架：运营商建立监测框架来检测异常网络活动
 
 ###路由器实现问题

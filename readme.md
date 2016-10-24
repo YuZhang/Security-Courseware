@@ -9,6 +9,10 @@
 - [UCBerkley CS161 Computer Security](http://inst.eecs.berkeley.edu/~cs161/fa16/)
 - [UCBerkley CS261N Internet/Network Security](http://www.icir.org/vern/cs261n/)
 
+课件：[https://github.com/YuZhang/Security-Courseware](https://github.com/YuZhang/Security-Courseware)
+
+实验材料：[https://pan.baidu.com/s/1c1AV0Bm](https://pan.baidu.com/s/1c1AV0Bm)
+
 教学大纲：
 
 1. [安全概述](introduction.md)
@@ -19,7 +23,7 @@
 - [系统安全](system-security)
 	1. [特权分离](system-security/privilege-separation.md) (OKWS) 
 	2. [能力与沙箱](system-security/capabilities-sandbox.md) (Capsicum)
-	3. [移动系统安全](system-security/ios-security.md) (Apple iOS)
+	3. [移动系统安全](system-security/ios-security.md) (Apple iOS, Pegasus)
 - [网络安全](network-security)
  	1. [TCP/IP安全](network-security/tcp-ip-sec.md) (TCP Hijack)
 	- [DNS安全](network-security/dns-sec.pptx) (Cache Poisoning, DNSSEC)

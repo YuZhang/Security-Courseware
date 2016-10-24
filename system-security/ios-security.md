@@ -1,18 +1,17 @@
 # 移动系统安全
 
-
 ###哈尔滨工业大学 网络与信息安全 张宇 2016
 
 ---
 
-本课程学习Apple iOS中安全机制。
+本课程学习Apple iOS中安全机制，以及最近披露的首个用于攻击的远程越狱漏洞“三叉戟”及Pegasus恶意软件。
 
 参考资料：
 
 - [iOS Security Guide (iOS9.3 or later, May 2016) [local]](supplyments/iOS_Security_Guide.pdf) [[online]](http://www.apple.com/business/docs/iOS_Security_Guide.pdf)
-- [The iPhone Wiki](https://www.theiphonewiki.com/wiki/Main_Page)
-- [Hacking from iOS8 to iOS9 (Pangu Team @ RUXCON 2015 / POC 2015)](http://blog.pangu.io/wp-content/uploads/2015/11/POC2015_RUXCON2015.pdf)
-
+- [Analysis and exploitation of Pegasus kernel vulnerabilities [local]](supplyments/Pegasus.pdf) 
+[[online]](http://jndok.github.io/2016/10/04/pegasus-writeup/) [[POC]](https://github.com/jndok/PegasusX)
+- [iOS Hackers Handbook](https://www.amazon.com/iOS-Hackers-Handbook-Charlie-Miller/dp/1118204123)
 
 ##iOS安全体系结构
 
@@ -53,15 +52,15 @@
  +————————————————————————————————+
 ```
 
-盘古团队总结的iOS主要安全功能时间线：
+盘古团队总结的[iOS主要安全功能时间线](- [Hacking from iOS8 to iOS9 (Pangu Team @ RUXCON 2015 / POC 2015)](http://blog.pangu.io/wp-content/uploads/2015/11/POC2015_RUXCON2015.pdf))：
 
 - 1.x：无保护
-- 2.x：Code Signing
-- 4.3：ASLR
-- 6：KASLR（Kernel ASLR）
-- 7：Touch ID
-- 8：Team ID：Apple颁发证书中一部分，程序可链接同一Team ID的库
-- 9：KPP（Kernel Patch Protection）
+- 2.x：Code Signing：代码签名防止代码被篡改，并禁止非授权应用
+- 4.3：ASLR：地址空间布局随机化增加攻击者预测目的地址难度
+- 6：KASLR（Kernel ASLR）：随机化内核镜像/`kernel_map`的基地址
+- 7：Touch ID：指纹识别，增强认证
+- 8：Team ID：程序只能链接同一Team ID的库（阻止将动态库加载到任意App中）
+- 9：KPP（Kernel Patch Protection）：防止内核被篡改
 
 ##系统安全
 
@@ -88,6 +87,19 @@
 - 授权服务器比较测量值列表与允许安装版本，若匹配，则将ECID加入测量值并签名，回传 ["SHSH blobs"](https://en.wikipedia.org/wiki/SHSH_blob) 给设备
 - 加入ECID是为了“个性化”授权，令一个设备上的旧版本iOS不能拷贝到其他设备
 - **漏洞**：iOS 3和4中，没有包括nonce，可被重放攻击来恢复到旧版本
+
+###KPP
+
+KPP（Kernel Patch Protection）防止运行时内核被篡改
+
+ARMv8-A架构定义了四个例外层级，分别为EL0到EL3，其中数字越大代表特权(privilege)越大:
+
+- EL0: 无特权模式(unprivileged)
+- EL1: 操作系统内核模式(OS kernel mode)
+- EL2: 虚拟机监视器模式(Hypervisor mode)
+- EL3: TrustZone monitor mode
+
+KPP就是运行在Application Process 的 EL3中，目的是用来保证：只读的页不可修改、page table 不可修改、执行页不可修改。
 
 ###安全飞地（Secure Enclave）
 
@@ -208,9 +220,9 @@
 
 ###密钥包（Keybags）
 
-文件和Keychain DP类密钥在Keybag中管理。
+在Keybag中管理文件和Keychain DP类密钥。
 
-- iOS有5个Keybag：user，device，backup，escrow，iCloud Backup
+- 5个Keybag：user，device，backup，escrow，iCloud Backup
 	- user：设备正常操作所用的类密钥，通常被passcode保护
 	- device：设备相关数据所用类密钥，单用户时，与user是同一个Keybag
 	- backup：当iTunes做加密备份时创建，存储在计算机上；备份数据用新生成的密钥来重新加密
@@ -226,15 +238,22 @@
 - 设备自带应用，例如Mail和Safari，由Apple签名
 - 所有第三方App可执行代码需要用Apple颁发的证书来签名，防止使用未签名代码资源或使用自更改代码
 - 所有开发者需要注册，加入开发者计划，用Apple颁发证书来签名App，提交到App Store
-- Apple Developer Enterprise Program (ADEP)允许企业开发内部App，用户安装苹果颁发的企业Provisioning Profile来运行内部App
-- [**开发者证书滥用漏洞**](https://www.theiphonewiki.com/wiki/Misuse_of_enterprise_and_developer_certificates)：用于运行盗版软件，或越狱程序
+- [开发者证书滥用漏洞](https://www.theiphonewiki.com/wiki/Misuse_of_enterprise_and_developer_certificates)：用于运行盗版软件，或越狱程序
+	- Apple Developer Enterprise Program (ADEP)允许企业开发内部App，用户安装苹果颁发的企业Provisioning Profile来运行内部App
+
+[Su-A-Cyder攻击](https://www.blackhat.com/docs/asia-16/materials/asia-16-Tamir-Su-A-Cyder-Homebrewing-Malware-For-iOS-Like-A-B0SS.pdf)：
+
+
+[Sandjacking攻击](https://threatpost.com/sandjacking-attack-puts-ios-devices-at-risk-to-rogue-apps/118375/)：
+
 
 ###运行时进程安全
 
 - 所有第三方App被沙箱化，被随机分配一个唯一目录，只能访问自己的文件
-- 基于TrustedBSD框架的强制访问控制，或通过iOS服务访问其他信息，后台运行通过系统API
+- 基于TrustedBSD框架的强制访问控制（类似seccomp）
+	- 只能或通过iOS服务访问其他信息，后台运行通过系统API
 - iOS的绝大部分和所有第三方App以非特权用户“mobile”来运行
-- iOS系统分区是只读的
+- iOS系统分区是只读的（禁止篡改）
 - 访问特权信息或行使其他特权都通过声明权利（entitlement）来实现
 	- 权利是Key-Value对，被签名，不能更改
 	- 第三方App访问用户信息，iCloud或扩展需要声明权利
@@ -243,7 +262,8 @@
 - 采用ARM Excute Never (XN)来令内存页不可执行
 - 采用Apple-only dynamic code-signing权利来令内存页可写与可执行
 	- Safari以此实现JavaScript JIT编译器
-
+- 沙箱（访问控制）不能完全阻止软件恶意行为：
+	- [XcodeGhost攻击](https://en.wikipedia.org/wiki/XcodeGhost)：2015年9月，阿里巴巴发现国内下载的Xcode中被插入恶意代码，凡是用篡改后的Xcode编译的App都会将设备和用户信息上传到攻击者服务器。防御方法是检查Xcode真伪并开启[Gatekeeper](https://en.wikipedia.org/wiki/Gatekeeper_(macOS))。
 
 ###扩展（Extension）
 
@@ -274,3 +294,216 @@ MFi（Made for iPhone/iPod/iPad）许可计划为附件制造商提供了iAP（i
 	- 临时密钥采用ECDH密钥交换（Curve25519），用认证IC的1024位RSA密钥来签名
 
 ---
+
+##“三叉戟”攻击与Pegasus
+
+参考资料：
+
+- [The Million Dollar Dissident: NSO Group’s iPhone Zero-Days used against a UAE Human Rights Defender](https://citizenlab.org/2016/08/million-dollar-dissident-iphone-zero-day-nso-group-uae/)
+- [Technical Analysis of Pegasus Spyware (lookout.com)](https://info.lookout.com/rs/051-ESQ-475/images/lookout-pegasus-technical-analysis.pdf)
+
+[Pegasus](https://en.wikipedia.org/wiki/Pegasus_(spyware))是第一个被发现的用于定向攻击的远程越狱软件。该间谍软件通过诱骗用户点击一个网址（或利用[WAP Push](https://en.wikipedia.org/wiki/Wireless_Application_Protocol#WAP_Push)无须用户点击）发动攻击，能够读取短消息，邮件，口令，通讯录，窃听通话，录音，以及追踪位置，监测Gmail, Facebook, Skype, WhatsApp, Facetime, 微信等应用。在漏洞发现10天后，2016年8月25日Apple发布的iOS 9.3.5更新移除了该软件所利用的3个漏洞。
+
+该软件被认为是以色列网络军火商NSO Group制作，一份授权卖25000美元。锁定NSO的线索在攻击负载中库文件里发现“_kPegasusProtocol”字段，而Pegasus是NSO集团产品。Pegasus相关信息出现在2015年[Hacking Team 数据泄露](https://en.wikipedia.org/wiki/Hacking_Team)之中。
+
+- 持久化：每次启动使用JavaScriptCore重新运行三叉戟攻击；并禁止自动更新，检测并删除其他越狱软件
+- 记录活动：基于Cydia Substrate实现对手机活动的全面记录
+- 数据渗漏（Exfiltration）：攻击负载灯塔与C&C服务器间通过HTTPS伪装gmail信息来通信；窃取的数据通过PATN (Pegasus Anonymizing Transmission Network）回传给Pegasus数据服务器
+
+###三叉戟漏洞
+
+参考资料：[Analysis and exploitation of Pegasus kernel vulnerabilities](supplyments/Pegasus.pdf) 
+[[online]](http://jndok.github.io/2016/10/04/pegasus-writeup/) [[POC]](https://github.com/jndok/PegasusX)
+
+1. CVE-2016-4657：Safari的Webkit内核上的内存漏洞执行远程代码
+- CVE-2016-4655：内核信息泄露漏洞获得内核基址，绕过KASLR
+- CVE-2016-4656：内核UAF漏洞导致越狱
+
+下面介绍攻击原理，具体代码和攻击细节与实际情况不一定相符。
+
+####CVE-2016-4657 —— Webkit内存漏洞
+
+点击攻击链接，打开Safari并下载恶意JavaScript，触发Safari WebKit中内存漏洞来在Safari上下文环境里执行任意代码。目前（截止20161024），该漏洞尚未完全披露。
+
+####CVE-2016-4655 –– 内核信息泄露（Kernel Info-Leak）
+
+[KASLR](https://www.theiphonewiki.com/wiki/Kernel_ASLR)用于抵御ROP攻击，由iBoot实现内核映像基址（base）的随机化：
+
+`base=0x01000000+(slide_byte*0x00200000)`
+
+在进行越狱之前，利用内核信息泄露来获取的内核栈中“函数返回地址”，进而计算KASLR中随机滑动量（slide）来确定内核基址。
+
+漏洞发生在内核中[`OSUnserializeBinary`](https://github.com/jndok/xnu/blob/aea2bdfb13661311a23bc0659dd5104d48a10081/libkern/c%2B%2B/OSSerializeBinary.cpp#L258-L476)函数中，该函数将二进制格式数据转换为内核数据结构，输入为一串整型`unit32_t`：
+
+- 以`0x000000d3`开头
+- 后面是若干TLV（类型，大小，值），类型+大小在一个整数中
+- 类型字段中`0x80000000U`表示当前集合（collection）结束
+- 例如：下面包含两个集合，在最外层的集合包含一个dict，dict内的集合包含一个string（key）和一个布尔值（value）
+
+```xml
+<beginning>  <end of 1st collection>  <end of dict (2nd collection)>
+         |      |                                |
+   0x000000d3 0x81000000 0x09000004 0x00414141 0x8b000001
+                 |          |     |      |        |     |
+<dict>     <—————+          |     |      |        |     |
+    <string>AAA</string>   <+  length  value      |     |
+    <boolean>1</boolean>     <————————————————————+   value
+</dict>
+```
+
+内核信息泄露漏洞源于没有检查`OSNumber`输入长度：
+
+```cpp
+case kOSSerializeNumber:
+...
+    o = OSNumber::withNumber(value, len); <-- NO CHECK ON len
+    next += 2;
+    break;
+```
+
+攻击者通过在内核中注册一个包含恶意长度`OSNumber`的对象，从`OSNumber`边界之外读取内核栈中信息：
+
+1. 构造一个包含过长`OSNumber`的序列化字典
+2. 用该字典设定内核中的某些的属性
+3. 读取该属性中`OSNumber`会触发去序列化函数
+4. 导致邻接数据泄露，以此计算内核滑动量
+
+字典示例：
+
+```xml
+<dict>
+    <symbol>AAA</symbol>
+    <number size=0x200>0x4141414141414141</number>
+</dict>
+```
+
+计算内核随机滑动量S的方法：
+
+- 从内核二进制映像中读取触发信息泄露的函数返回地址X
+- 在实际运行时，KASLR会将整个映像随机滑动S，返回地址X也同步滑动S
+- 利用内核信息泄露，读取运行时栈中该函数返回地址Y
+- 计算滑动量S=Y-X
+
+为触发漏洞，向内核写入和读取数据采用[`IOUserClient`](https://developer.apple.com/library/content/samplecode/SimpleUserClient/Listings/User_Client_Info_txt.html)（[中文资料](http://www.tanhao.me/pieces/1547.html/)），该类负责应用程序与内核驱动程序间连接。具体触发漏洞的函数为`io_registry_entry_get_property_bytes`。
+
+
+####CVE-2016-4656 –– 内核释放后使用（Kernel Use-After-Free）
+
+[UAF（也称为“Dangling pointer”）](https://en.wikipedia.org/wiki/Dangling_pointer)漏洞是指堆中一块内存被释放后，指向该内存的指针仍被后续程序使用，导致异常。例如利用伪造C++中虚表（vtable）指针来夺取控制流。
+
+[Stack pivoting（栈轴定位）](https://blogs.mcafee.com/mcafee-labs/emerging-stack-pivoting-exploits-bypass-common-security/)：为在栈上实施ROP攻击，需将栈指针指向一个攻击者控制的缓冲。
+
+- 将一个已序列化的`OSString`字典key类型转换到`OSSymbol`时，一个`OSString`对象在被引用时未执行引用计数
+- 虽然之后该对象表面上被释放，但仍有指向该对象的指针并调用了方法（`retain()`）
+- 通过在释放后内存写入一个指向伪造的OSString`对象虚表的指针，在调用方法时夺取控制流
+
+在一个`objsArray`队列里添加了一个引用，但未计数：
+
+```cpp
+define setAtIndex(v, idx, o)  
+...
+	if (ok) v##Array[idx] = o;   <-- WITHOUT REF_COUNT++
+```
+
+下面的`o->release()`释放一个`OSSString`对象，引用数减一：
+
+```cpp
+...
+else
+{
+    sym = OSDynamicCast(OSSymbol, o);
+    if (!sym && (str = OSDynamicCast(OSString, o))) {
+        sym = (OSSymbol *) OSSymbol::withString(str);
+        o->release(); <-- FREE OBJ; REF_COUNT--
+        o = 0;
+    }
+    ok = (sym != 0);
+}
+```
+此后该对象被使用，并调用一个方法`retain`（功能是引用数加1）：
+
+```cpp
+case kOSSerializeObject:
+    if (len >= objsIdx) break;
+    o = objsArray[len]; <-- TO A FREED OBJ
+    o->retain();  <-- USE; REF_COUNT++
+    isRef = true;
+    break;
+```
+C++中，对象方法通过虚表来调用父类实现，通过伪造一个假虚表可以夺取控制流。对于`retain()`函数，`OSString`是`OSBbject`的子类，`retain()`实际是在`OSBbject`实现的。虚表指针位于对象的开头；在`OSData`对象开头放置假虚表指针，会覆盖`OSString`对象的虚表指针。
+
+攻击者构造一个序列化的字典：
+
+```xml
+<dict>
+    <string>AAA</string>
+    <boolean>true</boolean>
+
+    <symbol>BBB</symbol>
+    <data>
+        00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    </data>
+
+    <symbol>CCC</symbol>
+    <reference>1</reference> <!-- referring to object 1, the string -->
+</dict>
+```
+用信息泄露中基于`IOUserClient`的类似方法，来触发UAF漏洞：
+
+1. `OSString`对象“AAA”被分配32字节，被去序列化后立即被`release()`
+- 序列化一个32字节的`OSData`对象（内容全0）时，分配了刚刚释放的空间
+	- `kalloc()`分配最近被释放的相同大小空间
+	- `OSString`对象原来内容，包括虚表指针，被置0
+- 序列化一个指向对象1，即`OSString`的引用，调用`retain()`
+
+利用UAF漏洞越狱过程如下（堆中地址从低到高增长）：
+
+```
++————————————————————————+
+|                        | "_thread_exception_return"
++                        + 
+|                        | "_bzero"
++                        + 
+|                        | "_posix_cred_get"
++                        +
+|                        | "_proc_ucred"
++                        +
+|                        | "_current_proc"  
++————————————————————————+                <————————+
+|          ...           |                         |
++————————————————————————+                         |
+|      retain() ptr      |———> (1)stack pivot —+   |
++——————————0x20——————————+                     |   |
+|                        |———> (2)main chain ——————+
++————————————————————————+                     |
+|        vtable ptr      |———> pop rsp; ret    |
++———————————0x0——————————+           <—————————+
+
+```
+
+1. 触发UAF后并将被释放的`OSString`空间重新分配给以0填充的`OSData`
+	- `OSString`的虚表指针为前8字节（64位）= 全0
+	- `retain`指针在虚表内的偏移量为0x20字节
+	- 调用`retain`时，`RIP`（64位指令指针）= [0x20]
+- 映射NULL页
+	- 禁止__PAGEZERO段，将NULL页留作布置ROP链
+- 在NULL页中偏移量0x20字节处放置一个stack pivot (转移到转移链)
+	- gadget：`xchg eax, esp; ret` (二进制`{0x94, 0xC3}`)
+	- 该gadget先将`esp`设置为`eax`（0），再将栈顶（0）弹出到`RIP`
+- 在NULL页中偏移量0x0处放置一个小的转移链（转移到提升特权的主链）
+	- 0x0处gadget：`pop rsp; ret` (二进制`{0x5C, 0xC3}`)
+	- 0x10处：指向主链中第一个gadget的指针
+	- 该gadget
+	- 使用该转移链的原因：从0x0到0x20之间空间（32字节）不够放置主链
+- 执行主链来提升特权，模仿`setuid(0)`来越狱
+	1. 获取内存中当前进程的凭证结构体（credentials）
+		1. `"_current_proc"` 获取当前进程结构体
+		2. `"_proc_ucred"` 获取其中的凭证结构体
+		3. `"_posix_cred_get"` 获取其中的posix凭证结构体指针
+	- 将整个凭证结构体置0，其中UID/GID都被置0（root），实现越狱！
+		- `"_bzero"` 将目标内存（3个int型）置0
+	- 最后从内核态中正常退出
+		- `"_thread_exception_return"`
+
+---
+

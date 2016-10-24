@@ -119,7 +119,7 @@ int *ptr = ...;char buf[128];gets(buf);  //Buffer is overflowed, and overwrite
 
 ```
 
-- 堆对象溢出（函数指针，C++ vtables）
+- 堆对象溢出（函数指针，C++ vtables），我们会在[iOS系统安全部分](../system-security/iOS-security.md)学习一个此类漏洞
 - malloc/free溢出可以改写指定地址上数据，详见[Exploiting the heap](http://www.win.tue.nl/~aeb/linux/hh/hh-11.html)。考虑下面一个C程序。
 
 ```c
@@ -452,7 +452,6 @@ stop gadget是一个指向令程序停止代码（例如`sleep()`）的返回地
 	- 若连接保持，则找到了pop gadget（需确认不是另一个stop）
 	- 否则，则遇到了crash
 
-
 ```
                         +->sleep(5)<-++——— pop eax        ^   |            ||    ret            |   |            ||     \———>[stop]   |  0x5....       0x5.... 
 |          [crash]  |  0x0           0x0    <—————————————————+
@@ -495,7 +494,7 @@ stop gadget是一个指向令程序停止代码（例如`sleep()`）的返回地
 
 用之前的方法找到以下gadget，用ROP实现`write()`调用。
 
-``` gaspop edi; ret (socket)pop esi; ret (buffer)pop edx; ret (length)pop eax; ret (write syscall number)
+```gaspop edi; ret (socket)pop esi; ret (buffer)pop edx; ret (length)pop eax; ret (write syscall number)
 syscall
 ```
 ####第三阶段：构造shellcode
