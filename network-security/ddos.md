@@ -16,7 +16,7 @@ US-CERT定义的DoS攻击症状：网络性能恶化、特定网站不可用、�
 - 2014年2月，[CloudFlare客户遭受400G的NTP Flood攻击](https://blog.cloudflare.com/technical-details-behind-a-400gbps-ntp-amplification-ddos-attack/)
 - 2015年3月末，GitHub上反审查工具遭受最大规模DDoS攻击，[相关报道](http://arstechnica.com/security/2015/03/github-battles-largest-ddos-in-sites-history-targeted-at-anti-censorship-tools/)，[攻击时GitHub状态页](https://status.github.com/messages/2015-03-30)
 - 2016年9月中旬，超过14.5万被劫持闭路电视摄像头发动了1.1Tbps的DDoS攻击，成为[史上最大规模DDoS](http://arstechnica.com/security/2016/09/botnet-of-145k-cameras-reportedly-deliver-internets-biggest-ddos-ever/)；实施攻击的恶意软件名为[“Mirai”](https://krebsonsecurity.com/2016/10/who-makes-the-iot-things-under-attack/)
-- 
+- 2016年10月21日，DNS服务商[Dyn遭受DDoS攻击](https://en.wikipedia.org/wiki/October_2016_Dyn_cyberattack)导致美国大量网站瘫痪，攻击源于大量被劫持摄像头等物联网设备，攻击软件同样为[“Mirai”](https://krebsonsecurity.com/2016/10/who-makes-the-iot-things-under-attack/)
 
 [Qsmind DDoS攻击年鉴](http://www.qsmind.com/index.html)
 
@@ -38,6 +38,7 @@ US-CERT定义的DoS攻击症状：网络性能恶化、特定网站不可用、�
 	- [Fork bomb](https://en.wikipedia.org/wiki/Fork_bomb)：也叫“Wabbit”，自复制程序；例如，在Bash中执行 “`:(){ :|:& };:`”
 - 耗尽操作系统资源：
 	- [TCP SYN flood](https://en.wikipedia.org/wiki/SYN_flood)引起服务器生成很多半开连接，占用所有系统可用连接
+		- [LAND攻击](https://en.wikipedia.org/wiki/LAND)：源地址伪造为受害者地址，即目的地址和源地址相同
 	- 基于中断的内核处理大流量时导致“活锁”，CPU都用来处理包接收中断，而不是处理收到的包
 	- [Slowloris（懒猴）](https://en.wikipedia.org/wiki/Slowloris_(computer_security))：HTTP GET时只发送部分请求，缓慢更新，永不关闭
 	- HTTP SlowPOST：也称为[R-U-Dead-Yet (RUDY)](https://en.wikipedia.org/wiki/Denial-of-service_attack#R-U-Dead-Yet.3F_.28RUDY.29)，Post时以极慢速度（1byte/110s）来发送消息

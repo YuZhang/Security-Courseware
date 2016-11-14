@@ -196,7 +196,7 @@ Sender     <———————————————    Reciever
 - [finger协议](https://en.wikipedia.org/wiki/Finger_protocol)所提供的用户信息，例如姓名、电话号码，可能被口令破解器所利用
 - 电子邮件中发件人地址缺乏认证，邮件内容缺乏保护
 	- 旧的[POP](https://en.wikipedia.org/wiki/Post_Office_Protocol)中，用户名和口令在一条命令中，容易被窃听或泄露
-	- 现在推荐使用[IMAP](https://en.wikipedia.org/wiki/Internet_Message_Access_Protocol)-over-SSL，PGP
+	- 现在推荐使用[IMAP](https://en.wikipedia.org/wiki/Internet_Message_Access_Protocol)-over-SSL，PGP，[DKIM](https://en.wikipedia.org/wiki/DomainKeys_Identified_Mail)
 - FTP认证，匿名FTP
 - SNMP认证
 - 远程启动认证：RARP+TFTP，BOOTP+TFTP，DHCP
