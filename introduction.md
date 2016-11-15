@@ -192,6 +192,7 @@ if ((options == (__WCLONE|__WALL)) && (current->uid = 0))                  			r
 - 2011年，两个CA，[DigiNotar](http://en.wikipedia.org/wiki/DigiNotar)和[Comodo](http://en.wikipedia.org/wiki/Comodo_Group)，发布了包括google, yahoo等的假证书
 - 2012年，一个CA，[Trustwave](http://www.h-online.com/security/news/item/Trustwave-issued-a-man-in-the-middle-certificate-1429982.html)发布了一个对任意网站都有效的根证书
 - 2015年，埃及MSC Holding使用CNNIC签发的中级证书签发gmail假证书，导致Chrome和Firefox移除的CNNIC根证书 [[相关报道]](https://en.wikipedia.org/wiki/China_Internet_Network_Information_Center)
+- 后面我们会介绍[CA增强方案](network-security/tls.md)
 
 ###假设硬件是可信的
 

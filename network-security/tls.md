@@ -493,11 +493,17 @@ TLS中漏洞：
 
 ###3. CA安全增强
 
+- 多数浏览器相信上百个CA，任何一个CA被攻破，可伪造任何站点证书
+- 2011年，两个CA，[DigiNotar](http://en.wikipedia.org/wiki/DigiNotar)和[Comodo](http://en.wikipedia.org/wiki/Comodo_Group)，发布了包括google, yahoo等的假证书
+- 2012年，一个CA，[Trustwave](http://www.h-online.com/security/news/item/Trustwave-issued-a-man-in-the-middle-certificate-1429982.html)发布了一个对任意网站都有效的根证书
+- 2015年，埃及MSC Holding使用CNNIC签发的中级证书签发gmail假证书，导致Chrome和Firefox移除的CNNIC根证书 [[相关报道]](https://en.wikipedia.org/wiki/China_Internet_Network_Information_Center)
+
+
 - [Pinning](https://en.wikipedia.org/wiki/Transport_Layer_Security#Certificate_pinning)：PKP(Public-Key Pinning)将信任从根CA公钥转移到其他可信公钥，例如在浏览器内置公钥白名单，或采用首用信任TOFU(trust-on-first-use)机制。- 公证人方案：
 	- [Perspectives](https://en.wikipedia.org/wiki/Transport_Layer_Security#Perspectives_Project)通过主动采集证书来扮演一个第三方公证人角色，即在证书权威CA和证书持有者之外提供一个新的证书源，并提供审计功能。
 	- [Convergence](https://en.wikipedia.org/wiki/Convergence_(SSL))扩展了Perspectives，对来自客户端的证书请求做了匿名化处理来保护用户隐私。	
 	- 这种第三方角色保证了其独立性，但可能由于证书采集问题导致假警报。- 公开日志方案：
 	- 由Google提出的[证书透明(certificate transparency)](https://en.wikipedia.org/wiki/Certificate_Transparency)方案引入了一个基于Merkle树的公开、只可追加日志系统，记载CA颁发过的和证书持有者提交的证书，以支撑对CA审计与问责。日志本身也是可审计的，其远景目标是一个证书被客户端所接受当且仅当该证书已被添加到日志中。
-	- 在[Sovereign Keys](https://www.eff.org/sovereign-keys)方案中，证书持有者对自己的证书签名并存入公开日志中。- 上述方案通过不同信任转移或审计机制来应对CA被攻破以及滥用风险，对防止关键互联网资源认证中的权利滥用有极大借鉴意义。- [DANE](https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities)（DNS-based Authentication of Named Entities）将多根CA的非层级结构层级化，将多根结构单根化，通过DNSSEC认证域名相应证书，因此，DANE相当于将CA滥用问题转移到DNSSEC滥用问题，权利被集中所带来的好处是攻击面减小，缺点是滥用风险更加突出、危害也更大。
+	- 在[Sovereign Keys](https://www.eff.org/sovereign-keys)方案中，证书持有者对自己的证书签名并存入公开日志中。- [DANE](https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities)（DNS-based Authentication of Named Entities）将多根CA的非层级结构层级化，将多根结构单根化，通过DNSSEC认证域名相应证书，因此，DANE相当于将CA滥用问题转移到DNSSEC滥用问题，权利被集中所带来的好处是攻击面减小，缺点是滥用风险更加突出、危害也更大。
 
 ---
