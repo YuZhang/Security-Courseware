@@ -22,6 +22,13 @@
 
 互联网安全术语表：[RFC4949: Internet Security Glossary, Version 2](https://tools.ietf.org/html/rfc4949)
 
+###计算机与网络安全4大学术会议
+
+- NDSS (The Network and Distributed System Security Symposium) [2016](http://www.internetsociety.org/events/ndss-symposium-2016/ndss-2016-programme)
+- USENIX Security (Symposium) [2016](https://www.usenix.org/conference/usenixsecurity16/technical-sessions)
+- CCS (ACM SIGSAC Conference on Computer and Communications Security) [2016](https://www.sigsac.org/ccs/CCS2016/wp-content/uploads/2016/08/Open-TOC-CCS.html)
+- S&P (IEEE Symposium on Security and Privacy) (Oakland) [2016](http://www.ieee-security.org/TC/SP2016/program-papers.html)
+
 ###安全事件统计
 
 [Verizon 2016 Data Breach Inveistigations Report](http://www.verizonenterprise.com/resources/reports/rp_dbir-2016-executive-summary_xg_en.pdf)：
