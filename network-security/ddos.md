@@ -42,6 +42,7 @@ US-CERT定义的DoS攻击症状：网络性能恶化、特定网站不可用、�
 	- 基于中断的内核处理大流量时导致“活锁”，CPU都用来处理包接收中断，而不是处理收到的包
 	- [Slowloris（懒猴）](https://en.wikipedia.org/wiki/Slowloris_(computer_security))：HTTP GET时只发送部分请求，缓慢更新，永不关闭
 	- HTTP SlowPOST：也称为[R-U-Dead-Yet (RUDY)](https://en.wikipedia.org/wiki/Denial-of-service_attack#R-U-Dead-Yet.3F_.28RUDY.29)，Post时以极慢速度（1byte/110s）来发送消息
+	- [BlackNurse](http://soc.tdc.dk/blacknurse/blacknurse.pdf)：利用ICMP端口不可达消息（Type3，Code3）对防火墙实施攻击，40~50pps就可导致CPU过载
 	- [ReDoS](https://en.wikipedia.org/wiki/ReDoS)：利用指数复杂性的正则表达式消耗计算资源，可用来攻击IDS等，例如对于正则表达式“`^(a+)+$`”，输入`aaaaaaaaaaaaaaaaX`有65536个可能路径
 	- [TDoS](https://en.wikipedia.org/wiki/Denial-of-service_attack#Telephony_denial-of-service_.28TDoS.29)：利用VoIP来“呼死你”
 - 触发锁死与限额耗尽：

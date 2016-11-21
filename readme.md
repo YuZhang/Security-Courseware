@@ -29,11 +29,11 @@
 	- [DNS安全](network-security/dns-sec.pptx) (Cache Poisoning, DNSSEC)
 	- [BGP安全](network-security/bgp-sec.pptx) (Prefix Hijack, RPKI)
 	- [分布式拒绝服务(DDoS)](network-security/ddos.md) (Shrew, IP-Traceback)
-	- [SSL/TLS安全](network-security/tls.md)（BEAST, CRIME, POODLE, 3HS...）
 - [Web安全](web-security) 
-	1. [风险，注入与XSS](web-security/web-sec-1.md)
-	-  [CSRF，认证，Clickjacking与Tracking](web-security/web-sec-2.md)
+	1. [注入，XSS与CSRF](web-security/web-sec-1.md)
+	-  [认证，Clickjacking与Tracking](web-security/web-sec-2.md)
+	-  [SSL/TLS安全](web-security/tls.md)（BEAST, CRIME, POODLE, 3HS...）
 - [新进展（待）]()
 	1. 匿名通信（Tor，）
-	2. Bitcoin（...）
+	2. BitCoin（...）
 - [总结](summary.md)

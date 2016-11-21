@@ -1,10 +1,10 @@
-#Web安全：CSRF、认证、Clickjacking与Tracking
+#Web安全：认证、Clickjacking与Tracking
 
 ###哈尔滨工业大学 网络与信息安全 张宇 2016
 
 ---
 
-回顾之前的Web风险分类，已经学习了风险1和3，本课程学习风险2、8和。
+回顾之前的Web风险分类，已经学习了风险1、3和8，本课程学习风险2，10。
 
 开源web应用安全项目(OWASP)总结的[2013年最关键Web应用安全风险Top 10](OWASP_Top_10_2013-Chinese-V1.2.pdf)：
 
@@ -20,16 +20,13 @@
 - 未验证的重定向和转发：重定向受害者到钓鱼/恶意网站或访问未授权页面
 
 
-##1. CSRF
+##1. 认证
 
 
-##2. 认证
+##2. Clickjacking
 
 
-##3. Clickjacking
-
-
-##4. Tracking
+##3. Tracking
 
 ---
 
