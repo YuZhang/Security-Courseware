@@ -502,7 +502,6 @@ www.attacker.com                          Browser                       wwww.ban
 	- 但攻击者并不访问，而是令用户的浏览器来访问`return_to` URL
 	- RP完成OpenID协议，在用户的浏览器中存储会话cookie，用户已经作为攻击者登录了RP
 
-
 ###5.4 防御
 
 - Secret Validation Token：由服务器生成一个随机token发送给浏览器，后续请求需携带token；没有该token的伪造请求不能得到应答

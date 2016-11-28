@@ -33,7 +33,7 @@ void foo(int *p){     int offset;     int *z = p + offset;     if(offset > 7)
 
 静态检测在不运行代码的情况下进行。例如，我们很容易发现`offset`在未被初始化的情况下使用，而且传播到`bar()`函数中。代价较小，但准确性不足。
 
-动态检测在代码运行时进行。例如，[模糊测试（fuzzing）](https://en.wikipedia.org/wiki/Fuzz_testing)自动或半自动地生成随机数据输入到一个程序中，并监视程序异常。[宽松边界检查（Baggy Bounds Checking）](https://www.usenix.org/legacy/events/sec09/tech/full_papers/akritidis.pdf)有效地在运行时检测缓冲区边界是否正确。
+动态检测在代码运行时进行。例如，[模糊测试（fuzzing）](https://en.wikipedia.org/wiki/Fuzz_testing)自动或半自动地生成随机数据输入到一个程序中，并监视程序异常。例如，[宽松边界检查（Baggy Bounds Checking）](https://www.usenix.org/legacy/events/sec09/tech/full_papers/akritidis.pdf)有效地在运行时检测缓冲区边界是否正确。
 
 - 优点：能够显著减少bug。
 - 缺点：难以保证完全没有bug。
@@ -259,7 +259,7 @@ int *ptr = malloc(sizeof(int) * 2);while(1){     *ptr = 42;    <———    
 
 为克服上述问题，Baggy实现了有效的内存分配与边界检查，主要包括5点技巧：
 
-1. 按2的幂划分内存空间，分配的起点与2的幂对齐
+1. 按2的幂划分内存空间，分配的起始点与2的幂对齐
 - 将范围上界表示为log_2(分配大小)。对于32位指针，只需5比特来表示其范围上界。
 - 将范围上界存储在一个线性数组中：每个元素1字节，实现快速查询。可用虚拟内存来按需分配数组。所有元素初始值为31，内存释放后恢复为31。
 - 按一定粒度(slot)分配内存（例如16字节）：上界数组更短
@@ -364,7 +364,7 @@ char *p = malloc(32);char *q = p + 32;char ch = *q;```
 
 ###ROP [(Blackhat08)](http://cseweb.ucsd.edu/~hovav/talks/blackhat08.html)
 
-之前我们已经学习过Return-to-libc攻击，该攻击通过改写返回值，调用了libc中函数，绕过不可执行栈防御。ROP是一连串利用函数返回来操纵控制流的技术。例如，攻击者打算多次重复调用某个libc函数`func(char * str)`。首先，需要3个地址：
+之前已经学习过Return-to-libc攻击，该攻击通过改写返回值，调用了libc中函数，绕过不可执行栈防御。ROP是一连串利用函数返回来操纵控制流的技术。例如，攻击者打算多次重复调用某个libc函数`func(char * str)`。首先，需要3个地址：
 
 - 函数`func()`的地址
 - 参数`str`的地址
@@ -374,7 +374,7 @@ char *p = malloc(32);char *q = p + 32;char ch = *q;```
 
 上面的`pop/ret`操作片段称作一个“gadget”（小装置），是在已经存在的二进制文件中的有用片段，后面还会需要其他gadget。
 
-然后，利用溢出改写返回地址，并在栈中伪造函数调用帧：
+然后，利用溢出改写返回地址，并在栈中伪造一个假的函数调用帧：
 
 ```
 +————————————————————————+
@@ -388,7 +388,7 @@ char *p = malloc(32);char *q = p + 32;char ch = *q;```
 +————————————————————————+                 | frame for
 |          (1)           | addr of pop/ret—+ func()
 +————————————————————————+
-|    return address      | addr of func()
+|    return address (0)  | addr of func()
 +————————————————————————+
 |      saved %ebp        |<——— new %ebp
 +————————————————————————+
@@ -401,14 +401,16 @@ char *p = malloc(32);char *q = p + 32;char ch = *q;```
 当函数返回后，程序流程如下：
 
 1. 返回地址（被改写为`func()`地址）出栈到`eip`，`esp`—>(1)
-2. `func()`从`esp+4`—>(2)中读取参数地址，执行直到返回
-3. `func()`中`ret`将栈顶，即`esp`—>(1)`pop/ret`地址，出栈到`eip`，此时`esp`—>(2)
-4. `pop/ret`执行：(2)被弹出栈，`esp`—>(3)；`ret`执行弹出栈顶（3)`func()`地址到`$eip`，此时`esp`—>(4)
-5. `func()`从`esp+4`—>(5)中读取参数地址，执行直到返回
+- `func()`开始执行，将旧`ebp`入栈并将新`ebp`设置为`esp`，`ebp`=`esp`—>(0)
+- `func()`从`ebp+8`—>(2)中读取参数，执行直到返回
+- `func()`中`leave`指令执行`mov %ebp,%esp`, `pop %ebp`，`esp`->(1)，`ebp`->某个地址
+- `func()`中`ret`将栈顶`esp`—>(1)，即gadget地址，弹出到`eip`，`esp`—>(2)
+- `pop/ret`执行：(2)被弹出栈，`esp`—>(3)；`ret`执行弹出栈顶（3)`func()`地址到`eip`，`esp`—>(4)
+- 重复之前过程，`func()`从`esp+4`—>(5)中读取参数执行
 
 ###Blind ROP：
 
-若采用了ASLR，则地址被随机化难以实现ROP。Blind ROP（BROP）能够在源代码未知、随机地址未知的条件下实施攻击。
+若采用了ASLR，则地址被随机化难以确定函数和gadget地址来实现ROP。Blind ROP（BROP）能够在源代码未知、随机地址未知的条件下实施攻击。
 
 BROP攻击分为三个阶段：
 
@@ -440,30 +442,30 @@ stop gadget是一个指向令程序停止代码（例如`sleep()`）的返回地
 
 **第2步： 寻找pop gadget**
 
-一旦有了stop gadget，可寻找`pop`到不同寄存器的pop gadget，即`pop %X; ret;`。3个地址：
+一旦有了stop gadget，可寻找`pop`到不同寄存器的pop gadget，即`pop %X; ret;`。为此，定义3个地址：
 
 - probe: 猜测的pop gadget地址
 - stop: 已找到的stop gadget地址
-- crash: 不可执行代码（`0x0`）地址
+- crash: 不可执行代码地址（`0x0`）
 
-利用ROP寻找pop gadget过程：
+寻找pop gadget过程：
 
-- 返回地址改为probe地址，后面跟着crash地址和stop地址
-	- 若连接保持，则找到了pop gadget（需确认不是另一个stop）
-	- 否则，则遇到了crash
+- 返回地址改为probe地址，接着crash地址和stop地址，形成一个链
+	- 若连接保持，则意味着probe之后执行了stop，就找到了pop gadget（需确认不是另一个stop）
+	- 否则，意味着程序崩溃，probe后遇到了crash
 
 ```
-                        +->sleep(5)<-++——— pop eax        ^   |            ||    ret            |   |            ||     \———>[stop]   |  0x5....       0x5.... 
-|          [crash]  |  0x0           0x0    <—————————————————+
-+——————————[probe]  |  0x4...8       0x4...c -->xor eax, eax  |                    |                           ret           |
-                                                   \__________|
+                        +->sleep(5)<-++——— pop eax        /\  |            ||    ret            ||  |            ||     \———>[stop] ——||——0x5....       0x5.... 
+|          [crash]——||——0x0           0x0    <————————————————+
++——————————[probe]——||——0x4...8       0x4...c -->xor eax, eax |                    ||                           ret          |
+                                                    \_________|
 ```
 
 此时，攻击者找到了一些pop gadget，但不知道其中所使用的寄存器，也不知道`syscall`指令的地址。
 
 **第3步： 寻找syscall()并确定pop gadget所用寄存器**
 
-`pause()`系统调用无需参数。为了找到`pause()`，攻击者将所有pop gadget连在一起形成一个ROP链，将`pause()`的系统调用号入栈作为每个gadget的参数。在链底部放入所猜测的`syscall`地址，如下图：
+`pause()`系统调用无需参数。为了找到`pause()`，攻击者将所有pop gadget连在一起形成一个ROP链，将`pause()`的系统调用号入栈作为每个gadget的参数。在ROP链底部放入所猜测的`syscall`地址，如下图：
 
 ```
 +————————————————————————+
@@ -488,7 +490,7 @@ stop gadget是一个指向令程序停止代码（例如`sleep()`）的返回地
 
 ```
 
-这会将`pause()`调用号存入寄存器中。若其中有`exa`，而且`syscall()`猜测正确的话，则服务器会暂停。此时，就找到了`syscall()`地址。接着，用每个pop gadget单独重复这一过程，就能找到使用了`exa`的gadget。利用这一方法，还可以确定其他寄存器对应的gadget。
+这会将`pause()`调用号存入寄存器中。若其中有`exa`，而且`syscall()`猜测正确的话，则服务器会暂停。此时，就找到了`syscall()`地址。接着，用每个pop gadget单独重复这一过程，就能找到使用了`exa`的gadget。利用该方法的原理还可以确定其他寄存器对应的gadget。
 
 - 第4步：调用`write()`
 

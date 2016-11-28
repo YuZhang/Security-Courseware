@@ -8,9 +8,8 @@
 
 **预备知识**: Linux，x86体系结构，x86汇编，C语言，gdb
 
-- [Memory Layout (Virtual Address Space of a C process)](memorylayout.pdf)
 - [PC Assembly Language](supplyments/PC-Assembly-Language.pdf)
-- [gcc x86 Assembly Quick Reference](gcc-x86-Assembly.pdf)
+- [gcc x86 Assembly Quick Reference](supplyments/gcc-x86-Assembly.pdf)
 - [GDB Quick Reference](supplyments/gdb-refcard.pdf)
 
 **缓冲区溢出（buffer overflow）**：在计算机安全和程序设计中的一种异常，当一个程序向缓冲区写入数据时，超出了缓冲区边界并且覆盖了相邻内存。
@@ -20,6 +19,8 @@
 **栈缓冲区溢出（stack buffer overflow）**：程序向调用栈中原本缓冲区之外的内存地址写入数据，意图获取对指令指针的控制，将其指向恶意代码。
 
 **Linux进程内存布局**
+
+- [Memory Layout (Virtual Address Space of a C process)](supplyments/memorylayout.pdf)
 
 ```
 +——————————————+ 0xFFFFFFFF (high address)
@@ -83,18 +84,21 @@ low  —————>  high address
 * stack frame pointer 栈帧指针指向调用者的栈帧基址`ebp`
 * `ebp` 基址指针指向栈帧底（高地址）
 * `esp` 栈指针指向栈顶（低地址）
+* `e`表示32位，`%`表示寄存器
 
-* caller调用者规则：
+* caller（调用者）规则：
 
 	1. 子函数参数入栈，从右向左
-	1. `call`指令，将返回地址入栈后执行函数
-	1. 子函数返回，返回值在`eax`中，清除栈中参数，恢复寄存器值
+	- `call`指令，将下一条指令地址入栈（`push %eip`），并无条件跳转
+	- 子函数返回，返回值在`eax`中
 
-* callee被调用者规则：
+* callee（被调用者）规则：
 
-	1. 保存caller的栈基址，设定callee新的栈基址为当前栈指针（`ebp`入栈，拷贝`esp`到`ebp`中）
-	1. 为局部变量分配栈空间
-	1. 执行函数，结果保存在`eax`中，恢复寄存器，清除局部变量，执行`ret`指令
+	1. 保存caller的栈基址，设定callee新的栈基址为当前栈指针（`push %ebp`; `mov %esp, %ebp`）
+	- 为局部变量分配栈空间（`sub 123,%esp`）
+	- 执行函数，结果保存在`eax`中
+	- 执行`leave`复合指令，清除当前栈帧，恢复到调用者栈帧（`mov %ebp, %esp`; `pop %ebp`）
+	- 执行`ret`指令（`pop %eip`）
 
 ---
 ##栈缓冲区溢出
@@ -254,7 +258,7 @@ $4 = (char (*)[128]) 0xbffff62c
 
 ``` gas
 (gdb) n [运行gets()]
-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 7	    i = atoi(buf);
 ```
 
@@ -298,23 +302,6 @@ $8 = 0xbffff62c 'A' <repeats 128 times>
 9	}
 (gdb) nexti
 0x08048e70	9	}
-(gdb) disass
-Dump of assembler code for function read_req:
-   0x08048e44 <+0>:	push   %ebp
-   0x08048e45 <+1>:	mov    %esp,%ebp
-   0x08048e47 <+3>:	sub    $0xa8,%esp
-   0x08048e4d <+9>:	lea    -0x8c(%ebp),%eax
-   0x08048e53 <+15>:	mov    %eax,(%esp)
-   0x08048e56 <+18>:	call   0x804fc90 <gets>
-   0x08048e5b <+23>:	lea    -0x8c(%ebp),%eax
-   0x08048e61 <+29>:	mov    %eax,(%esp)
-   0x08048e64 <+32>:	call   0x804dd10 <atoi>
-   0x08048e69 <+37>:	mov    %eax,-0xc(%ebp)
-   0x08048e6c <+40>:	mov    -0xc(%ebp),%eax
-   0x08048e6f <+43>:	leave
-=> 0x08048e70 <+44>:	ret
-End of assembler dump.
-
 (gdb) p $eip   [下一条指令是ret]
 $11 = (void (*)()) 0x8048e70 <read_req+44>
 (gdb) nexti     [ret后，下一条指令地址是AAAA]
@@ -338,7 +325,7 @@ Starting program: /home/httpd/lecture1/readreq
 Breakpoint 1, read_req () at readreq.c:6
 6	    gets(buf);
 (gdb) n
-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 7	    i = atoi(buf);
 (gdb) n
 8	    return i;
@@ -808,7 +795,7 @@ warning: Source file is more recent than executable.
 [执行n多次直到REQUEST_URI被处理完]
 (gdb) n
 109         envp += sprintf(envp, "SERVER_NAME=zoobar.org") + 1;
-(gdb) x/10 buf        [打印buf，请求中各字段已经被分割]
+(gdb) x/s10 buf        [打印buf，请求中各字段已经被分割]
 0x8050540 <buf.4435>:   "GET"
 0x8050544 <buf.4435+4>: "/", 'A' <repeats 199 times>...
 0x805060c <buf.4435+204>:       'A' <repeats 200 times>...
