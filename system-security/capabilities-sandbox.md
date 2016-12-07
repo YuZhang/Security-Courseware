@@ -30,7 +30,7 @@
 
 ###基于能力的安全
 
-[基于能力（capability）的安全](https://en.wikipedia.org/wiki/Capability-based_security) ：一个能力是一个可交换但不可伪造的权威令牌（token），实现为一个引用(reference)指向一个受保护对象及相关访问权利（right）。
+[基于能力（capability）的安全](https://en.wikipedia.org/wiki/Capability-based_security) ：一个能力是一个可交换但不可伪造的权威令牌（token），实现为一个引用（reference）指向一个受保护对象及相关访问权利（right）。
 
 **一个文件访问控制例子：**
 
@@ -224,8 +224,3 @@ FreeBSD   Capsicum     100       Capsicum sanboxing using cap_enter
 
 ```
 ---
-
-
-
-
-I

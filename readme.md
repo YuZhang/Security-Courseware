@@ -31,7 +31,7 @@
 	- [分布式拒绝服务(DDoS)](network-security/ddos.md) (Shrew, IP-Traceback)
 - [Web安全](web-security) 
 	1. [注入，XSS与CSRF](web-security/web-sec-1.md)
-	-  [认证，Clickjacking与Tracking](web-security/web-sec-2.md)
+	-  [认证与Clickjacking](web-security/web-sec-2.md)
 	-  [SSL/TLS安全](web-security/tls.md)（BEAST, CRIME, POODLE, 3HS...）
 - [新进展（待）]()
 	1. 匿名通信（Tor，）

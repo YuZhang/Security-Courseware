@@ -116,18 +116,19 @@ Unix系统采用强制访问控制，**‘root’**特权用户（UID=0）拥有
 - 缺省情况下，例如登录后`euid = ruid = suid`
 - `euid`：进程多数权限依赖于`euid`，例如新创建文件的拥有者。`euid=0`的进程为特权进程。(Linux中还有`fsuid`)
 - `ruid`：进程真正拥有者（启动者），拥有发信号权限
-- `suid`：临时保存`euid`，待之后恢复。用于特权用户临时降低特权，之后再恢复特权。
+- `suid`：临时保存`euid`，待之后恢复。用于特权用户临时降低特权，之后再恢复特权
+- Linux中的`fsuid/gid`用于文件系统访问控制，通常与`euid/gid`一致
 - 进程`fork`或`exec`时，继承或保留3个uid
-- `setuid`调用：实际情况比较复杂，详见[Setuid Demystified (2002)](supplyments/setuid-usenix02.pdf)
+- `setuid()`函数族设置`uid/gid`，但实际情况比较复杂，详见[Setuid Demystified (USENIX Security 2002)](https://www.usenix.org/legacy/events/sec02/full_papers/chen/chen.pdf)
 - `sudo`命令：临时以特定用户（缺省root）特权来执行命令。例如，`sudo apt-get`
-- [`chroot`](https://en.wikipedia.org/wiki/Chroot)命令：
-	- 该命令只有root可以执行：`chroot /tmp/guest`, `su guest`
-	- 改变当前进程的根目录，将进程文件系统特权限制在指定jail目录下
-	- `open("/etc/passwd", "r")` -> 		    `open("/tmp/guest/etc/passwd", "r")`
 
 [特权扩大（priviledge escalation）](https://en.wikipedia.org/wiki/Privilege_escalation)：利用操作系统或软件应用中的bug、设计缺陷或配置疏漏来获得访问被保护资源的特权。
 
 - 垂直特权扩大：即特权提升（priviledge elavation），低特权用户获得高特权用户的特权，通常获得系统管理权。例如，Unix系统中越狱(jailbreakig)打破`chroot`或`jail`限制，以及Andriod中获取root。
+	- [`chroot`](https://en.wikipedia.org/wiki/Chroot)命令：
+		- 该命令只有root可以执行：`chroot /tmp/guest`, `su guest`
+		- 改变当前进程的根目录，将进程文件系统特权限制在指定jail目录下
+		- `open("/etc/passwd", "r")` -> 		    `open("/tmp/guest/etc/passwd", "r")` 
 - 水平特权扩大：一个用户获得另一用户的特权。例如，在一个网银中，用户甲通过cookie劫持来访问用户乙的银行账户。
 
 [**最小特权原则（principle of least privilege）**](https://en.wikipedia.org/wiki/Principle_of_least_privilege)：限制每个主体只具有执行合法操作所必须的最小特权。
@@ -219,5 +220,3 @@ OKWS安全缺点：
 - 仍然受核心库中bug影响
 
 ---
-
-I

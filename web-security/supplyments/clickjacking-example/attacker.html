@@ -1,0 +1,45 @@
+<html>
+	<head>
+		<title>Attacker web page</title>
+    <script type="text/javascript">
+    function win_open() {
+        window.open("attacker.html");
+    }
+		/* framebluster */
+    /* if (top.location != self.location)
+        top.location = self.location; */
+    </script>
+		<style type="text/css"><!--
+			*{
+				margin:0;
+				padding:0;
+			}
+			body {
+				background:#ffffff;
+			}
+			.button
+			{
+				padding:5px;
+				background:#6699CC;
+				left:275px;
+				width:120px;
+				border: 1px solid #336699;
+			}
+			#content {
+				width: 200px;
+				height: 200px;
+				margin-top: 50px ;
+				margin-left: 50px;
+			}
+		//--></style>
+
+	</head>
+	<body>
+		<div id="content">
+			<h1>Attacker</h1>
+			<form action="attacker.html">
+        <input type="button" class="button" value="Go to the attacker!" onclick="javascript:win_open()">
+			</form>
+		</div>
+	</body>
+</html>

