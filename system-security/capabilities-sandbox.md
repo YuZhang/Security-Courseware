@@ -80,16 +80,16 @@
 	- [FreeBSD jail](https://en.wikipedia.org/wiki/FreeBSD_jail)（chroot+网络限制）
 		- `jail jail-path hostname IP-addr cmd`
 		- 调用增强的chroot (无法用  “../../”  逃离)
-		- 职能绑定socket到指定IP地址和授权端口		- 只能与jail内进程通信		- root被限制，例如不能载入内核模块
+		- 只能绑定socket到指定IP地址和授权端口		- 只能与jail内进程通信		- root被限制，例如不能载入内核模块
 	- 优点：简单，不需要修改程序
 	- 缺点：粗粒度，不能阻止访问网络或令宿主操作系统崩溃
-- 基于规则的执行：通过一个明确的规则集来强制限制用户或程序访问（MAC），例如Linux安全模块（Linux Security Module，LSM）框架下的[SELinux](https://en.wikipedia.org/wiki/SELinux)和[Apparmor](https://en.wikipedia.org/wiki/Apparmor)
-	- [基于角色的访问控制](https://en.wikipedia.org/wiki/Role-based_access_control)：加入角色概念，可定义每个角色的权限（类似组的概念）
-	- [类型增强（type enforcement）](https://en.wikipedia.org/wiki/Type_enforcement)：加入域(domain），对应主体（如进程）)，和类型(type），对应客体（如文件）概念，描述域和类型的访问规则
 - [seccomp (Secure Computing Mode)](https://en.wikipedia.org/wiki/Seccomp)：Linux内核中一种应用沙箱机制
 	- 传统seccomp模式：进程只允许执行`exit()`, `sigreturn()`, 以及对已打开的文件描述符执行`read()` and `write()`, 而禁止其他系统调用
 	- [seccomp-bpf](https://www.kernel.org/doc/Documentation/prctl/seccomp_filter.txt)：程序自定义允许的系统调用（Linux内核3.5）
 	- Mac OS X沙箱("Seatbelt")有类似功能
+- 基于规则的执行：通过一个明确的规则集来强制限制用户或程序访问（MAC），例如Linux安全模块（Linux Security Module，LSM）框架下的[SELinux](https://en.wikipedia.org/wiki/SELinux)和[Apparmor](https://en.wikipedia.org/wiki/Apparmor)
+	- [基于角色的访问控制](https://en.wikipedia.org/wiki/Role-based_access_control)：加入角色概念，可定义每个角色的权限（类似组的概念）
+	- [类型增强（type enforcement）](https://en.wikipedia.org/wiki/Type_enforcement)：加入域(domain），对应主体（如进程），和类型(type），对应客体（如文件）概念，描述域和类型的访问规则
 - [capability](https://en.wikipedia.org/wiki/Capability-based_security)：通过token来表示程序所具备能力
 
 ---
