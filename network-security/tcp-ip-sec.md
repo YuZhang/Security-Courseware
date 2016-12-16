@@ -73,13 +73,13 @@ X——>S :            ACK(ISN_S+1), SRC=T      —————> +————�
 参考资料：[RFC5961: Improving TCP's Robustness to Blind In-Window Attacks (2010)](https://tools.ietf.org/html/rfc5961)
 
 ```
-———————————————————————————————————————————————         
+—————————————————————————————————————————————         
 SEQ#  | Out-of-Win| In-Window |   
 ———————————————————————————————
-      |      ACK  |   Reset   |  Before RFC5961
+      |     ACK   |   Reset   |Before RFC5961
 SYN   —————————————————————————
-      |    C-ACK  |   C-ACK   |   After RFC5961
-———————————————————————————————————————————————
+      |   C-ACK   |   C-ACK   | After RFC5961
+—————————————————————————————————————————————
 
 —————————————————————————————————————————————           
 SEQ#  | Out-of-Win|   Exact   |   In-Window
@@ -93,9 +93,9 @@ RST   ————————————————————————�
                   |       In-Apt-Win
 ACK#  | Out-of-Win| In-Apt-Win| Challenge-Win
 —————————————————————————————————————————————           
-      |   Drop    |        Process     
+      |    Drop   |        Process     
 DATA  ———————————————————————————————————————           
-      |   Drop    |  Process  |   C-ACK
+      |    Drop   |  Process  |   C-ACK
 —————————————————————————————————————————————
 ```
 
@@ -157,7 +157,7 @@ Sender     <———————————————    Reciever
 
 - 防御方案：随机，特别大，移除全局C-ACK速率限制（2016年7月Linux内核4.7上补丁）
 		
-###2. 路由安全
+##2. 路由安全
 
 ####源路由（source routing）攻击：
 
@@ -187,11 +187,11 @@ Sender     <———————————————    Reciever
 - [ICMP](https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol)重定向攻击，目标不可达，TTL超时等等
 - [BGP安全](bgp-sec.pptx)后面课程会学习
 
-###3. “认证”服务器
+##3. “认证”服务器
 
 一种替代基于地址的认证的方法是使用“认证服务器”。该认证服务器为客户提供认证服务，与其他服务器进行认证。显然，通过其他机器来实现认证不是好主意！
 
-###4. 龙出没
+##4. 龙出没
 
 - [finger协议](https://en.wikipedia.org/wiki/Finger_protocol)所提供的用户信息，例如姓名、电话号码，可能被口令破解器所利用
 - 电子邮件中发件人地址缺乏认证，邮件内容缺乏保护
@@ -202,27 +202,20 @@ Sender     <———————————————    Reciever
 - 远程启动认证：RARP+TFTP，BOOTP+TFTP，DHCP
 - [DNS安全](dns-sec.pptx)后面课程会学习
 
-###5. 简单攻击
+##5. 简单攻击
 
 - 局域网内：窃听，ARP欺骗，广播风波（1个ICMP echo触发N个reply）
 - TFTP无认证
 - 特权端口只能被分配给特权进程，但以此作为认证机制的一部分并不安全
 
-###6. 全面防御
+##6. 全面防御
 
 - 认证：密码学与TCP/IP结合
 - 加密：链路级加密，TCP
 - [可信系统（Trusted System）](https://en.wikipedia.org/wiki/Trusted_system)：用于实现特定安全策略的系统
 
-###7. 结论与反思
+##7. 结论与反思
 
 - 1989年互联网简单的多，友好的多。今天的关键问题不是认证（authentication），而是授权（authorization）:如何知道某一方是否允许行使某一行为？
 - 多数安全问题源于有bug的代码
 - 攻击通常需要一些辅助数据。只能创建一个TCP连接的攻击者不能猜测正确的序列号
-
-
-
-
-
-
-
