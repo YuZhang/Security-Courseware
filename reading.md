@@ -1,5 +1,6 @@
 $ ls -1 | xargs -I % echo '- %'
 
+- 1130310408-张文佳-What Cannot be Read, Cannot be Leveraged? Revisiting Assumptions of JIT-ROP Defenses.pdf
 - 1130320109-于鹏-Predicting_Decrypting_and_Abusing_WPA2802.11_Group_Keys.pdf
 - 1130320115-孙强-transcript-collision-attacks-breaking-authentication-tls-ike-ssh.pdf
 - 1130520213-黎衡-No Pardon for the Interruption： New Inference Attacks on Android Through Interrupt Timing Analysis.pdf
