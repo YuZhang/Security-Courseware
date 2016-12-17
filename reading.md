@@ -3,28 +3,36 @@ $ ls -1 | xargs -I % echo '- %'
 - 1130320109-于鹏-Predicting_Decrypting_and_Abusing_WPA2802.11_Group_Keys.pdf
 - 1130320115-孙强-transcript-collision-attacks-breaking-authentication-tls-ike-ssh.pdf
 - 1130520213-黎衡-No Pardon for the Interruption： New Inference Attacks on Android Through Interrupt Timing Analysis.pdf
+- 15SK03104-张立飞-MERS Statistical Test Generation for Side-Channel Analysis based Trojan Detection.pdf
 - 15SK03106-莫德强-Security Analysis of Emerging Smart Home Applications.pdf
 - 15SK03108-丁爽-SoK Everyone Hates Robocalls A Survey of Techniques against Telephone Spam.pdf
 - 16B903022-王焕然-Contesting Secure Development.pdf
 - 16B903041-陈浩-protecting-cpp-dynamic-dispatch-through-vtable-interleaving.pdf
 - 16B903061-张春瑞-High Fidelity Data Reduction for Big Data Security Dependency Analyses.pdf
 - 16B903064-刘立坤-Differential Privacy as a Mutual Information Constraint.pdf.pdf
+- 16B903065-沈卓- Protecting Privacy of BLE Device Users.pdf
 - 16B903067-吴毓龙-What Cannot Be Read, Cannot Be Leveraged? Revisiting Assumptions of JIT-ROP Defenses.pdf
 - 16S003008-张晔-Stickler Defending against Malicious Content Distribution Networks in an Unmodified Browser.pdf
 - 16S003009-刘飞扬-Attacking the Network Time Protocol.pdf
 - 16S003013-冯俊龙-Cache Storage Channels Alias-Driven Attacks and Verified Countermeasures.pdf
 - 16S003019-陈喆-All Your DNS Records Point to Us Understanding the Security Threats of Dangling DNS Records.pdf
 - 16S003042-董宇琦-Beauty and the Beast Diverting modern web browsers to build unique browser.pdf
+- 16S003050-宋扬-ItsFree-for-a-Reason-Exploring-the-Ecosystem-of-Free-Live-Streaming-Services.pdf
 - 16S003070-李永悦-spiffy-inducing-cost-detectability-tradeoffs-persistent-link-flooding-attacks.pdf
+- 16S003077-魏杰明-discovRE Efficient Cross-Architecture Identification of Bugs in Binary Code.pdf
 - 16S003082-方依-Users Really Do Plug in USB Drives They Find.pdf
 - 16S003084-李星晨-PhishEye-Live Monitoring of Sandboxed Phishing Kits.pdf
-- 16S003085-丁宁-The Cracked Cookie Jar HTTP Cookie Hijacking and the Exposure of Private Information.pdf
 - 16S003087-刘国强-The Cracked Cookie Jar HTTP Cookie Hijacking and the Exposure of Private Information.pdf
 - 16S003094-吁松-UNVEIL A Large-Scale, Automated Approach to Detecting Ransomware.pdf
+- 16S103128-高天峰-Call Me Back! Attacks on System Server and System Apps in Android through Synchronous Callback.pdf
 - 16S103158-侯明-Measurement and Analysis of Private Key Sharing in the HTTPS Ecosystem.pdf
 - 16S103161-胡凯-what-mobile-ads-know-about-mobile-users.pdf
 - 16S103163-王云龙-Shreds Fine-grained Execution Units with Private Memory.pdf
+- 16S103164-赵俊达-MitM Attack by Name Collision Cause Analysis and Vulnerability Assessment in the New gTLD Era.pdf
 - 16S103173-孙宇慧-ads-safe-detecting-hidden-attacks-through-mobile-app-web-interfaces.pdf
 - 16S103177-武兴隆-A Surfeit of SSH Cipher Suites.pdf
+- 16SD03190-贾兆远-One Bit Flips,One Cloud Flops Cross-VM Row Hammer Attacks and Privilege Escalation.pdf
 - 16SK03187-刘伟-When CSI Meets Public WiFi Inferring Your Mobile Phone Password via WiFi Signals.pdf
 - 16SK03188-闫明-pASSWORD tYPOS and How to Correct Them Securely.pdf
+- 16s003085-丁宁-Verena End-to-End Integrity Protection for Web Applications.pdf
+- 7130310108-杜思佳-Don’t Forget to Lock the Back Door! A Characterization of IPv6 Network Security Policy.pdf
