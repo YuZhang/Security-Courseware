@@ -13,6 +13,7 @@ $ ls -1 | xargs -I % echo '- %'
 - 16B903064-刘立坤-Differential Privacy as a Mutual Information Constraint.pdf.pdf
 - 16B903065-沈卓- Protecting Privacy of BLE Device Users.pdf
 - 16B903067-吴毓龙-What Cannot Be Read, Cannot Be Leveraged? Revisiting Assumptions of JIT-ROP Defenses.pdf
+- 16S003006-陈向军-Generic Attacks on Secure Outsourced Databases.pdf
 - 16S003008-张晔-Stickler Defending against Malicious Content Distribution Networks in an Unmodified Browser.pdf
 - 16S003009-刘飞扬-Attacking the Network Time Protocol.pdf
 - 16S003013-冯俊龙-Cache Storage Channels Alias-Driven Attacks and Verified Countermeasures.pdf
@@ -34,6 +35,5 @@ $ ls -1 | xargs -I % echo '- %'
 - 16S103177-武兴隆-A Surfeit of SSH Cipher Suites.pdf
 - 16SD03190-贾兆远-One Bit Flips,One Cloud Flops Cross-VM Row Hammer Attacks and Privilege Escalation.pdf
 - 16SK03187-刘伟-When CSI Meets Public WiFi Inferring Your Mobile Phone Password via WiFi Signals.pdf
-- 16SK03188-闫明-pASSWORD tYPOS and How to Correct Them Securely.pdf
 - 16s003085-丁宁-Verena End-to-End Integrity Protection for Web Applications.pdf
 - 7130310108-杜思佳-Don’t Forget to Lock the Back Door! A Characterization of IPv6 Network Security Policy.pdf
