@@ -29,6 +29,8 @@
 - CCS (ACM SIGSAC Conference on Computer and Communications Security) [2016](https://www.sigsac.org/ccs/CCS2016/wp-content/uploads/2016/08/Open-TOC-CCS.html)
 - S&P (IEEE Symposium on Security and Privacy) (Oakland) [2016](http://www.ieee-security.org/TC/SP2016/program-papers.html)
 
+从上面4个会议本年度论文中选取一篇，将论文pdf文件以 学号-姓名-题目.pdf 格式命名发给我。
+
 ###安全事件统计
 
 [Verizon 2016 Data Breach Inveistigations Report](http://www.verizonenterprise.com/resources/reports/rp_dbir-2016-executive-summary_xg_en.pdf)：

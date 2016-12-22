@@ -1,3 +1,5 @@
+$ls -1 | perl -ne 'push @A, $_; END{print $A[rand(100000)%$#A];}'
+
 $ ls -1 | xargs -I % echo '- %'
 
 - 1130310408-张文佳-What Cannot be Read, Cannot be Leveraged? Revisiting Assumptions of JIT-ROP Defenses.pdf
@@ -16,8 +18,10 @@ $ ls -1 | xargs -I % echo '- %'
 - 16S003006-陈向军-Generic Attacks on Secure Outsourced Databases.pdf
 - 16S003008-张晔-Stickler Defending against Malicious Content Distribution Networks in an Unmodified Browser.pdf
 - 16S003009-刘飞扬-Attacking the Network Time Protocol.pdf
+- 16S003012-朱小舟-Return to the Zombie Gadgets Undermining Destructive Code Reads via Code Inference Attacks.pdf
 - 16S003013-冯俊龙-Cache Storage Channels Alias-Driven Attacks and Verified Countermeasures.pdf
 - 16S003019-陈喆-All Your DNS Records Point to Us Understanding the Security Threats of Dangling DNS Records.pdf
+- 16S003020-赵洋-Distillation as a Defense to Adversarial Perturbations against Deep Neural Networks.pdf
 - 16S003042-董宇琦-Beauty and the Beast Diverting modern web browsers to build unique browser.pdf
 - 16S003050-宋扬-ItsFree-for-a-Reason-Exploring-the-Ecosystem-of-Free-Live-Streaming-Services.pdf
 - 16S003070-李永悦-spiffy-inducing-cost-detectability-tradeoffs-persistent-link-flooding-attacks.pdf
@@ -34,6 +38,7 @@ $ ls -1 | xargs -I % echo '- %'
 - 16S103173-孙宇慧-ads-safe-detecting-hidden-attacks-through-mobile-app-web-interfaces.pdf
 - 16S103177-武兴隆-A Surfeit of SSH Cipher Suites.pdf
 - 16SD03190-贾兆远-One Bit Flips,One Cloud Flops Cross-VM Row Hammer Attacks and Privilege Escalation.pdf
+- 16SD03191-叱干小玄-Analog Malicious Hardware.pdf
 - 16SK03187-刘伟-When CSI Meets Public WiFi Inferring Your Mobile Phone Password via WiFi Signals.pdf
 - 16s003085-丁宁-Verena End-to-End Integrity Protection for Web Applications.pdf
 - 7130310108-杜思佳-Don’t Forget to Lock the Back Door! A Characterization of IPv6 Network Security Policy.pdf
