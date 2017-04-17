@@ -1,12 +1,12 @@
 缓冲区溢出：攻防对抗
 ===
-###哈尔滨工业大学 网络与信息安全 张宇 2016
+### 哈尔滨工业大学 网络与信息安全 张宇 2016
 
 ---
 
 本节学习缓冲区溢出攻击的防御方案与新型攻击技术，重点介绍一种边界检查机制Baggy，以及一种破解地址空间布局随机化的攻击技术BROP。
 
-##避免攻击
+## 避免攻击
 
 回顾缓冲区溢出攻击要点：
 
@@ -16,14 +16,14 @@
 
 避免缓冲区溢出，来从源头上杜绝**较长输入**通过缓冲区溢出来**改写栈中数据**。
 
-###对策1：避免C代码中bug
+### 对策1：避免C代码中bug
 
 仔细检查缓冲区，字符串，队列大小。使用带有缓冲区大小参数的函数，例如用`strncpy()`替代`strcpy()`，用`fgets()`替代`gets()`。新版本编译器会对程序中bug进行警告，不应忽略这个警告。
 
 - 优点：从源头上避免问题！
 - 缺点：难以保证代码没有bug，特别是代码库很大时。应用也可能自己定义除了`fgets()`或`strcpy()`之外的缓冲区操作函数。
 
-###对策2：Bug检测工具
+### 对策2：Bug检测工具
 
 可分为静态检测和动态检测。考虑如下代码：
 
@@ -38,7 +38,7 @@ void foo(int *p){     int offset;     int *z = p + offset;     if(offset > 7)
 - 优点：能够显著减少bug。
 - 缺点：难以保证完全没有bug。
 
-###对策3：使用内存安全语言
+### 对策3：使用内存安全语言
 
 例如JavaScript，C#，Python。
 
@@ -54,7 +54,7 @@ void foo(int *p){     int offset;     int *z = p + offset;     if(offset > 7)
 
 ---
 
-##缓解攻击
+## 缓解攻击
 
 当缓冲区溢出发生时，阻止攻击者进行以下步骤：
 
@@ -63,7 +63,7 @@ void foo(int *p){     int offset;     int *z = p + offset;     if(offset > 7)
 - 将恶意代码安置在**可预测位置**，令代码指针指向该位置
 
 
-###对策1：金丝雀（canaries）[[参考](https://en.wikipedia.org/wiki/Buffer_overflow_protection#Canaries)]
+### 对策1：金丝雀（canaries）[[参考](https://en.wikipedia.org/wiki/Buffer_overflow_protection#Canaries)]
 
 在被改写的代码指针被调用之前发现它。其思想是编译器在程序中安放canary变量，并检测canary变量是否被改写。类似用金丝雀在煤矿中检测一氧化碳。此类工作包括[StackGuard](https://www.usenix.org/legacy/publications/library/proceedings/sec98/full_papers/cowan/cowan.pdf)和[GCC的SSP（Stack Smashing Protector）]()。
 
@@ -164,7 +164,7 @@ int main(int argc, char **argv) {     char *p, *q;     p = malloc(1024);     
 ptr = get_free_block_struct(size);bck = ptr->bk;fwd = ptr->fd;fwd->bk = bck;   //Writes memory!bck->fd = fwd;   //Writes memory!
 ```
 
-###对策2：边界检查（bounds checking）
+### 对策2：边界检查（bounds checking）
 
 C语言中难以区分有效指针和无效指针，例如下代码中的`ptr`。
 
@@ -174,14 +174,14 @@ union u{    int i;    struct s{        int j;        int k;}; };int *ptr =
 
 原因在于C语言中，指针本身不包含使用语义。因此，有许多工具并不试图猜测语义，而只是保证堆和栈中对象的内存边界，这被称为“边界检查”。基于编译器实现，在运行时检查指针是否合理范围之内。尽管不能保证指针一定被正确使用，但能确保程序一定在已分配的内存中操作。这被认为是C语言世界中的一大进步！
 
-####电子围栏（electric fences）:
+#### 电子围栏（electric fences）:
 
 思想：每个堆对象分配一整个内存页，对象之后的页内空间（guard page）标记为不可访问，若访问则导致故障
 
 - 优点：不需要源代码，不需要改变编译器或重编译程序！但需要重新链接到实现了电子围栏的malloc库
 - 缺点：内存消耗巨大！每个页中只有一个对象，而且还有一个不用使用的哑页。也不能保护栈。
 
-####胖指针（fat pointer）:
+#### 胖指针（fat pointer）:
 
 思想：更改指针表达，令其包含所指向对象在内存中的边界信息。
 
@@ -198,11 +198,11 @@ int *ptr = malloc(sizeof(int) * 2);while(1){     *ptr = 42;    <———    
 
 后面会详细介绍一种边界检查方案：Baggy。
 
-###对策3：不可执行内存
+### 对策3：不可执行内存
 
 硬件支持对内存读、写、执行的权限说明。例如，AMD的NX位，Intel的XD位，Windows DEP（Data Execution Prevention），Linux的Pax。可将栈标记为不可执行。一些系统强制“W^X”，即可写和可执行不能同时存在，但也不支持动态生成代码（同时需要写和执行）。详见[可执行空间保护](https://en.wikipedia.org/wiki/Executable_space_protection)。
 
-###对策4：随机化内存地址
+### 对策4：随机化内存地址
 
 许多攻击需要在shellcode中编入地址。这些地址通过gdb等工具获得。因此，可通过地址随机化令攻击者难以猜测地址。
 
@@ -224,7 +224,7 @@ int *ptr = malloc(sizeof(int) * 2);while(1){     *ptr = 42;    <———    
 
 ---
 
-##Baggy Bounds Checking
+## Baggy Bounds Checking
 
 阅读资料：[Baggy Bounds Checking (USENIX Security 2009)](supplyments/baggy-bound-checking-USENIX2009.pdf) [[online]](https://www.usenix.org/legacy/events/sec09/tech/full_papers/akritidis.pdf)
 
@@ -356,13 +356,13 @@ char *p = malloc(32);char *q = p + 32;char ch = *q;```
 
 ---
 
-##Blind Return-Oriented Programming
+## Blind Return-Oriented Programming
 
 阅读资料：[Hacking Blind (S&P 2014)](supplyments/blind-return-oriented-programming.pdf) [[Slides]](blind-return-oriented-programming-slides.pdf) [[online]](http://www.scs.stanford.edu/brop/bittau-brop-slides.pdf)
 
 假设目标系统实现了DEP和ASLR，那么缓冲区溢出攻击还能实施吗？如目标系统只实现了DEP而没有实现ASLR，可实施ROP攻击。若也实现了ASLR，则可实施BROP攻击。
 
-###ROP [(Blackhat08)](http://cseweb.ucsd.edu/~hovav/talks/blackhat08.html)
+### ROP [(Blackhat08)](http://cseweb.ucsd.edu/~hovav/talks/blackhat08.html)
 
 之前已经学习过Return-to-libc攻击，该攻击通过改写返回值，调用了libc中函数，绕过不可执行栈防御。ROP是一连串利用函数返回来操纵控制流的技术。例如，攻击者打算多次重复调用某个libc函数`func(char * str)`。首先，需要3个地址：
 
@@ -408,7 +408,7 @@ char *p = malloc(32);char *q = p + 32;char ch = *q;```
 - `pop/ret`执行：(2)被弹出栈，`esp`—>(3)；`ret`执行弹出栈顶（3)`func()`地址到`eip`，`esp`—>(4)
 - 重复之前过程，`func()`从`esp+4`—>(5)中读取参数执行
 
-###Blind ROP：
+### Blind ROP：
 
 若采用了ASLR，则地址被随机化难以确定函数和gadget地址来实现ROP。Blind ROP（BROP）能够在源代码未知、随机地址未知的条件下实施攻击。
 
@@ -418,7 +418,7 @@ BROP攻击分为三个阶段：
 2. BROP：寻找足够的gadget来调用`write()`
 3. 用`write()`获取二进制数据来寻找足够的gadget构造shellcode
 
-####第一阶段：读栈术
+#### 第一阶段：读栈术
 
 许多服务程序崩溃后自动重启，而每次重启时地址随机化结果是一致的，例如，Linux的[PIE（Position-independent executable）](https://en.wikipedia.org/wiki/Position-independent_code#PIE)机制，用`fork()`来产生新服务进程，而不是`execve()`。由于`fork()`拷贝父进程地址空间，尽管地址布局未知，但每次子进程重启后地址布局都是相同的。
 
@@ -429,7 +429,7 @@ BROP攻击分为三个阶段：
 
 一旦猜测正确，记录已经猜出的值，继续猜测新位置的值。以此读取canary和返回地址等敏感信息。
 
-####第二阶段：BROP
+#### 第二阶段：BROP
 
 **第1步： 寻找一个stop gadget**
 
@@ -499,11 +499,11 @@ stop gadget是一个指向令程序停止代码（例如`sleep()`）的返回地
 ```gaspop edi; ret (socket)pop esi; ret (buffer)pop edx; ret (length)pop eax; ret (write syscall number)
 syscall
 ```
-####第三阶段：构造shellcode
+#### 第三阶段：构造shellcode
 
 至此，攻击者利用BROP来攻击web服务器，通过`write()`将服务器数据和代码地址作为参数，将敏感内容写入与攻击者客户端相连的socket，发送给攻击者。攻击者由此发现更多的gadget来构造shellcode。
 
-####防御Blind BROP
+#### 防御Blind BROP
 
 每次服务崩溃重新随机化canary和地址空间！
 

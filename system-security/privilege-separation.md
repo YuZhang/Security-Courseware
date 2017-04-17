@@ -1,13 +1,13 @@
-# 特权分离
+#  特权分离
 
-###哈尔滨工业大学 网络与信息安全 张宇 2016
+### 哈尔滨工业大学 网络与信息安全 张宇 2016
 
 ---
 
 本节课学习特权分离概念，一种web服务器安全体系OKWS。
 
 
-##访问控制
+## 访问控制
 
 [访问控制（access control (AC)）](https://en.wikipedia.org/wiki/Access_control)：对资源消耗，访问，使用的的选择性限制。
 
@@ -53,7 +53,7 @@ symlink("/etc/passwd", "file");
 ```
 
 
-##UNIX操作系统中的特权
+## UNIX操作系统中的特权
 
 [特权（privilege）](https://en.wikipedia.org/wiki/Privilege_(computing))：允许用户（主体）对一个计算机系统（客体）执行特定操作的授权。
 
@@ -133,7 +133,7 @@ Unix系统采用强制访问控制，**‘root’**特权用户（UID=0）拥有
 
 [**最小特权原则（principle of least privilege）**](https://en.wikipedia.org/wiki/Principle_of_least_privilege)：限制每个主体只具有执行合法操作所必须的最小特权。
 
-##特权分离
+## 特权分离
 
 参考文献：[Preventing Privilege Escalation (USENIX Security 2003)](http://www.citi.umich.edu/u/provos/papers/privsep.pdf)
 
@@ -151,7 +151,7 @@ Unix系统采用强制访问控制，**‘root’**特权用户（UID=0）拥有
 
 ---
 
-##OKWS
+## OKWS
 
 参考文献：[Building Secure High-Performance Web Services with OKWS (USENIX ATC 2004) [local]](supplyments/okws.pdf)
 

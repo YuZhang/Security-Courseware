@@ -1,10 +1,10 @@
-#缓冲区溢出：原理与实验
+# 缓冲区溢出：原理与实验
 
-###哈尔滨工业大学 网络与信息安全 张宇 2016
+### 哈尔滨工业大学 网络与信息安全 张宇 2016
 
 ---
 
-##背景知识
+## 背景知识
 
 **预备知识**: Linux，x86体系结构，x86汇编，C语言，gdb
 
@@ -101,12 +101,12 @@ low  —————>  high address
 	- 执行`ret`指令（`pop %eip`）
 
 ---
-##栈缓冲区溢出
+## 栈缓冲区溢出
 
 研究一个存在缓冲区溢出漏洞的程序`readreq.c`，该程序读入用户输入的数字后，打印输出。
 
 ``` c
-#include <stdio.h>
+# include <stdio.h>
 
 int read_req(void) {
     char buf[128];
@@ -419,7 +419,7 @@ main (ac=<error reading variable: Cannot access memory at address 0x41414149>,
 
 本节课中熟悉实验环境，分析一个Web服务器的逻辑，寻找缓冲区溢出漏洞并触发该漏洞。
 
-## 实验预备
+##  实验预备
 
 实验资料见[MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)中Lab 1。
 
@@ -489,7 +489,7 @@ httpd     4454  4448  0 15:44 pts/3    S+     0:00 zookfs-exstack 6
 
 ---
 
-##HTTP简介
+## HTTP简介
 
 参考资料：[How the web works: HTTP and CGI explained](supplyments/How-the-web-works.pdf)
 
@@ -537,7 +537,7 @@ Content-type: text/html
 
 ---
 
-### 寻找漏洞
+###  寻找漏洞
 
 缓冲区溢出存在的要素：数组（字符串），串处理/读取函数（写操作）。
 
@@ -654,7 +654,7 @@ http.c:107:    envp += sprintf(envp, "REQUEST_URI=%s", reqpath) + 1;
 zookd.c:70:    if ((errmsg = http_request_line(fd, reqpath, env, &env_len)))
 ```
 ---
-## 触发漏洞
+##  触发漏洞
 
 首先，该漏洞必须能改写栈中的一个返回地址；其次，改写一些数据结构来用于夺取程序的控制流。撰写触发该漏洞的程序，并验证改程序可以导致web服务器崩溃（通过`dmesg | tail`, 使用`gdb`, 或直接观察）。
 
@@ -686,9 +686,9 @@ HTTP/1.0 200 OK      <-- HTTP版本号，状态代码
 我们发现了可由我们控制的用户输入，客户端请求位于下面代码中： 
 
 ``` python
-## This is the function that you should modify to construct an
-## HTTP request that will cause a buffer overflow in some part
-## of the zookws web server and exploit it.
+##  This is the function that you should modify to construct an
+##  HTTP request that will cause a buffer overflow in some part
+##  of the zookws web server and exploit it.
 
 def build_exploit(shellcode):
     ## Things that you might find useful in constructing your exploit:
@@ -941,9 +941,9 @@ $9 = 1024
 Program received signal SIGSEGV, Segmentation fault.
 0x41414141 in ?? ()
 (gdb) bt
-#0  0x41414141 in ?? ()
-#1  0x080495e8 in http_serve (fd=3, name=0x80510b4 "/", 'A' <repeats 199 times>...) at http.c:296
-#2  0x08048d00 in main (argc=<error reading variable: Cannot access memory at address 0x41414149>,
+# 0  0x41414141 in ?? ()
+# 1  0x080495e8 in http_serve (fd=3, name=0x80510b4 "/", 'A' <repeats 199 times>...) at http.c:296
+# 2  0x08048d00 in main (argc=<error reading variable: Cannot access memory at address 0x41414149>,
     argv=<error reading variable: Cannot access memory at address 0x4141414d>) at zookfs.c:39
 ```
 
@@ -951,7 +951,7 @@ Program received signal SIGSEGV, Segmentation fault.
 
 ---
 
-## 作业：寻找并触发漏洞
+##  作业：寻找并触发漏洞
 
 实验资料：[MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)中Lab 1。
 

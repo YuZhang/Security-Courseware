@@ -1,12 +1,12 @@
-#Web安全：Phishing与Clickjacking
+# Web安全：Phishing与Clickjacking
 
-###哈尔滨工业大学 网络与信息安全 张宇 2016
+### 哈尔滨工业大学 网络与信息安全 张宇 2016
 
 ---
 
 本课程学习Web用户所面临的安全问题，所涉及的攻击都是通过欺骗用户（通过浏览器）来实现的。
 
-##1. Phishing
+## 1. Phishing
 
 [Phishing（钓鱼）](https://en.wikipedia.org/wiki/Phishing)：通常通过电邮和短信等手段，诱骗受害者来访问攻击者所伪装的可信实体。
 
@@ -80,7 +80,7 @@ response_type=code&scope=get_user_info%2Cadd_share
 	- 通过另外的手段验证交易，例如短信验证
 	- 钓鱼攻击本质是用技术来攻击人的弱点，从技术角度无法彻底消除。最好的防御————多加小心！
 
-##2. Clickjacking
+## 2. Clickjacking
 
 [Clickjacking](https://en.wikipedia.org/wiki/Clickjacking)：也称作“User Interface redress attack”，欺骗用户鼠标点击一个对象，该对象与用户本以为要点击的不同。
 
@@ -100,7 +100,7 @@ response_type=code&scope=get_user_info%2Cadd_share
 - 关注某人，分享链接，点赞
 - 点击广告来产生pay per click收入
 
-###Framebluster
+### Framebluster
 
 参考资料：[Busting Frame Busting: a Study of Clickjacking Vulnerabilities on Popular Sites (IEEE Web 2.0 S&P workshop 2010)](supplyments/busting-frame.pdf) [[online]](http://seclab.stanford.edu/websec/framebusting/)
 
@@ -195,7 +195,7 @@ if (self === top) {
 
 若javascript被禁用，则缺省情况下网页不会被显示。
 
-###其他防御方案：
+### 其他防御方案：
 
 - [NoScirpt](https://en.wikipedia.org/wiki/NoScript)中的ClearClick功能阻止用户点击那些不可见或被修改的网页元素
 - X-Frame-Options：允许一个网页通过在HTTP应答头部添加新选项来说明frame策略 [RFC7034: HTTP Header Field X-Frame-Options](https://tools.ietf.org/html/rfc7034)

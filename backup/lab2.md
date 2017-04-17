@@ -1,10 +1,10 @@
 
 
-##Zoobar特权分离实验
+## Zoobar特权分离实验
 
 本实验学习如何在`zookws`和`zoobar`上应用特权分离，使得其中的bug不会令攻击者来转移zoobar到其账号。
 
-###实验准备
+### 实验准备
 
 `zoobar`应用在用户之间转移信贷，该功能通过`transfer.py`实现。下面启动并访问该服务：
 
@@ -35,9 +35,9 @@ $ sudo ./zookld zook.conf
 ```
 `zook.conf`中只包含一个HTTP服务`zookfs_svc`。通过`zookfs`程序实现。`chroot`到`/jail`中，其中包含可执行程序（除了`zookld`），支撑库，`zoobar`站点。详见`zook.conf`和`zookfs.c`。
 
-###利用Unix用户和权限实现特权分离
+### 利用Unix用户和权限实现特权分离
 
-####练习1：支持chroot和非特权用户
+#### 练习1：支持chroot和非特权用户
 启动精灵进程`zookld`读取`zook.conf`，设定所有服务在`root`下运行，绑定到特权端口80。
 
 在缺省配置中，`zookd`和有漏洞的服务**不正确地**在`root`下运行，`zookld`未jail相关进程。
@@ -50,7 +50,7 @@ $ sudo ./zookld zook.conf
 
 更改`zook.conf`来使用上述功能。`sudo make check`来验证更改的配置是否通过基本测试
 
-###练习2：拆分服务
+### 练习2：拆分服务
 
 改造`zookfs_svc`并更改`zook.conf`，将`zookfs_svc`分离成两个在不同用户下运行的服务：`static_svc`提供静态文件和`dynamic_svc`执行动态内容。
 
@@ -64,7 +64,7 @@ $ sudo ./zookld zook.conf
 
 用`sudo make check`来验证更改的配置是否通过基本测试。
 
-###RPC库
+### RPC库
 
 学习RPC库实现进程间通过Unix套接字通信。作为一个演示程序，在`zoobar/echo-server.py`中实现了一个简单的"echo"服务，该服务由`zookld`启动，服务配置在`zook.conf`中。
 
@@ -72,7 +72,7 @@ $ sudo ./zookld zook.conf
 
 包含了一个简单的客户端。访问`/zoobar/index.cgi/echo?s=hello`，请求被路由到`zoobar/echo.py`，该程序连接`/echosvc/sock`并启动echo操作。一旦从echo服务接收到应答，将返回一个包含应答的网页。这个客户端通过`rpclib`中`RpcClient`类的`call`方法实现。
 
-###分离login服务
+### 分离login服务
 
 目前攻击者利用漏洞可以从`person`数据库中获得所有用户口令。数据库在`zoobar/db/`中，所有Python代码都能够访问。
 
@@ -87,7 +87,7 @@ $ sudo ./zookld zook.conf
 
 使用加盐哈希函数来保存密码，哈希函数选择Python的[PBKDF2](https://www.dlitz.net/software/python-pbkdf2/)模块。大致上，用`pbkdf2.PBKDF2(passward, salt).hexread(32)`来焊锡口令。`pbkdf2.py`在`zoobar`目录。用`os.urandom`替代`random.random`来产生salt。
 
-###分离bank服务
+### 分离bank服务
 
 将`zoobar`账户信息分离到一个`Bank`数据库中，建立`bank_svc`服务，在新的`Bank`和`Transfer`数据库上实现。
 
@@ -107,7 +107,7 @@ $ sudo ./zookld zook.conf
 使用`sudo make check `来验证。
 
 
-##Python沙箱实验
+## Python沙箱实验
 
 zoobar应用需要被扩展来支持‘可执行profile’，该扩展允许用户使用Python代码作为其profile。当其他用户浏览该用户的Python profile，服务器会执行其中的代码来生成profile输出。由此，用户可在profile中实现不同功能：
 

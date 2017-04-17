@@ -1,15 +1,15 @@
-# 能力与沙箱
+#  能力与沙箱
 
 
-###哈尔滨工业大学 网络与信息安全 张宇 2016
+### 哈尔滨工业大学 网络与信息安全 张宇 2016
 
 ---
 
 本课程首先学习基于能力安全和沙箱的概念；然后学习一种能力+沙箱方案Capsicum。
 
-##基于能力的安全
+## 基于能力的安全
 
-###糊涂副手问题
+### 糊涂副手问题
 
 [环境权威（ambient authority）](https://en.wikipedia.org/wiki/Ambient_authority)：这是目前主流的访问控制形式，指权威在一个环境中被隐式行使。
 
@@ -28,7 +28,7 @@
 	- 编译器需要检查所有可能写入文件的权限与用户关系；收银员需要检查所有商品标签与商品是否相符；这能做到吗？有可能，但代价太大，容易有其他漏洞
 	- 问题本质是难以明确特权：编译器执行承担双重角色：编译器拥有者和用户；超市收银员承担双重工作：根据标签确定价格，检查标签是否和商品相符
 
-###基于能力的安全
+### 基于能力的安全
 
 [基于能力（capability）的安全](https://en.wikipedia.org/wiki/Capability-based_security) ：一个能力是一个可交换但不可伪造的权威令牌（token），实现为一个引用（reference）指向一个受保护对象及相关访问权利（right）。
 
@@ -55,7 +55,7 @@
 
 ---
 
-##沙箱
+## 沙箱
 
 [沙箱（sandbox）](https://en.wikipedia.org/wiki/Sandbox_(computer_security))：一种隔离运行程序的安全机制，常用于执行未测试或不可信程序，避免对操作系统或主机安全造成威胁，可被看做是虚拟化(virtualization)技术的一个特例。
 
@@ -94,7 +94,7 @@
 
 ---
 
-##Capsicum
+## Capsicum
 
 参考资料：[Capsicum: practical capabilities for UNIX (USENIX Security 2010) [local]](supplyments/Capsicum.pdf)
 
@@ -104,13 +104,13 @@
 - 可逐渐修改应用程序来采用该框架
 - 需要微内核体系和纯消息传递设计
 
-###能力模式
+### 能力模式
 - 通过新的`cap_enter`系统调用设置一个进程凭据标记
 - 标记被所有后代进程继承，无法清除
 - 能力模式的进程无法访问全局名字空间（例如PID，文件路径，协议地址，IPC，系统时钟等等），例如文件系统和PID名字空间，以及若干系统管理接口（`/dev`, `ioctl`, `reboot`, `kldload`）
 - 受限的系统调用（`sysctl`, `shm_open`）只允许创建匿名内存对象；只能操作给定文件描述符下的对象
 
-### 能力
+###  能力
 - 通过文件描述符（fd）表示
 - fd是不可伪造的授权token, 可被子进程继承或IPC传递
 - `cap_new`系统调用在一个存在的fd和一个权力（right）掩码上创建一个能力
@@ -118,14 +118,14 @@
 - 能力通过fd作为`openat`等系统调用参数来传递，禁止绝对路径，“..”路径，`AT_FDCWD`
 - 通过`fexecve`使用setuid和setgid来禁止特权提升
 
-###运行时环境：
+### 运行时环境：
 - 通过`libcapsicum`库API创建沙箱
 - 通过`cap_enter`来切断对全局名字空间的访问
 - 关闭未授权的文件描述符
 - 通过`fexecve`来清洗地址空间
 - 沙箱返回一个UNIX domain套接字用于与主机通信，或获得额外权利
 
-###应用于TCPDUMP例子
+### 应用于TCPDUMP例子
 - `tcpdump`将一个模式编译为一个BPF过滤器，配置一个BPF设备为输入源，将捕到的包输出为文本
 - 沙箱化：先以环境特权获得资源，之后进入能力模式
 
@@ -153,7 +153,7 @@
   1272 tcpdump CALL  open(0x80092477c,O_RDONLY,<unused>0x1b6)  1272 tcpdump NAMI  "/etc/resolv.conf"  1272 tcpdump RET   connect -1 errno 78 Function not implemented  1272 tcpdump CALL  socket(PF_INET,SOCK_DGRAM,IPPROTO_UDP)  1272 tcpdump RET   socket 4  1272 tcpdump CALL  connect(0x4,0x7fffffffe080,0x10)  1272 tcpdump RET   connect -1 errno 78 Function not implemented
 ```
 
-###应用于GZIP的例子
+### 应用于GZIP的例子
 
 - `gzip`以环境用户特权运行，没有隔离机制
 - 分离两部分代码：
@@ -170,11 +170,11 @@
 	- Principle of Least Authority Shell (PLASH)：shell以环境特权运行，管道组件沙箱化；这适合`gzip`以管道方式运行，但以非管道方式运行时需要一些环境特权
 	- 沙箱化库`libz`：问题是`libz`提供基于buffer的API，通过RPC传递代价较高
 
-##Google Chromium沙箱
+## Google Chromium沙箱
 
 参考资料：[The Chromium Projects - Sandbox](https://www.chromium.org/developers/design-documents/sandbox)
 
-###设计原则
+### 设计原则
 
 - 不要重新发明车轮：利用操作系统现有安全机制
 	- 虽然用更好的安全模型来扩展OS内核看上去很诱人，但千万不要！
@@ -192,12 +192,12 @@
 	- 仿真和虚拟机解决方案本身并不提供安全
 	- 沙箱不应该依赖于代码仿真，代码转换，或打补丁来提供安全
 
-###Linux沙箱技术
+### Linux沙箱技术
 
 采用多进程模型，为浏览器中不同部分分配不同特权。用于Zygote进程（渲染器，[PPAPI](https://en.wikipedia.org/wiki/Google_Native_Client#Pepper)，[NaCl](https://en.wikipedia.org/wiki/Google_Native_Client)，等）。[[参考]](https://chromium.googlesource.com/chromium/src/+/master/docs/linux_sandboxing.md)
 
 
-####分层法
+#### 分层法
 
 - Layer-1 (“语义层（semantics）”)： 采用setuid（旧内核）和namespaces（新内核）沙箱阻止进程访问绝大多数资源
 	- 用于保证运行不同Seccomp-BPF策略的进程完整性
@@ -208,7 +208,7 @@
 	- 与Layer-1一起沙箱化GPU进程 
 - 曾经采用，被已废弃的技术：Seccomp-legacy, SELinux, Apparmor
 
-####在实现Chromium浏览器时比较（来自[Capsicum 2004](supplyments/Capsicum.pdf)）：
+#### 在实现Chromium浏览器时比较（来自[Capsicum 2004](supplyments/Capsicum.pdf)）：
 
 ```
 OS        Model        Loc       Description

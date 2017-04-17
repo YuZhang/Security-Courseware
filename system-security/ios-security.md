@@ -1,6 +1,6 @@
-# 移动系统安全
+#  移动系统安全
 
-###哈尔滨工业大学 网络与信息安全 张宇 2016
+### 哈尔滨工业大学 网络与信息安全 张宇 2016
 
 ---
 
@@ -13,7 +13,7 @@
 [[online]](http://jndok.github.io/2016/10/04/pegasus-writeup/) [[POC]](https://github.com/jndok/PegasusX)
 - [iOS Hackers Handbook](https://www.amazon.com/iOS-Hackers-Handbook-Charlie-Miller/dp/1118204123)
 
-##iOS安全体系结构
+## iOS安全体系结构
 
 
 ```
@@ -72,9 +72,9 @@
 - DEP（数据执行保护）：不允许数据被执行
 - 沙箱：提供更细粒度的隔离
 
-##系统安全
+## 系统安全
 
-###安全启动链（Secure Boot Chain）
+### 安全启动链（Secure Boot Chain）
 
 1. 启动 -- 执行 --> Boot ROM (只读存储，作为硬件信任根)
 2. -- 包含 --> Apple Root CA公钥
@@ -87,7 +87,7 @@
 - 基带子系统和Secure Enclave采用类似的安全启动方案
 - [**Pwnage漏洞**](https://www.theiphonewiki.com/wiki/Pwnage)：iPhone，iPod touch和iPhone 3G中，Boot ROM没有检查LLB签名
 
-###系统软件授权（System Software Anthorization）
+### 系统软件授权（System Software Anthorization）
 
 - SSA保证系统完整性 并 阻止降级安装系统
 - iOS更新安装过程中，连接到安装授权服务器，发送:
@@ -98,7 +98,7 @@
 - 加入ECID是为了“个性化”授权，令一个设备上的旧版本iOS不能拷贝到其他设备
 - **漏洞**：iOS 3和4中，没有包括nonce，可被重放攻击来降级恢复到旧版本
 
-###KPP
+### KPP
 
 KPP（Kernel Patch Protection）防止运行时内核被篡改
 
@@ -111,7 +111,7 @@ ARMv8-A架构定义了四个例外层级，分别为EL0到EL3，其中数字越�
 
 KPP就是运行在Application Process的EL3中，目的是用来保证：只读的页不可修改、page table不可修改、执行页不可修改。
 
-###安全飞地（Secure Enclave）
+### 安全飞地（Secure Enclave）
 
 - Secure Enclave（SE）是Apple A7及后继处理的协处理器
 - 加密存储，硬件随机数产生器，实现Data Protection密钥管理和完整性的全部密码学操作
@@ -120,7 +120,7 @@ KPP就是运行在Application Process的EL3中，目的是用来保证：只读�
 	- 处理器不能读取数据，因为采用了一个会话密钥来加密并认证数据（密码学方案[AES-CCM](https://en.wikipedia.org/wiki/CCM_mode)）
 	- 会话密钥来自于Touch ID传感器和Secure Encalve基于共享密钥的协商
 
-###Touch ID
+### Touch ID
 
 - 用于解锁屏幕，从iTunes Store购物，第三方app认证，Keychain认证
 - 比passcode更安全，更方便
@@ -136,9 +136,9 @@ KPP就是运行在Application Process的EL3中，目的是用来保证：只读�
 		- 被SE在48小时后丢弃
 		- Touch ID识别失败5次
 
-##加密和数据保护
+## 加密和数据保护
 
-###硬件安全特征
+### 硬件安全特征
 
 为提高速度并节能，iOS设备中包含一个专用AES256密码学引擎，位于闪存和主系统内存之间DMA路径上
 
@@ -153,7 +153,7 @@ KPP就是运行在Application Process的EL3中，目的是用来保证：只读�
 	- 密钥在SE内生成，使用基于多环震荡器与CTR_DRB算法的硬件随机数生成器
 - 密钥删除：可抹去存储器（Effaceable Storage）直接访问底层存储技术来删除少量块数据
 
-###文件数据保护
+### 文件数据保护
 
 数据保护（Data Protection，DP）通过构造和管理一个密钥层级实现，在硬件加密技术之上构建。
 
@@ -186,7 +186,7 @@ KPP就是运行在Application Process的EL3中，目的是用来保证：只读�
 
 优点：层次化密钥方案提供了灵活性，改变passcode只需重新封装CK，改变文件class只需重新封装FK。
 
-###Passcode
+### Passcode
 
 - 一旦设定passcode，自动启用数据保护功能
 - passcode与UID混合
@@ -194,7 +194,7 @@ KPP就是运行在Application Process的EL3中，目的是用来保证：只读�
 - Touch ID是一种更方便，但更强大的passcode
 - 可以设定连续10次passcode错误后，删除所有数据
 
-###数据保护类（Data Protection classes）
+### 数据保护类（Data Protection classes）
 
 - 完全保护（Complete Protection）：
 	- CK被由UID和passcode得到密钥来加密保护
@@ -217,7 +217,7 @@ KPP就是运行在Application Process的EL3中，目的是用来保证：只读�
 	- 只使用UID来保护CK，并将封装的CK存储在ES中
 	- 主要目的是方便实现快速删除
 
-###密钥链数据保护（Keychain Data Protection）
+### 密钥链数据保护（Keychain Data Protection）
 
 许多应用需要处理口令和小块的敏感数据，例如密钥和登录令牌。Keychain提供了一种安全存储方案。
 
@@ -228,7 +228,7 @@ KPP就是运行在Application Process的EL3中，目的是用来保证：只读�
 	- iOS创建的一些条目，例如Wi-Fi口令，邮箱账户，社交网络账号令牌，采用PUFUA类
 - Keychain可以采用ACL来设置访问和认证策略
 
-###密钥包（Keybags）
+### 密钥包（Keybags）
 
 在Keybag中管理文件和Keychain DP类密钥。
 
@@ -240,9 +240,9 @@ KPP就是运行在Application Process的EL3中，目的是用来保证：只读�
 	- iCloud backup：与backup类似，其中的类密钥都是非对称的，类似PUO类
 		- 为什么用非对称？因为假设iCloud上不可信的
 
-##App安全
+## App安全
 
-###App代码签名
+### App代码签名
 
 - 强制代码签名将信任链概念从操作系统扩展到App
 - 设备自带应用，例如Mail和Safari，由Apple签名
@@ -253,7 +253,7 @@ KPP就是运行在Application Process的EL3中，目的是用来保证：只读�
 
 [Sandjacking攻击](https://threatpost.com/sandjacking-attack-puts-ios-devices-at-risk-to-rogue-apps/118375/)：
 
-###运行时进程安全
+### 运行时进程安全
 
 - 所有第三方App被沙箱化，被随机分配一个唯一目录，只能访问自己的文件
 - 基于TrustedBSD框架的强制访问控制（类似seccomp）
@@ -272,7 +272,7 @@ KPP就是运行在Application Process的EL3中，目的是用来保证：只读�
 - 沙箱（访问控制）不能完全阻止软件恶意行为：
 	- [XcodeGhost攻击](https://en.wikipedia.org/wiki/XcodeGhost)：2015年9月，阿里巴巴发现国内下载的Xcode中被插入恶意代码，凡是用篡改后的Xcode编译的App都会将设备和用户信息上传到攻击者服务器。防御方法是检查Xcode真伪并开启[Gatekeeper](https://en.wikipedia.org/wiki/Gatekeeper_(macOS))
 
-###扩展（Extension）
+### 扩展（Extension）
 
 iOS允许一个App通过Extension为其他App提供功能，扩展是一个专用被签名的可执行文件。
 
@@ -288,7 +288,7 @@ iOS允许一个App通过Extension为其他App提供功能，扩展是一个专�
 	- 不能访问运行撤销键入数据的API
 - 定制键盘开发者可以申请开放访问（Open Access），在用户同意后可在缺省沙箱内运行 
 
-###附件
+### 附件
 
 MFi（Made for iPhone/iPod/iPad）许可计划为附件制造商提供了iAP（iPod Accessories Protocol）和必要的支撑硬件组件。
 
@@ -302,7 +302,7 @@ MFi（Made for iPhone/iPod/iPad）许可计划为附件制造商提供了iAP（i
 
 ---
 
-##“三叉戟”攻击与Pegasus
+## “三叉戟”攻击与Pegasus
 
 参考资料：
 
@@ -317,7 +317,7 @@ MFi（Made for iPhone/iPod/iPad）许可计划为附件制造商提供了iAP（i
 - 记录活动：基于Cydia Substrate实现对手机活动的全面记录
 - 数据渗漏（Exfiltration）：攻击负载灯塔与C&C服务器间通过HTTPS伪装gmail信息来通信；窃取的数据通过PATN (Pegasus Anonymizing Transmission Network）回传给Pegasus数据服务器
 
-###三叉戟漏洞
+### 三叉戟漏洞
 
 参考资料：[Analysis and exploitation of Pegasus kernel vulnerabilities](supplyments/Pegasus.pdf) 
 [[online]](http://jndok.github.io/2016/10/04/pegasus-writeup/) [[POC]](https://github.com/jndok/PegasusX)
@@ -328,11 +328,11 @@ MFi（Made for iPhone/iPod/iPad）许可计划为附件制造商提供了iAP（i
 
 下面介绍攻击原理，具体代码和攻击细节与实际情况不一定相符。
 
-####CVE-2016-4657 —— Webkit内存漏洞
+#### CVE-2016-4657 —— Webkit内存漏洞
 
 点击攻击链接，打开Safari并下载恶意JavaScript，触发Safari WebKit中内存漏洞来在Safari上下文环境里执行任意代码。目前（截止20161024），该漏洞尚未完全披露。
 
-####CVE-2016-4655 –– 内核信息泄露（Kernel Info-Leak）
+#### CVE-2016-4655 –– 内核信息泄露（Kernel Info-Leak）
 
 [KASLR](https://www.theiphonewiki.com/wiki/Kernel_ASLR)用于抵御ROP攻击，由iBoot实现内核映像基址（base）的随机化：
 
@@ -404,7 +404,7 @@ case kOSSerializeNumber:
 
 从泄露的内存中读取函数返回地址后，计算滑动量。
 
-####CVE-2016-4656 –– 内核释放后使用（Kernel Use-After-Free）
+#### CVE-2016-4656 –– 内核释放后使用（Kernel Use-After-Free）
 
 [UAF（也称为“Dangling pointer”）](https://en.wikipedia.org/wiki/Dangling_pointer)漏洞是指堆中一块内存被释放后，指向该内存的指针仍被后续程序使用，导致异常。例如利用伪造C++中虚表（vtable）指针来夺取控制流。
 

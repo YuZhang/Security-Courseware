@@ -1,12 +1,12 @@
-#缓冲区溢出：漏洞利用
+# 缓冲区溢出：漏洞利用
 
-###哈尔滨工业大学 网络与信息安全 张宇 2016
+### 哈尔滨工业大学 网络与信息安全 张宇 2016
 
 ---
 
 本节课学习shellcode原理，并利用漏洞在服务器上运行shellcode，以及return-to-libc攻击。
 
-##Shellcode原理
+## Shellcode原理
 
 参考资料：[Smashing The Stack For Fun And Profit](supplyments/Smashing-The-Stack-For-Fun-And-Profit.pdf) [[online]](http://phrack.org/issues/49/14.html#article)
 
@@ -15,7 +15,7 @@
 下面是一个C语言程序启动shell的例子。
 
 ``` c
-#include <stdio.h>void main() {   char *name[2];   name[0] = "/bin/sh";   name[1] = NULL;
+# include <stdio.h>void main() {   char *name[2];   name[0] = "/bin/sh";   name[1] = NULL;
    /* int execve(const char *filename, char *const argv[],
           char *const envp[]);   */   execve(name[0], name, NULL);
    exit(0);}
@@ -73,12 +73,12 @@ low address         <———— stack growth ————              high ad
 查看完整的shellcode代码`shellcode.S`：
 
 ``` gas
-#include <sys/syscall.h>                /* 系统调用编号表 */
+# include <sys/syscall.h>                /* 系统调用编号表 */
 
-#define STRING  "/bin/sh"               /* 执行命令字符串 */
-#define STRLEN  7                       /* 字符串长度 */
-#define ARGV    (STRLEN+1)              /* execve()参数2相对于string的偏移量 */
-#define ENVP    (ARGV+4)                /* execve()参数3相对于string的偏移量 */
+# define STRING  "/bin/sh"               /* 执行命令字符串 */
+# define STRLEN  7                       /* 字符串长度 */
+# define ARGV    (STRLEN+1)              /* execve()参数2相对于string的偏移量 */
+# define ENVP    (ARGV+4)                /* execve()参数3相对于string的偏移量 */
                                         /* argv末尾元素和envp复用同一地址 */
 .globl main                             /* 令符号main对ld和其他程序可见 */
         .type   main, @function         /* 设置符号main的类型为函数 */
@@ -156,7 +156,7 @@ $
 ```
 ---
 
-##代码注入
+## 代码注入
 
 利用之前的漏洞将shellcode注入到web服务器并启动shell。回顾之前的漏洞触发过程：
 
@@ -267,7 +267,7 @@ def build_exploit(shellcode):
 
 ---
 
-## Return-to-libc攻击
+##  Return-to-libc攻击
 
 参考资料：[Bypassing non-executable-stack during exploitation using return-to-libc](http://css.csail.mit.edu/6.858/2014/readings/return-to-libc.pdf)
 
@@ -420,11 +420,11 @@ __GI_exit (status=16843009) at exit.c:103
 
 ---
 
-##作业：删除敏感文件
+## 作业：删除敏感文件
 
 实验资料：[MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)中Lab 1。
 
-####1. 可执行栈上shellcode攻击
+#### 1. 可执行栈上shellcode攻击
 
 利用缓冲区溢出漏洞将shellcode注入到web服务器，删除一个敏感文件`/home/httpd/grades.txt`。主要任务是构造一个新的shellcode。
 
@@ -439,7 +439,7 @@ __GI_exit (status=16843009) at exit.c:103
 
 将攻击程序命名为`exploit-3.py`，用`make check-exstack`来检查攻击是否成功。
 
-####2. 不可执行栈上return-to-libc攻击
+#### 2. 不可执行栈上return-to-libc攻击
 
 在栈不可执行的web服务器上，采用return-to-libc攻击删除敏感文件`/home/httpd/grades.txt`。
 

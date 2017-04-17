@@ -1,6 +1,6 @@
-#TCP/IP安全
+# TCP/IP安全
 
-###哈尔滨工业大学 网络与信息安全 张宇 2016
+### 哈尔滨工业大学 网络与信息安全 张宇 2016
 
 ---
 
@@ -10,9 +10,9 @@
 
 本节课学习这些安全问题，并了解一些最近的进展。
 
-##1. TCP序列号预测
+## 1. TCP序列号预测
 
-###初始序列号猜测攻击
+### 初始序列号猜测攻击
 
 参考资料： [RFC6528: Defending against Sequence Number Attacks (2012)](https://tools.ietf.org/html/rfc6528)
  
@@ -48,9 +48,9 @@ X——>S :            ACK(ISN_S+1), SRC=T      —————> +————�
 		- `secretkey`在重启时、一段时间后、充分使用后，需更换
 		- 攻击者先连接一次获得的ISN用处不大，因为`sip`和`sport`与受害者不同
 
-###Blind In-Window Attacks
+### Blind In-Window Attacks
 
-####在传统TCP上的攻击
+#### 在传统TCP上的攻击
 
 ```
  +—————+      +—————+      +—————+     
@@ -68,7 +68,7 @@ X——>S :            ACK(ISN_S+1), SRC=T      —————> +————�
 - ++额外知道ACK号`ACK#`，实施DATA攻击注入数据
 - 上述攻击可能实现，因为许多TCP长连接，例如BGP会话，的四元组较易被猜测，且高带宽延迟乘积连接的接收窗口范围很大
 
-####RFC5961的防御方案：
+#### RFC5961的防御方案：
 
 参考资料：[RFC5961: Improving TCP's Robustness to Blind In-Window Attacks (2010)](https://tools.ietf.org/html/rfc5961)
 
@@ -113,7 +113,7 @@ DATA  ————————————————————————�
 	- 若接收+挑战窗口（原接收窗口）外，则丢弃 
 - **为避免挑战ACK机制占用过多资源，设定单位时间内挑战ACK包数上限**
 
-####基于全局速率限制的攻击技术
+#### 基于全局速率限制的攻击技术
 
 参考资料：[Off-Path TCP Exploits: Global Rate Limit Considered Dangerous (USENIX Security 2016)](supplyments/tcp-hijacking.pdf) [[online]
 (https://www.usenix.org/conference/usenixsecurity16/technical-sessions/presentation/cao)]
@@ -157,9 +157,9 @@ Sender     <———————————————    Reciever
 
 - 防御方案：随机，特别大，移除全局C-ACK速率限制（2016年7月Linux内核4.7上补丁）
 		
-##2. 路由安全
+## 2. 路由安全
 
-####源路由（source routing）攻击：
+#### 源路由（source routing）攻击：
 
 - IP loose source and record route (LSRR) 选项（参考[RFC1812:   Requirements for IP Version 4 Routers](https://tools.ietf.org/html/rfc1812)）可指定包经过路径/返回路径
 	- 源地址始终为最初发包者，目的地址在每一跳都更新为LSRR选项中下一地址
@@ -181,17 +181,17 @@ Sender     <———————————————    Reciever
 - 防御：禁止LSRR
 
 
-####其他路由相关攻击
+#### 其他路由相关攻击
 
 - [RIP协议](https://en.wikipedia.org/wiki/Routing_Information_Protocol)中伪造路由消息
 - [ICMP](https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol)重定向攻击，目标不可达，TTL超时等等
 - [BGP安全](bgp-sec.pptx)后面课程会学习
 
-##3. “认证”服务器
+## 3. “认证”服务器
 
 一种替代基于地址的认证的方法是使用“认证服务器”。该认证服务器为客户提供认证服务，与其他服务器进行认证。显然，通过其他机器来实现认证不是好主意！
 
-##4. 龙出没
+## 4. 龙出没
 
 - [finger协议](https://en.wikipedia.org/wiki/Finger_protocol)所提供的用户信息，例如姓名、电话号码，可能被口令破解器所利用
 - 电子邮件中发件人地址缺乏认证，邮件内容缺乏保护
@@ -202,19 +202,19 @@ Sender     <———————————————    Reciever
 - 远程启动认证：RARP+TFTP，BOOTP+TFTP，DHCP
 - [DNS安全](dns-sec.pptx)后面课程会学习
 
-##5. 简单攻击
+## 5. 简单攻击
 
 - 局域网内：窃听，ARP欺骗，广播风波（1个ICMP echo触发N个reply）
 - TFTP无认证
 - 特权端口只能被分配给特权进程，但以此作为认证机制的一部分并不安全
 
-##6. 全面防御
+## 6. 全面防御
 
 - 认证：密码学与TCP/IP结合
 - 加密：链路级加密，TCP
 - [可信系统（Trusted System）](https://en.wikipedia.org/wiki/Trusted_system)：用于实现特定安全策略的系统
 
-##7. 结论与反思
+## 7. 结论与反思
 
 - 1989年互联网简单的多，友好的多。今天的关键问题不是认证（authentication），而是授权（authorization）:如何知道某一方是否允许行使某一行为？
 - 多数安全问题源于有bug的代码

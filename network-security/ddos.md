@@ -1,10 +1,10 @@
-#DDoS（分布式拒绝服务）攻防
+# DDoS（分布式拒绝服务）攻防
 
-###哈尔滨工业大学 网络与信息安全 张宇 2016
+### 哈尔滨工业大学 网络与信息安全 张宇 2016
 
 ---
 
-##1. DDoS事件
+## 1. DDoS事件
 
 US-CERT定义的DoS攻击症状：网络性能恶化、特定网站不可用、不能访问任意网站、垃圾邮件数量激增、网络连接中断、长期决绝访问或任何互联网服务。
 
@@ -20,15 +20,15 @@ US-CERT定义的DoS攻击症状：网络性能恶化、特定网站不可用、�
 
 [Qsmind DDoS攻击年鉴](http://www.qsmind.com/index.html)
 
-##2. 攻击分类 
+## 2. 攻击分类 
 
 参考资料：[RFC4732: Internet Denial-of-Service Considerations (2006)](https://tools.ietf.org/html/rfc4732)
 
-###攻击链路
+### 攻击链路
 
 - 直接发送大量流量令链路拥塞，导致关键服务或路由故障
 
-###攻击末端系统
+### 攻击末端系统
 
 - 利用软件漏洞
 	- [Ping of death](https://en.wikipedia.org/wiki/Ping_of_death)攻击发送大于65535字节的ping包（ICMP echo request），导致接收方在IP分片重组时缓冲区溢出
@@ -55,7 +55,7 @@ US-CERT定义的DoS攻击症状：网络性能恶化、特定网站不可用、�
 	- [HOIC高轨道离子炮](https://en.wikipedia.org/wiki/High_Orbit_Ion_Cannon)：2012年开发以取代LOIC，匿名者用其攻击美国司法部
 
 --
-###Shrew Attack
+### Shrew Attack
 
 Shrew（鼩鼱，qu2jing1，一种像老鼠的有毒小动物）
 
@@ -125,7 +125,7 @@ Shrew（鼩鼱，qu2jing1，一种像老鼠的有毒小动物）
 
 --
 
-###攻击路由器
+### 攻击路由器
 
 [何为'数字大炮'？](http://blog.hit.edu.cn/yuzhang/post/4.html)
 
@@ -147,11 +147,11 @@ NDSS'2007上的文章提出，利用针对TCP的低速DoS攻击，使得一对BG
 
 综上，‘数字大炮’是媒体的一种渲染，其原理是通过DoS攻击来打断BGP会话，引发路由摆动。
 
-###攻击进行中的通信
+### 攻击进行中的通信
 
 例如在前面学习的TCP重置和劫持攻击
 
-###利用受害者本身的资源攻击
+### 利用受害者本身的资源攻击
 
 一个例子是利用[UDP echo](https://en.wikipedia.org/wiki/Echo_Protocol)和[UDP chargen](https://en.wikipedia.org/wiki/Character_Generator_Protocol)服务器：
 
@@ -160,7 +160,7 @@ NDSS'2007上的文章提出，利用针对TCP的低速DoS攻击，使得一对BG
 
 攻击者将源地址伪造为chargen服务器地址，向受害者echo端口发送一个包，echo应答又触发chargen服务器发送一个包，导致两台机器“打乒乓球”。
 
-###攻击本地主机或设施
+### 攻击本地主机或设施
 
 - 耗尽DHCP服务中地址池，伪造DHCP应答
 - ARP伪造；伪造ARP应答；伪造MAC地址
@@ -169,22 +169,22 @@ NDSS'2007上的文章提出，利用针对TCP的低速DoS攻击，使得一对BG
 	- 在非特许频段上采用CSMA/CA方式，会发生信源干扰，易于被无线电拥塞攻击
 	- 链路自动配置中漏洞，伪造Beacon帧，伪造/干扰认证/解认证（authentication）、连接/解连接(assocaition)等
 
-###通过DNS攻击站点
+### 通过DNS攻击站点
 
 - 直接攻击权威服务器，攻击根服务器
 - 之前学习的DNS缓存下毒
 
-###攻击防火墙/IDS
+### 攻击防火墙/IDS
 
 - 防火墙/IDS分为有状态和无状态两类，防火墙故障通常引起断网
 	- 对于有状态，可通过构造病态流量令内存过载
 	- 对于无状态，可简单以大流量来耗尽处理资源
 - 对于反应型IDS，以受害者身份伪造攻击流量，令IDS封堵受害者
 
-###物理DoS
+### 物理DoS
 - 2015年5月27日支付宝故障是由于杭州市萧山区某地光纤被挖断
 
-###垃圾邮件与黑洞列表
+### 垃圾邮件与黑洞列表
 
 - 大量垃圾邮件是对邮件系统的DoS
 - 黑洞列表包括发送垃圾邮件的拨号ISP和邮件服务器IP地址。攻击者伪装为受害者发送垃圾邮件，令未发送垃圾邮件的受害者加入黑洞列表中
@@ -192,9 +192,9 @@ NDSS'2007上的文章提出，利用针对TCP的低速DoS攻击，使得一对BG
 
 ---
 
-##攻击放大器
+## 攻击放大器
 
-###攻击
+### 攻击
 
 - [smurf攻击](https://en.wikipedia.org/wiki/Smurf_attack)：伪造受害者源地址+ICMP echo request发送到子网广播地址
 - DNS放大：伪造受害者源地址发送查询+应答包远大于查询包
@@ -208,13 +208,13 @@ NDSS'2007上的文章提出，利用针对TCP的低速DoS攻击，使得一对BG
 	- [Quake Network Protocol](http://blog.alejandronolla.com/2013/06/24/amplification-ddos-attack-with-quake3-servers-an-analysis-1-slash-2/)- 63.9
 	- BitTorrent - 54.3
 
-###防御
+### 防御
 - 入口过滤来阻止源地址伪造
 - 避免远大于请求包大小的应答包大小，除非有握手来验证源地址
 - 初始连接建立过程中，应由客户端负责重传
 - 避免触发第三方连接，除非之前有验证
 
-##DoS缓解策略
+## DoS缓解策略
 
 原则上不可能区分一个足够精妙的DoS攻击和一伙蜂拥而至的用户，出乎意料的大量但非恶意的流量和DoS攻击有一样的效果
 
@@ -230,7 +230,7 @@ NDSS'2007上的文章提出，利用针对TCP的低速DoS攻击，使得一对BG
 - 一篇DDoS防御综述：[A Survey of Defense Mechanisms Against Distributed Denial of Service (DDoS) Flooding Attacks. IEEE Communications Surveys & Tutorials, 2013](http://d-scholarship.pitt.edu/19225/1/FinalVersion.pdf)
 - SYN Flood攻击防御：[RFC4987: TCP SYN Flooding Attacks and Common Mitigations (2007)](https://tools.ietf.org/html/rfc4987)
 
-###协议设计
+### 协议设计
 
 - 不要保留未验证主机的状态
 
@@ -266,7 +266,7 @@ NDSS'2007上的文章提出，利用针对TCP的低速DoS攻击，使得一对BG
 - 自动配置与认证
 	- 未认证的自动配置便于部署，但易于被攻击
 
-###网络设计与配置
+### 网络设计与配置
 
 - 网络在面对带内（数据面或控制面）DoS攻击时，应提供私有带外访问（通过一个不同的基础设施）
 
@@ -287,7 +287,7 @@ NDSS'2007上的文章提出，利用针对TCP的低速DoS攻击，使得一对BG
 		- [Anti-Spoofing, BCP 38, and the Tragedy of the Commons](http://www.internetsociety.org/deploy360/blog/2014/07/anti-spoofing-bcp-38-and-the-tragedy-of-the-commons/)
 - 建立监测框架：运营商建立监测框架来检测异常网络活动
 
-###路由器实现问题
+### 路由器实现问题
 
 - 检查协议词法与语义：
 	- 谁发送消息？是否遵循协议格式？发送时间是否正确？
@@ -298,7 +298,7 @@ NDSS'2007上的文章提出，利用针对TCP的低速DoS攻击，使得一对BG
 - 恰当处理路由器资源消耗：
 	- 一个例子：高端路由器中由ASCI来处理大部分流量，一些异常包由通用CPU处理；存在一种低PPS攻击，构造异常包来饱和ASCI和CPU之间的队列；对策是采用多个此类队列，并令攻击者难以填满多个队列
 
-###IP Traceback
+### IP Traceback
 
 1985年，Morris在一篇论文中写到：
 > 该方案[IP]弱点是源主机自己来填写IP源主机ID，而且TCP/IP中没有措施来发现一个包的真正起源。
@@ -317,7 +317,7 @@ NDSS'2007上的文章提出，利用针对TCP的低速DoS攻击，使得一对BG
 
 [Practical Network Support for IP Traceback (SIGCOMM 2000)](supplyments/IP-Traceback.pdf)
 
-####标记过程（边采样）
+#### 标记过程（边采样）
 
 - 在包中写入的数据：
 	- edge：start , end (IP地址)
@@ -338,7 +338,7 @@ End:         -      R2     R2      R2
 Distance:    0      1      2       2
 
 ```
-####路径重构
+#### 路径重构
 
 - 以受害者v为根的树G，G上边为(start，end，distance)
 - 对于每个包w
@@ -352,7 +352,7 @@ Distance:    0      1      2       2
 - E(X) < ln(d) / (p(1-p)^{d-1})
 - p=1/25，d=10，X<108
 
-####编码
+#### 编码
 
 每个边需要72bit=2*32bit地址+8bit距离，但难以放入IP头部。
 
@@ -429,7 +429,7 @@ Address      Hash(Address)
 
 --
 
-###结语
+### 结语
 
 - 发动DoS攻击比许多其他攻击的代价要高
 - 防御DoS不是阻止所有攻击，而是提高攻击的门槛

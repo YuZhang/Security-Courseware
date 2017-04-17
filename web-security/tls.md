@@ -1,12 +1,12 @@
-#传输层安全
+# 传输层安全
 
-###哈尔滨工业大学 网络与信息安全 张宇 2016
+### 哈尔滨工业大学 网络与信息安全 张宇 2016
 
 ---
 
-##1. SSL/TLS简介
+## 1. SSL/TLS简介
 
-###1.1. 介绍
+### 1.1. 介绍
 
 - [SSL（Secure Socket Layer）/ TLS（Transport Layer Security）](https://en.wikipedia.org/wiki/Transport_Layer_Security)的一个极简介绍：客户端选择一个秘密随机数，使用服务器的公钥加密发送给服务器。客户端和服务器间用这个秘密中派生出的若干加密和MAC密钥来通信。
 	- 目的：保护通信的机密性、完整性、真实性（认证）
@@ -47,7 +47,7 @@
 	- 集成[HKDF](https://en.wikipedia.org/wiki/Key_derivation_function)，半临时DH，会话哈希，支持1-RTT和0-RTT握手协议
 	- 支持新的密码基元，包括[ChaCha20](https://en.wikipedia.org/wiki/Salsa20#ChaCha_variant)流密码，[Poly1305](https://en.wikipedia.org/wiki/Poly1305) MAC，[EdDSA](https://en.wikipedia.org/wiki/EdDSA)数字签名算法，[x25519](https://en.wikipedia.org/wiki/Curve25519)密钥交换协议
 
-###1.2. TLS握手协议
+### 1.2. TLS握手协议
 
 TLS 1.2（[RFC5246](https://tools.ietf.org/html/rfc5246)）:
 
@@ -96,7 +96,7 @@ TLS 1.2（[RFC5246](https://tools.ietf.org/html/rfc5246)）:
 - RSA握手：如上图所示，客户端选择pms，用服务器公钥加密发给服务器
 - DHE（ephemeral DH）握手：服务器将密钥材料（p, g, g^s）用自己私钥签名，客户端将（g^c）发送给服务器，双方计算pms=g^{cs}
 
-###1.3. TLS记录协议
+### 1.3. TLS记录协议
 
 - 记录协议是一种分层协议；在每一层，消息中包括长度、描述和内容
 - 支持4种高层协议：握手（22 handshake），告警（21 alert），变更密码说明（20 change cipher spec），应用数据（23 appication data），心跳（24 Heartbeat）
@@ -121,19 +121,19 @@ TLS 1.2（[RFC5246](https://tools.ietf.org/html/rfc5246)）:
 		- 从`key_block`中提取客户端-->服务器加密密钥、MAC密钥、IV
 		- 从`key_block`中提取服务器-->客户端加密密钥、MAC密钥、IV
 
-###1.4 重新协商（Renegotiation）
+### 1.4 重新协商（Renegotiation）
 
 - 客户端或服务器可在已经建立的TLS连接上请求新的握手，例如临时需要客户端验证
 - 该过程与之前的握手过程一样，除了消息都是通过在已建立的连接上加密传递
 - 握手完成后，双方以新协商的参数开始一个新的会话
 
-##2. 针对SSL/TLS的攻防
+## 2. 针对SSL/TLS的攻防
 
 针对TLS的攻击总结：[RFC7457: Summarizing Known Attacks on Transport Layer Security (TLS) and Datagram TLS (DTLS)](https://tools.ietf.org/html/rfc7457)
 
 TLS安全使用建议：[RFC7525 (BCP195): Recommendations for Secure Use of Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)](https://tools.ietf.org/html/rfc7525)
 
-### 2.1. SSL Stripping
+###  2.1. SSL Stripping
 
 由[Moxie Marlinspike](https://en.wikipedia.org/wiki/Moxie_Marlinspike)发明，通过中间人攻击更改未加密的HTTP流量或网页来剥离SSL/TLS，详见[New Tricks For Defeating SSL In Practice (Blackhat DC 2009)](http://www.blackhat.com/presentations/bh-dc-09/Marlinspike/BlackHat-DC-09-Marlinspike-Defeating-SSL.pdf)。
 
@@ -159,7 +159,7 @@ TLS安全使用建议：[RFC7525 (BCP195): Recommendations for Secure Use of Tra
 - 客户端设置一个cookie，在`max-age`指定的时间（例如1年）内，自动将访问该网站的任何`http`链接转换为`https`
 - 用户首次访问时并未被HTTPS保护，攻击者可将HSTS头部去掉；对策是在浏览器内预制一批HSTS站点
 
-###2.2. BEAST
+### 2.2. BEAST
 
 参考资料：[“Here Come The ⊕ Ninjas”](https://bug665814.bmoattachments.org/attachment.cgi?id=540839)
 
@@ -215,7 +215,7 @@ s.onopen = function(e) {    console . log (" opened ");
 	- 好处一是保留与TLS 1.0的代码兼容性
 	- 好处二是避免快速重置IV，引文已知部分系统在此存在问题
 
-###2.3. Padding Oracle攻击
+### 2.3. Padding Oracle攻击
 
 
 [Padding Oracle攻击](https://en.wikipedia.org/wiki/Padding_oracle_attack)：一种选择密文攻击（CCA）
@@ -225,7 +225,7 @@ s.onopen = function(e) {    console . log (" opened ");
 - 攻击者篡改密文，根据是否返回错误消息，来判断特定位置明文的内容
 	- 若无错误，则说明padding格式正确
 
-####POODLE
+#### POODLE
 
 [POODLE（Padding Oracle On Downgraded Legacy Encryption）](https://en.wikipedia.org/wiki/POODLE)（[CVE-2014-3566](http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2014-3566)）攻击针对SSL 3.0中CBC模式下非确定、可篡改的padding方案：
 
@@ -260,7 +260,7 @@ s.onopen = function(e) {    console . log (" opened ");
 - 用"bad record mac"告警替换掉原来的"decryption failed"告警，即只说密文完整性被破坏，而不泄露是否解密失败（padding error）
 
 
-####Lucky Thriteen
+#### Lucky Thriteen
 
 论文 [“Lucky Thirteen: Breaking the TLS and DTLS Record Protocols (USENIX Security 2013)”](http://www.isg.rhul.ac.uk/tls/Lucky13.html)
 
@@ -270,9 +270,9 @@ s.onopen = function(e) {    console . log (" opened ");
 
 防御：添加随机延迟。
 
-###2.4 压缩攻击
+### 2.4 压缩攻击
 
-####CRIME
+#### CRIME
 
 [CRIME](https://en.wikipedia.org/wiki/CRIME)（Compression Ratio Info-leak Made Easy）（[CVE-2012-4929](http://cve.mitre.org/cgi-bin/cvename.cgi?name=cve-2012-4929)）：根据TLS压缩会将重复字符串变短的原理，实施选择明文攻击。由BEAST攻击的作者开发。
 
@@ -368,7 +368,7 @@ def next_byte(cookie, known, alphabet=BASE64):
 - 禁用压缩！
 - 禁止第三方cookie!
 
-###2.5 重新协商
+### 2.5 重新协商
 
 重新协商（Renegotiation）攻击 ([CVE-2009-3555](http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2009-3555))：中间人利用重新协商机制漏洞注入明文。
 
@@ -423,7 +423,7 @@ Cookie: AS21389:6812HSADI:3991238\n
 
 对策：[RFC5746: Transport Layer Security (TLS) Renegotiation Indication Extension](https://tools.ietf.org/html/rfc5746)中针对重新协商攻击定义了一个TLS扩展（Renegotiation Indication），强制标明重新协商，通过交换Finished消息中验证信息来将重新协商和TLS连接进行密码学绑定。
 
-###2.6 三重握手
+### 2.6 三重握手
 
 参考资料：[Triple Handshakes and Cookie Cutters: Breaking and Fixing Authentication over TLS (IEEE S&P 2016)](https://www.mitls.org/downloads/tlsauth.pdf)
 
@@ -491,7 +491,7 @@ TLS中漏洞：
 - 将ms与完整握手绑定，例如在ms派生方案中包含握手消息哈希值，令ms来隐式认证客户端和服务器身份以及所有会话参数
 - 将简化会话继续握手与完全握手绑定，在简化握手中加入一个secure resumption indication扩展，包含创建会话的握手消息哈希值
 
-###3. CA安全增强
+### 3. CA安全增强
 
 - 多数浏览器相信上百个CA，任何一个CA被攻破，可伪造任何站点证书
 - 2011年，两个CA，[DigiNotar](http://en.wikipedia.org/wiki/DigiNotar)和[Comodo](http://en.wikipedia.org/wiki/Comodo_Group)，发布了包括google, yahoo等的假证书

