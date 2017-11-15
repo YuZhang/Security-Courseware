@@ -4,6 +4,21 @@
 
 ---
 
+##课程评价
+
+1. 期末考试：60%
+2. 完成实验1：20%
+3. 阅读论文并撰写报告：20%
+
+###计算机与网络安全4大学术会议
+
+- NDSS (The Network and Distributed System Security Symposium) [2016](http://www.internetsociety.org/events/ndss-symposium-2016/ndss-2016-programme) [2017](https://www.ndss-symposium.org/ndss2017/)
+- USENIX Security (Symposium) [2016](https://www.usenix.org/conference/usenixsecurity16/technical-sessions) [2017](https://www.usenix.org/conference/usenixsecurity17)
+- CCS (ACM SIGSAC Conference on Computer and Communications Security) [2016](https://www.sigsac.org/ccs/CCS2016/wp-content/uploads/2016/08/Open-TOC-CCS.html) [2017](https://www.sigsac.org/ccs/CCS2017/)
+- S&P (IEEE Symposium on Security and Privacy) (Oakland) [2016](http://www.ieee-security.org/TC/SP2016/program-papers.html) [2017](http://www.ieee-security.org/TC/SP2017/program-papers.html)
+
+从上面4个会议本年度论文中选取一篇，将论文PDF文件以 "学号-姓名-题目.pdf" 格式命名，并发给我。撰写一篇文字报告，并准备课堂报告。
+
 ##安全概述
 
 ###计算机安全（Computer Security）[[参考](https://en.wikipedia.org/wiki/Computer_security)]
@@ -22,14 +37,6 @@
 
 互联网安全术语表：[RFC4949: Internet Security Glossary, Version 2](https://tools.ietf.org/html/rfc4949)
 
-###计算机与网络安全4大学术会议
-
-- NDSS (The Network and Distributed System Security Symposium) [2016](http://www.internetsociety.org/events/ndss-symposium-2016/ndss-2016-programme)
-- USENIX Security (Symposium) [2016](https://www.usenix.org/conference/usenixsecurity16/technical-sessions)
-- CCS (ACM SIGSAC Conference on Computer and Communications Security) [2016](https://www.sigsac.org/ccs/CCS2016/wp-content/uploads/2016/08/Open-TOC-CCS.html)
-- S&P (IEEE Symposium on Security and Privacy) (Oakland) [2016](http://www.ieee-security.org/TC/SP2016/program-papers.html)
-
-从上面4个会议本年度论文中选取一篇，将论文pdf文件以 学号-姓名-题目.pdf 格式命名发给我。
 
 ###安全事件统计
 
@@ -261,6 +268,7 @@ if ((options == (__WCLONE|__WALL)) && (current->uid = 0))                  			r
 - CVE-2014-6271: 环境变量声明中，函数之后命令会被执行
 	- `env x='() { :;}; echo vulnerable' bash -c "echo test"`
 	- 有漏洞Bash会输出`vulnerable`；否则，输出`test`
+	- [[代码解释]](https://unix.stackexchange.com/questions/157329/what-does-env-x-command-bash-do-and-why-is-it-insecure)
 
 ###缓冲区溢出（buffer overflow）
 
