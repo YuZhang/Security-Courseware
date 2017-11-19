@@ -8,8 +8,15 @@ ls -1 | xargs -I % echo '- %'
 - 15S003102-王嘉宁-(Cross-)Browser Fingerprinting via OS and Hardware Level Features.pdf
 - 17B903029-王野-Picking Up My Tab：Understanding and Mitigating Synchronized Token Lifting and Spending in Mobile Payment.pdf
 - 17S003028-孙兵-AWare Preventing Abuse of Privacy-Sensitive Sensors via Operation Bindings.pdf
+- 17S003110-栾效阳-SecureML A System for Scalable Privacy-Preserving Machine Learning.pdf
 - 17S003114-李子勃-Thou Shalt Not Depend on Me.pdf
 - 17S003115-朱秋苹-Dissecting Tor Bridges：a Security Evaluation of Their Private and Public Infrastructures.pdf
 - 17S003119-葛蒙蒙-Obfuscation-Resilient Privacy Leak Detection for Mobile Apps Through Differential Analysis.pdf
+- 17S103129-王纯宇-The Security Impact of HTTPS Interception.pdf
+- 17S103154-范永栋-PDF Mirage Content Masking Attack Against Information-Based Online Services.pdf
+- 17S103156-丁泽宇-A Lustrum of Malware Network Communication Evolution and Insights.pdf
+- 17S103189-陈煌-Hindsight Understanding the Evolution of UI Vulnerabilities in Mobile Browsers.pdf
+- 17SD03215-张月皎-Venerable Variadic Vulnerabilities Vanquished.pdf
 - 17SK03082-谢根栓-Key Reinstallation Attacks_Forcing Nonce Reuse in WPA2.pdf
 - 17SK03086-马蕾-Dial One for Scam：A Large-Scale Analysis of Technical Support Scams.pdf
+- 齐帅-17S003120-Show Me the Money! Finding Flawed Implementations of Third-party In-app Payment in Android Apps.pdf

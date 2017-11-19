@@ -4,6 +4,8 @@
 
 ---
 
+##警告！本章上机操作示例不是唯一正确的！由于未知原因，实际运行可能与示例不同！
+
 ## 背景知识
 
 **预备知识**: Linux，x86体系结构，x86汇编，C语言，gdb
@@ -795,7 +797,7 @@ warning: Source file is more recent than executable.
 [执行n多次直到REQUEST_URI被处理完]
 (gdb) n
 109         envp += sprintf(envp, "SERVER_NAME=zoobar.org") + 1;
-(gdb) x/s10 buf        [打印buf，请求中各字段已经被分割]
+(gdb) x/10s buf        [打印buf，请求中各字段已经被分割]
 0x8050540 <buf.4435>:   "GET"
 0x8050544 <buf.4435+4>: "/", 'A' <repeats 199 times>...
 0x805060c <buf.4435+204>:       'A' <repeats 200 times>...
