@@ -819,9 +819,9 @@ warning: Source file is more recent than executable.
 0xbffff211:     ""
 0xbffff212:     ""
 0xbffff213:     ""
-(gdb) p sizeof reqpath  [reqpath不会溢出]
+(gdb) p sizeof reqpath  [reqpath不会溢出, !可能输出4]
 $3 = 2048
-(gdb) p sizeof env      [env不会溢出]
+(gdb) p sizeof env      [env不会溢出, !可能输出4]
 $4 = 8192
 [继续用n命令执行]
 85          if (sendfd(svcfds[i], env, env_len, fd) <= 0)
