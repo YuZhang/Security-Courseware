@@ -13,6 +13,7 @@ ls -1 | xargs -I % echo '- %'
 - 17S003110-栾效阳-SecureML A System for Scalable Privacy-Preserving Machine Learning.pdf
 - 17S003114-李子勃-Thou Shalt Not Depend on Me.pdf
 - 17S003115-朱秋苹-Dissecting Tor Bridges：a Security Evaluation of Their Private and Public Infrastructures.pdf
+- 17S003117-管志成-SoK Science, Security, and the Elusive Goal of Security as a Scientific Pursuit.pdf
 - 17S003119-葛蒙蒙-Obfuscation-Resilient Privacy Leak Detection for Mobile Apps Through Differential Analysis.pdf
 - 17S003120-齐帅-Show Me the Money! Finding Flawed Implementations of Third-party In-app Payment in Android Apps.pdf
 - 17S103129-王纯宇-The Security Impact of HTTPS Interception.pdf
@@ -21,7 +22,9 @@ ls -1 | xargs -I % echo '- %'
 - 17S103159-薛晓峰-An Experimental Security Analysis of an Industrial Robot Controller.pdf
 - 17S103170-王庆丰-Data Breaches, Phishing, or Malware.pdf
 - 17S103180-张萌-Hardening Java’s Access Control by Abolishing Implicit Privilege Elevation.pdf
+- 17S103185-郭冠军--Stack Overflow Considered Harmful The Impact of Copy&Paste on Android Application Security.pdf.pdf
 - 17S103189-陈煌-Hindsight Understanding the Evolution of UI Vulnerabilities in Mobile Browsers.pdf
+- 17S103198-姜喆-Global Measurement of DNS Manipulation.pdf
 - 17SD03215-张月皎-Venerable Variadic Vulnerabilities Vanquished.pdf
 - 17SK03082-谢根栓-Key Reinstallation Attacks_Forcing Nonce Reuse in WPA2.pdf
 - 17SK03086-马蕾-Dial One for Scam：A Large-Scale Analysis of Technical Support Scams.pdf
