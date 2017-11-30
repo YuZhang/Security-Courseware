@@ -4,7 +4,7 @@
 
 ---
 
-##警告！本章上机操作示例不是唯一正确的！由于未知原因，实际运行可能与示例不同！
+## 警告！本章上机操作示例不是唯一正确的！由于未知原因，实际运行可能与示例不同！
 
 ## 背景知识
 
@@ -41,11 +41,11 @@
 |      |       |
 +——————————————+<——— brk() point
 |     heap     |<——— malloc(), free()
-+——————————————+ 
++——————————————+
 |   bss seg    |<———uninitialized data (Block Started by Symbol)
-+——————————————+ 
++——————————————+
 |  data seg    |<———initialized static data
-+——————————————+ 
++——————————————+
 |  text seg    |<——- binary code (*.o), static lib (*.a)
 +——————————————+ 0x08048000
 |    unused    |
@@ -64,11 +64,11 @@ low  —————>  high address
 **栈帧（stack frame）**：函数调用数据结构单元
 
 ```
-+———————————————————————-+    caller’s stack pointer (old %esp) 
-|        arguments       |               |                   
-+———————————————————————-+               |                  
-|     return address     | (old %eip)    v                
-+———————————————————————-+<——— callee’s sf (new %ebp)                              
++———————————————————————-+    caller’s stack pointer (old %esp)
+|        arguments       |               |
++———————————————————————-+               |
+|     return address     | (old %eip)    v
++———————————————————————-+<——— callee’s sf (new %ebp)
 |  caller’s sf pointer   |———> caller’s sf (old %ebp)
 +———————————————————————-+
 |    local variables     |
@@ -235,11 +235,11 @@ $4 = (char (*)[128]) 0xbffff62c
 `read_req()`栈帧示例：
 
 ```
-+———————————————————————-+   
-|        arguments       |                                  
-+———————————————————————-+                                 
++———————————————————————-+
+|        arguments       |
++———————————————————————-+
 |     return address     |<——— +4 =0xbffff6bc %eip=0x08048e7f
-+———————————————————————-+                             
++———————————————————————-+
 |       main() ebp       |<——— %ebp        =0xbffff6b8
 +———————————————————————-+
 |                        |
@@ -249,7 +249,7 @@ $4 = (char (*)[128]) 0xbffff62c
 |buf[127]   ^            |
 |           |            |
 |           |      buf[0]|<——— -0x8c(-140)=0xbffff62c
-+————————————————————————+ 
++————————————————————————+
 |                        |
 +———————————————————————-+
 |   &buf for gets()      |<——— -0xa8(-168)=0xbffff610 new %esp
@@ -270,7 +270,7 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 (gdb) p &buf[0]
 $5 = 0xbffff62c 'A' <repeats 200 times>… [超过了缓冲区大小128字节]
 (gdb) x $ebp [检查$ebp所指向地址内容，已经被AAAA覆盖]
-0xbffff6b8:	0x41414141  
+0xbffff6b8:	0x41414141
 (gdb) x $ebp+4 [检查返回地址，已经被AAAA覆盖]
 0xbffff6bc:	0x41414141
 (gdb) n [运行atoi()]
@@ -292,7 +292,7 @@ Dump of assembler code for function read_req:
    0x08048e70 <+44>:	ret
 End of assembler dump.
 (gdb) p &buf[0]   [查看buf]
-$8 = 0xbffff62c 'A' <repeats 128 times> 
+$8 = 0xbffff62c 'A' <repeats 128 times>
 ```
 
 为什么变为128? `atoi()`执行后，变量`i=0`，而`i`正好在`buf`结尾之后，相当于在字符串后插入`\0`。
@@ -396,17 +396,17 @@ main (ac=<error reading variable: Cannot access memory at address 0x41414149>,
 
 ```
 |                        |    |                        |
-|                        |    |    return address      | 
-|                        |    |  arguments for gets()  |                                                                 
+|                        |    |    return address      |
+|                        |    |  arguments for gets()  |
 +————————————————————————+    +————————————————————————+
-|buf[127]   ^            |  
-|           |            |   
-|           |      buf[0]|   
+|buf[127]   ^            |
+|           |            |
+|           |      buf[0]|
 +————————————————————————+
 |        int  i          |
-+————————————————————————+ 
++————————————————————————+
 |        main ebp        |
-+————————————————————————+ 
++————————————————————————+
 |     return address     |
 +———————————————————————-+
 |        arguments       |
@@ -455,14 +455,14 @@ main (ac=<error reading variable: Cannot access memory at address 0x41414149>,
 
 
 ```
-              |     +—————————+   
-              |     |zookld.c |<—— "zook-*.conf" 
-              |     +———+—————+                 
+              |     +—————————+
+              |     |zookld.c |<—— "zook-*.conf"
+              |     +———+—————+
               |         |——————————————+
               |         |              |         +—————————————+
 +——————+    HTTP    +———v———+      +———v————+    |CGI, Database|
 |client| <====|===> |zookd.c|<————>|zookfs.c|———>|"/zoobar"    |
-+——————+      |     +———^———+      +———^————+    +—————————————+ 
++——————+      |     +———^———+      +———^————+    +—————————————+
               |         |              | (2) http_request_headers()
 (1) http_request_line() |   +——————+   | (3) http_serve()
               |         +———|http.c|———+
@@ -650,7 +650,7 @@ dir_join(name, pn, indices[i]);   // name size = 1024
 handler(fd, pn);                // pn size = 1024
 |
 zookfs.c:47:    http_serve(sockfd, getenv("REQUEST_URI"));
-|      
+|
 http.c:107:    envp += sprintf(envp, "REQUEST_URI=%s", reqpath) + 1;
 |
 zookd.c:70:    if ((errmsg = http_request_line(fd, reqpath, env, &env_len)))
@@ -685,7 +685,7 @@ HTTP/1.0 200 OK      <-- HTTP版本号，状态代码
 </body>
 </html>
 ```
-我们发现了可由我们控制的用户输入，客户端请求位于下面代码中： 
+我们发现了可由我们控制的用户输入，客户端请求位于下面代码中：
 
 ``` python
 ##  This is the function that you should modify to construct an
@@ -715,7 +715,7 @@ const char *http_request_line(int fd, char *reqpath, char *env, size_t *env_len)
 {
     static char buf[8192];      /* static variables are not on the stack */
     char *sp1, *sp2, *qp, *envp = env;
-    //  ... ... 
+    //  ... ...
     if (http_read_line(fd, buf, sizeof(buf)) < 0)
         return "Socket IO error";
 
@@ -792,7 +792,7 @@ Continuing.
 
 Breakpoint 1, http_request_line (fd=5, reqpath=0xbfffee08 "", env=0x804e520 <env> "", env_len=0x8050520 <env_len>) at http.c:67
 warning: Source file is more recent than executable.
-67          char *sp1, *sp2, *qp, *envp = env; 
+67          char *sp1, *sp2, *qp, *envp = env;
 (gdb) n
 [执行n多次直到REQUEST_URI被处理完]
 (gdb) n
@@ -866,13 +866,13 @@ $6 = (const char **) 0xbfffde14
 根据上面的调试信息绘制`http_serve()`的栈结构：
 
 ```
-+———————————————————————-+   
-|          name          |<——— (+12)   =0xbfffde14       
-+———————————————————————-+   
-|        fd = 3          |<——— (+8)    =0xbfffde10                                  
-+———————————————————————-+                                 
-|     return address     |<——— (+4)    =0xbfffde0c 
-+———————————————————————-+                             
++———————————————————————-+
+|          name          |<——— (+12)   =0xbfffde14
++———————————————————————-+
+|        fd = 3          |<——— (+8)    =0xbfffde10
++———————————————————————-+
+|     return address     |<——— (+4)    =0xbfffde0c
++———————————————————————-+
 |          ebp           |<——— (0)     =0xbfffde08
 +———————————————————————-+
 |                        |
@@ -883,7 +883,7 @@ $6 = (const char **) 0xbfffde14
 |           |            |
 |           |       pn[0]|<——— (-1036) =0xbfffd9fc
 +————————————————————————+
-|    struct stat st      | 
+|    struct stat st      |
 |       (88bytes)        |<——— (-1124) =0xbfffd9a4
 +———————————————————————-+
 
