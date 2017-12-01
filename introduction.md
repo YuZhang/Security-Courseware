@@ -1,16 +1,16 @@
-#介绍
+# 介绍
 
-###哈尔滨工业大学 网络与信息安全 张宇 2016
+### 哈尔滨工业大学 网络与信息安全 张宇 2016
 
 ---
 
-##课程评价
+## 课程评价
 
 1. 期末考试：60%
 2. 完成实验1：20%
 3. 阅读论文并撰写报告：20%
 
-###计算机与网络安全4大学术会议
+### 计算机与网络安全4大学术会议
 
 - NDSS (The Network and Distributed System Security Symposium) [2016](http://www.internetsociety.org/events/ndss-symposium-2016/ndss-2016-programme) [2017](https://www.ndss-symposium.org/ndss2017/)
 - USENIX Security (Symposium) [2016](https://www.usenix.org/conference/usenixsecurity16/technical-sessions) [2017](https://www.usenix.org/conference/usenixsecurity17)
@@ -19,9 +19,9 @@
 
 从上面4个会议本年度论文中选取一篇，将论文PDF文件以 "学号-姓名-题目.pdf" 格式命名，并发给我。撰写一篇文字报告，并准备课堂报告。
 
-##安全概述
+## 安全概述
 
-###计算机安全（Computer Security）[[参考](https://en.wikipedia.org/wiki/Computer_security)]
+### 计算机安全（Computer Security）[[参考](https://en.wikipedia.org/wiki/Computer_security)]
 
 也称为网络空间安全（cybersecurity）或IT安全，保护信息系统中软件、硬件、信息及服务。
 
@@ -38,7 +38,7 @@
 互联网安全术语表：[RFC4949: Internet Security Glossary, Version 2](https://tools.ietf.org/html/rfc4949)
 
 
-###安全事件统计
+### 安全事件统计
 
 [Verizon 2016 Data Breach Inveistigations Report](http://www.verizonenterprise.com/resources/reports/rp_dbir-2016-executive-summary_xg_en.pdf)：
 
@@ -82,7 +82,7 @@ CVE（Common Vulnerabilities & Exposures，通用漏洞披露）中2016弱点最
 - [50个产品](http://www.cvedetails.com/top-50-products.php?year=2016)中前五名：Andriod（385个漏洞），Debian（290），Ubuntu（254），Flash（226），Opensuse（220）
 - [50个厂商](http://www.cvedetails.com/top-50-vendors.php?year=2016)中前五名：Oracle (569)，Google (546)，Adobe (418)，Microsoft（348），Novell（347）
 
-###漏洞买卖
+### 漏洞买卖
 
 1. 漏洞赏金计划：
  - Google: < $20k
@@ -96,7 +96,7 @@ CVE（Common Vulnerabilities & Exposures，通用漏洞披露）中2016弱点最
 	- Firefox/Safari: $60k-$150k
 	- Windows: $60-120k
 
-###僵尸网络：
+### 僵尸网络：
 
 [史上最大规模DDoS](http://arstechnica.com/security/2016/09/botnet-of-145k-cameras-reportedly-deliver-internets-biggest-ddos-ever/)：根据2016年9月19日报道，超过14.5万被劫持摄像头发动了1.1Tbps的DDoS攻击
 
@@ -111,7 +111,7 @@ CVE（Common Vulnerabilities & Exposures，通用漏洞披露）中2016弱点最
 - 美国/英国：$100-180 / 千台
 - 亚洲：$7-8 / 千台
 
-###安全概念
+### 安全概念
 
 - **安全**：在敌手出现时实现目标，或者说在敌手出现时，系统可正常工作
 - 安全思维：
@@ -128,9 +128,9 @@ CVE（Common Vulnerabilities & Exposures，通用漏洞披露）中2016弱点最
 	- 管理安全风险 vs. 收益
 
 ---
-##安全问题1：违背政策
+## 安全问题1：违背政策
 
-###Sarah Palin的email账号破解
+### Sarah Palin的email账号破解
 
 2008年9月，美国共和党副总统候选人莎拉·佩林的雅虎私人电子邮箱遭黑客入侵。黑客可能是一名田纳西州民主党议员正在念大学的儿子戴维·克内尔。[[相关报道]](https://en.wikipedia.org/wiki/Sarah_Palin_email_hack)
 
@@ -140,7 +140,7 @@ FBI发现了攻击者在代理服务器上的踪迹。
 
 **政策违背：真正用户需要知道用户名与口令 --> 知道密码提示问题答案**
 
-###Mat Honan的Apple和Amazon账号破解
+### Mat Honan的Apple和Amazon账号破解
 2012年一位网站主编Mat Honan的Google，Twitter, Apple账号都被破解。攻击者用这些账号发表种族言论，并删除了其iPhone等设备上数据。[[相关报道]](https://www.wired.com/2012/08/apple-amazon-mat-honan-hacking/all/)
 
 
@@ -151,7 +151,7 @@ FBI发现了攻击者在代理服务器上的踪迹。
 
 **政策违背：邮箱安全-->备份邮箱-->账单地址+信用卡末4位-->Amazon密码-->任意信用卡**
 
-###Twitter上@N 账号劫持
+### Twitter上@N 账号劫持
 
 2014年，Twitter上的 @N 账号（有人出价$50000）被劫持。账号所有者（受害者）Naoki Hiroshima在尝试夺回账号失败后，将用户名改为@N\_is\_stolen。Naoki通过与攻击者的邮件交流了解了其攻击过程。[[相关报道]](https://medium.com/@N/how-i-lost-my-50-000-twitter-username-24eb09e026dd#.d7lhyudko)
 
@@ -163,11 +163,12 @@ FBI发现了攻击者在代理服务器上的踪迹。
 
 **政策违背：账号安全-->邮箱安全-->域名安全-->信用卡末6位-->信用卡末4位**
 
-###2003年Linux后门事件
+### 2003年Linux后门事件
 2003年时，Linux采用代码维护系统BitKeeper，提交代码需经过审查。部分开发者为了方便另建立了一个CVS来维护源代码。攻击者在CVS所维护源码中插入如下代码，将无效调用`wait4()`的进程赋予root权限。
 
 ```c
-if ((options == (__WCLONE|__WALL)) && (current->uid = 0))                  			retval = -EINVAL;        
+if ((options == (__WCLONE|__WALL)) && (current->uid = 0))
+			retval = -EINVAL;
 ```
 不过，由于这个修改未经过审批流程，随后被发现。[[相关报道]](https://freedom-to-tinker.com/2013/10/09/the-linux-backdoor-attempt-of-2003/)
 
@@ -175,9 +176,9 @@ if ((options == (__WCLONE|__WALL)) && (current->uid = 0))                  			r
 
 ---
 
-##安全问题2：违背威胁模型/假设
+## 安全问题2：违背威胁模型/假设
 
-###未考虑人的因素
+### 未考虑人的因素
 
 - 通过邮件/电话的电信诈骗
 - 攻击者通过致电客服来重置密码
@@ -186,7 +187,7 @@ if ((options == (__WCLONE|__WALL)) && (current->uid = 0))                  			r
 2016年3月，希拉里竞选主席[波德斯塔（Podesta）电子邮件泄露](https://en.wikipedia.org/wiki/Podesta_emails)。攻击者俄罗斯黑客组织Fancy Bear（奇幻熊）采用鱼叉式网络钓鱼攻击，向波德斯塔发送一封伪造的Gmail警告邮件，其中包含一个链接指向一个伪造的登录页面。同年10月，[维基解密公开了泄露的邮件](https://wikileaks.org/podesta-emails/)。
 
 
-###1983年图灵演说
+### 1983年图灵演说
 
 [Reflections on Trusting Trust by Ken Thompson](http://www.ece.cmu.edu/~ganger/712.fall02/papers/p761-thompson.pdf)
 > To what extent should one trust a statement that a program is free of Trojan horses? Perhaps it is more important to trust the people who wrote the software.
@@ -196,12 +197,12 @@ if ((options == (__WCLONE|__WALL)) && (current->uid = 0))                  			r
 - Ken在该程序中植入了一个木马，能够用特定密码来‘通过’`Login`函数检查。
 - 即使有人发现了木马并更改了代码，但若用有木马的编译器编译，则新编译器中仍有木马！
 
-###随时间变化的计算假设
+### 随时间变化的计算假设
 
 - 自80年代中期，MIT Kerberos系统使用56比特DES密钥
 - 但目前2^56已经不够大了，1天之内就能破解
 
-###所有SSL证书CA都可信？
+### 所有SSL证书CA都可信？
 
 - 连接SSL支持的站点（HTTPS）需要验证CA办法的证书（身份和公钥的数字签名）
 - 多数浏览器相信上百个CA，任何一个CA被攻破，可伪造任何站点证书
@@ -210,24 +211,24 @@ if ((options == (__WCLONE|__WALL)) && (current->uid = 0))                  			r
 - 2015年，埃及MSC Holding使用CNNIC签发的中级证书签发gmail假证书，导致Chrome和Firefox移除的CNNIC根证书 [[相关报道]](https://en.wikipedia.org/wiki/China_Internet_Network_Information_Center)
 - 后面我们会介绍[CA增强方案](web-security/tls.md)
 
-###假设硬件是可信的
+### 假设硬件是可信的
 
 - 若NSA要干坏事，则该假设很可能不成立。NSA下属的网络攻击部门TAO(Office of Tailored Access Operations，定制接入行动办公室)掌握大量硬件攻击手段，详见[NSA ANT目录](https://en.wikipedia.org/wiki/NSA_ANT_catalog)
 - 2016年9月，Cisco在一个关于路由器故障报告中提到宇宙辐射可能是原因之一。这类故障称为[“Single event upset (单粒子翻转)”](https://en.wikipedia.org/wiki/Single_event_upset)。[[英文报道]](http://www.networkworld.com/article/3122864/hardware/cisco-says-router-bug-could-be-result-of-cosmic-radiation-seriously.html)，与[[中文报道]](http://www.leiphone.com/news/201609/AtW1F5zt6GS1ru9Y.html)
 
-###假设密码学中充分的随机性
+### 假设密码学中充分的随机性
 
 - 由于产生密钥或签名时熵不足，研究者发现0.75%的TLS证书共享密钥，获得0.5%的TLS主机和0.03%的SSH主机的RSA私钥，1.03%的SSH主机的DSA私钥，详见[Mining Your Ps and Qs: Detection of Widespread Weak Keys in Network Devices (USENIX Security 2012)](https://factorable.net/weakkeys12.extended.pdf)
 
-###认为自主开发软件/系统更安全
+### 认为自主开发软件/系统更安全
 
 - [XcodeGhost](https://en.wikipedia.org/wiki/XcodeGhost)在Apple的Xcode开发环境中注入恶意代码，并感染超过4000个应用，包括微博和网易云音乐。这些应用开发者从百度云和迅雷下载Xcode。尽管软件是自主开发的，但开发系统不是。
 
-###不上网/隔离就安全了？
+### 不上网/隔离就安全了？
 
 - 攻击伊朗核设施的[震网蠕虫（Stuxnet）](https://en.wikipedia.org/wiki/Stuxnet)通过U盘传播 -> Windows感染 -> Siemens PCS 7 SCADA工控软件 -> Siemens设备控制器
 
-###没有电就安全了？
+### 没有电就安全了？
 
 - [金唇 (The Thing，the Great Seal bug)](https://en.wikipedia.org/wiki/The_Thing_(listening_device))：1945年前苏联在赠送给美国大使馆的一个国徽礼物中安装了窃听器，该窃听器利用外部电磁波来获取能量，并将窃听到的信息发送出去（一种射频技术，是RFID的前身）
 
@@ -235,12 +236,12 @@ if ((options == (__WCLONE|__WALL)) && (current->uid = 0))                  			r
 
 ##安全问题3：机制问题（bug）
 
-###Apple iCloud 口令猜测速率限制 
+### Apple iCloud 口令猜测速率限制
 
 - 人们通常采用弱密码，可以通过1K-1M次猜测得到
 - iCloud有速率限制功能，但iCloud有许多API，其中“Find my iPhone”服务中的API忘了实现速率限制 [[详情]](https://github.com/hackappcom/ibrute)
 
-###在花旗集团信用卡站点缺失访问控制检查 
+### 在花旗集团信用卡站点缺失访问控制检查
 
 - 花旗集团允许信用卡用户来在线访问其信用卡账户（用户名+口令）
 - 账户信息页的URL中包括一些数字，这些数字与账号有关，而服务器不检查用户是否真的已经登录
@@ -250,19 +251,19 @@ if ((options == (__WCLONE|__WALL)) && (current->uid = 0))                  			r
 	- 若攻击者自己构造新的URL，则系统不安全
 - 很难说是错误威胁模型，还是bug [[详情]](https://bitcoin.org/en/alert/2013-08-11-android)
 
-###安卓Java SecureRandom弱点导致比特币盗窃
+### 安卓Java SecureRandom弱点导致比特币盗窃
 
 - 在安卓中许多比特币钱包应用使用Java的SecureRandom API
 - 系统有时忘记给PRNG设定种子
 - 导致用户私钥容易被猜中，攻击者将用户的比特币转给自己 [[详情]](https://bitcoin.org/en/alert/2013-08-11-android)
 
 
-###心脏出血（Heartbleed）
+### 心脏出血（Heartbleed）
 
 - TLS的心跳扩展中，一方（客户端）发送心跳请求，包含一个负载+负载长度，另一方（服务器）用相同内容做应答
 - CVE-2014-0160: 服务器未检查长度是否正确，过长的长度会导致服务器内存中数据被当做负载传递给客户端 [[详情]](https://en.wikipedia.org/wiki/Heartbleed)
 
-###Shellshock
+### Shellshock
 
 - 2014年9月24日公开的Bash shell中一系列安全漏洞，利用处理环境变量中函数定义之后的命令，攻击者可执行任意代码 [[详情]](https://en.wikipedia.org/wiki/Shellshock_(software_bug))
 - CVE-2014-6271: 环境变量声明中，函数之后命令会被执行
@@ -270,7 +271,7 @@ if ((options == (__WCLONE|__WALL)) && (current->uid = 0))                  			r
 	- 有漏洞Bash会输出`vulnerable`；否则，输出`test`
 	- [[代码解释]](https://unix.stackexchange.com/questions/157329/what-does-env-x-command-bash-do-and-why-is-it-insecure)
 
-###缓冲区溢出（buffer overflow）
+### 缓冲区溢出（buffer overflow）
 
 - 下节课学习[缓冲区溢出](buffer-overflow/buffer-overflow-1.md)
 
