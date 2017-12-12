@@ -10,11 +10,15 @@ ls -1 | xargs -I % echo '- %'
 - 17B903055-颜秉泽-6thSense A Context-aware Sensor-based Attack Detector for Smart Devices.pdf
 - 17S003028-孙兵-AWare Preventing Abuse of Privacy-Sensitive Sensors via Operation Bindings.pdf
 - 17S003064-刘洋-Identifier Binding Attacks and Defenses in Software-Defined Networks.pdf
+- 17S003091_张韬_SoK Cryptographically Protected Database Search.pdf
+- 17S003096-殷雪荐-Ramblr Making Reassembly Great Again.pdf
+- 17S003108-刘代志子-How the Web Tangled Itself Uncovering the History of Client-Side Web (In)Security.pdf
 - 17S003109-刘姝言-Obstacles to the Adoption of Secure Communication Tools.pdf.pdf
 - 17S003110-栾效阳-SecureML A System for Scalable Privacy-Preserving Machine Learning.pdf
 - 17S003111-王旭东-EmojiAuth：Quantifying the Security of Emoji-based Authentication.pdf
 - 17S003114-李子勃-Thou Shalt Not Depend on Me.pdf
 - 17S003115-朱秋苹-Dissecting Tor Bridges：a Security Evaluation of Their Private and Public Infrastructures.pdf
+- 17S003116-曾良伟-Deemon Detecting CSRF with Dynamic Analysis and Property Graphs.pdf
 - 17S003117-管志成-SoK Science, Security, and the Elusive Goal of Security as a Scientific Pursuit.pdf
 - 17S003119-葛蒙蒙-Obfuscation-Resilient Privacy Leak Detection for Mobile Apps Through Differential Analysis.pdf
 - 17S003120-齐帅-Show Me the Money! Finding Flawed Implementations of Third-party In-app Payment in Android Apps.pdf
@@ -34,3 +38,4 @@ ls -1 | xargs -I % echo '- %'
 - 17SK03082-谢根栓-Key Reinstallation Attacks_Forcing Nonce Reuse in WPA2.pdf
 - 17SK03083-江健-Unleashing Use Before Initialization Vulnerabilities in the Linux Kernel Using Targeted Stack Spraying.pdf
 - 17SK03086-马蕾-Dial One for Scam：A Large-Scale Analysis of Technical Support Scams.pdf
+- 17SK03122-张泽亚-How to Learn Klingon Without Dictionary- Detection and Measurement of Black Keywords Used by Underground Economy.pdf
