@@ -33,8 +33,8 @@
 	1. [Injection，XSS与CSRF](web-security/web-sec-1.md)
 	2.  [Phishing与Clickjacking](web-security/web-sec-2.md)
 	3.  [SSL/TLS安全](web-security/tls.md)（BEAST, CRIME, POODLE, 3HS...）
-6. [新进展（待）]()
+6. [新进展](application-security)
 	1. 匿名通信（Tor，）
-	2. BitCoin（...）
+	2. [BitCoin与Blockchain](application-security/blockchain.md)
 7. [总结](summary.md)
 8. [论文阅读](reading.md)
