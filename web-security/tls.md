@@ -174,16 +174,16 @@ BEAST (Browser Exploit Against SSL/TLS)（[CVE-2011-3389](http://cve.mitre.org/c
 - 若`P_i = x`，则`C_j = E(P_j xor C_(j-1)) = E(C_(i-1) xor P_i) = C_i`
 
 ```
- IV    P_1        P_2        P_3
- |      |          |          |
- |      v          v          v      
- +———> xor  +———> xor  +———> xor
- |      |   |      |   |      |
- |     E_k  |     E_k  |     E_k
- |      |   |      |   |      |
- |      |———+      |———+      |
- v      v          v          v
- IV    C_1        C_2        C_3
+ IV    P_(i-1)    P_i       P_(j-1)   P_j = C_(j-1) xor C_(i-1) xor x
+ |      |          |           |          |
+ |      v          v           v    IV'   v
+ +———> xor  +———> xor  +— ...  +   +———> xor ...
+ |      |   |      |   |       |   |      |
+ |     E_k  |     E_k  |      E_k  |     E_k
+ |      |   |      |   |       |   |      |
+ |      |———+      |———+  ...  |———+      |  ...
+ v      v          v           v   v      v
+ IV    C_(i-1)    C_i         C_(j-1)    c_j
 ```
 
 实践中，攻击者可结合跨站请求伪造（CSRF）攻击来获取HTTPS保护下的secure cookie。
@@ -203,10 +203,10 @@ s.onopen = function(e) {    console . log (" opened ");
 
 破解请求头部中cookie的攻击步骤：
 
-- Step 1：攻击者令用户发送请求`POST /AAAAAA HTTP/1.1<CR><LF><REQUEST HEADERS><CR><LF><REQUEST BODY>`，被CBC模式加密后，发送给目标服务器
-- Step 2: 攻击者获取所有密文，明文块`P_3`为`P/1.1<CR><LF><X>`，`X`是待猜测内容
-- Step 3: 攻击者将`P_guess = C_last(IV) xor C_2 xor "P/1.1<CR><LF><Y>"`附加在`<REQUEST BODY>`前，用户加密后将`C_guess`发送给服务器
-- Step 4: 若`C_guess = C_3`，则`X = Y`；否则，改变`Y`并跳到Step 3
+- Step 1：攻击者令用户发送请求`POST /AAAAAA HTTP/1.1<CR><LF><REQUEST HEADERS><CR><LF><REQUEST BODY>`，被CBC模式加密后，发送给目标服务器。
+- Step 2: 攻击者获取所有密文，明文块`P_3`为`P/1.1<CR><LF><X>`，`X`是待猜测内容。
+- Step 3: 攻击者将`P_guess = C_last(IV) xor C_2 xor "P/1.1<CR><LF><Y>"`附加在`<REQUEST BODY>`前，用户加密后将`C_guess`发送给服务器。
+- Step 4: 若`C_guess = C_3`，则`X = Y`；否则，改变`Y`并跳到Step 3。
 
 防御：[TLS 1.1中方案](https://tools.ietf.org/html/rfc4346#page-21)
 
@@ -402,7 +402,7 @@ November 2009](http://data.proidea.org.pl/confidence/6edycja/materialy/prezentac
     <================== 4. Client Traffic ====================>
 ```
 
-攻击示例：攻击者盗取受害者账户
+攻击示例：攻击者以自己发出的“支付账号和金额”以及受害用户发出的“cookie”一起拼凑一个支付请求，来盗取受害者账户。
 ```
 A<=>S:
 
