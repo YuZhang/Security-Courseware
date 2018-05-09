@@ -353,7 +353,7 @@ def next_byte(cookie, known, alphabet=BASE64):
 		candidates = good	return candidates[0]
 ```
 
-- 优点：只需要；无误报；压缩算法无关
+- 优点：无误报；压缩算法无关
 - 缺点：40%服务器端支持TLS压缩，浏览器只有Chrome支持TLS压缩；攻击者和受害者的zlib版本必须一致
 
 相关攻击：
