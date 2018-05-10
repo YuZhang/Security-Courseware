@@ -11,10 +11,11 @@
 	- 你：给谁发消息、正在上哪个网站、在哪里上网、你买了什么、你再吃什么...
 	- 政府/军队：隐藏在公网上的情报收集，隐藏专用网络，国际协作
 - 匿名定义：
-	-  不可识别性(Unidentifiability): 观察者不能识别任何独立个体
-	-  不可关联性(Unlinkability): 观察者不能将某个消息或行动与一个个体相关联
-	 	-  接收者匿名，发送者、关系匿名：观察者不能识别出通信的接收者、发送者或双方
-	-  不可观察性(Unobservability): 观察者不能对任何感兴趣的消息、行动、个体做出区分
+	-  不可关联性(Unlinkability): 观察者不能将某个个体和其消息、行为或身份标识符等关联起来
+	-  匿名(Anonymity)：观察者不能充分地从一群主体的集合中识别出某个个体
+	 	-  接收者匿名，发送者匿名：观察者不能将消息与其接收者或发送者关联起来
+		-  关系匿名：观察者不能将某个通信的双方关联起来
+	-  不可观察性(Unobservability): 观察者不能充分辨别其任何感兴趣的东西(如个体、消息、行为等）是否存在
 - 匿名需要伙伴
 	- 全世界只有两个人，何谈匿名？ 
 	- 自己不能匿名自己
@@ -199,7 +200,7 @@ S --- A --- B --- C --- R
 
 ### 4.1 Tor简介
 
-[Tor](https://en.wikipedia.org/wiki/Tor_(anonymity_network)): 一种原理类似Mix的匿名通信系统与网络，其名字来自"The Onion Router"的缩写。Tor设计发表在2014年 USENIX Security Symposium上，论文题目[Tor: The Second-Generation Onion Router](https://svn.torproject.org/svn/projects/design-paper/tor-design.html)。[根据2008年5月统计](https://metrics.torproject.org)，Tor覆盖网中relay节点达6千，bridge节点达2千，用户近2百万。
+[Tor](https://en.wikipedia.org/wiki/Tor_(anonymity_network)): 一种基于Mix的匿名通信系统与网络，其名字来自"The Onion Router"的缩写。Tor设计发表在2004年 USENIX Security Symposium上，论文题目[Tor: The Second-Generation Onion Router](https://svn.torproject.org/svn/projects/design-paper/tor-design.html)。[根据2008年5月统计](https://metrics.torproject.org)，Tor覆盖网中relay节点达6千，bridge节点达2千，用户近2百万。
 
 Tor历史：
 
@@ -218,7 +219,7 @@ Tor特点（相对于第一代洋葱路由）：
 - Leaky-pipe电路拓扑：发起点可以令流量从电路中间直接“泄漏”到目的，从而防范针对电路末端的攻击。
 - 拥塞控制：去中心化的端到端拥塞控制，允许每个节点检测拥塞并向发送方发出信号停止消息传输，直到拥塞消失。
 - 目录服务器（vs. 全网洪泛）：目录服务器存储了所有Tor节点的信息和状态，包括IP地址、端口号、运行的Tor服务版本、指纹、带宽、运行时间、公钥等信息。
-- 可配置出口策略：当节点作为出口节点时（即最后一跳节点），可以选择排除某些出口（包括出口国家、地址、端口等），这样做的好处是可以防止节点被滥用的情况。
+- 可配置出口策略：当节点作为出口节点时（即最后一跳节点），可以选择排除某些出口（包括出口国家、IP地址、端口等），这样做的好处是可以防止节点被恶意滥用。
 - 端到端完整性检验：Tor采用sha-1算法对消息进行hash处理，并将结果存储在报文头部（占4字节），在出口端校验数据的完整性。
 - Hidden service：为保护服务器匿名性，客户端在连接隐藏服务时，需要协商汇聚点（Rendezvous points），并通过汇聚点连接隐藏服务。
 - 抵御审查：当用户所处的地区屏蔽Tor节点时，用户需要借助“bridge”来连接到Tor网络。“bridge”本质上是一个特殊的入口节点，它的信息没有被存储到目录服务器中，而是只被少数人知道，因此降低了被屏蔽的概率。
@@ -358,7 +359,7 @@ HS通过它随机选取的几个introduction point（TP）作为它的联系点�
 
 虚电路上的每一个节点都只知道自己的前任节点和后继节点的身份，因此入口节点可以知道发送的IP地址，出口节点可以知道接收端的IP地址。假设攻击者同时控制了入口节点和出口节点，那么他就可以通过某些被动分析或主动分析的攻击方法，通过入口节点和出口节点来关联发送端和接收端。
 
-（Erdin, Esra, C. Zachor, and M. H. Gunes. "How to Find Hidden Users: A Survey of Attacks on Anonymity Networks." IEEE Communications Surveys & Tutorials 17.4(2015):2296-2316.）
+[论文：Erdin, Esra, C. Zachor, and M. H. Gunes. "How to Find Hidden Users: A Survey of Attacks on Anonymity Networks." IEEE Communications Surveys & Tutorials 17.4(2015):2296-2316.](http://pdfs.semanticscholar.org/021b/fdf7e4795271c5e7435d01c2b950d6e42ff5.pdf)
 
 被动分析方法包括以下几种：
 
@@ -375,7 +376,7 @@ HS通过它随机选取的几个introduction point（TP）作为它的联系点�
 
 #### 4.3.1 Cell计数攻击
 
-cell计数攻击（Ling, Zhen, et al. "A new cell counter based attack against tor." ACM Conference on Computer and Communications Security ACM, 2009:578-589.）
+cell计数攻击 [论文：Ling, Zhen, et al. "A new cell counter based attack against tor." ACM Conference on Computer and Communications Security ACM, 2009:578-589.](http://delivery.acm.org/10.1145/1660000/1653732/p578-ling.pdf)
 
 OR内部的工作模式如下图：
  
@@ -391,7 +392,7 @@ OR内部的工作模式如下图：
 
 #### 4.3.2 重放攻击
 
-重放攻击（Pries, R., et al. "A New Replay Attack Against Anonymous Communication Networks." IEEE International Conference on Communications IEEE, 2008:1578-1582.）
+重放攻击 [论文：Pries, R., et al. "A New Replay Attack Against Anonymous Communication Networks." IEEE International Conference on Communications IEEE, 2008:1578-1582.](http://pdfs.semanticscholar.org/be1f/95a923d3c8a8b1bc3089913d4187626c2d7d.pdf)
 
 - 原理：由于Tor使用计数模式的AES加密，因此如果在通信时复制任意cell，则会导致消息的解码失败，可以在出口节点处捕获这一事件，然后通过时间关联入口节点和出口节点，进而关联消息的发送端与接收端。
 - 前提：攻击者已经控制入口节点和出口节点，并有一台中央服务器CS。
@@ -404,7 +405,7 @@ OR内部的工作模式如下图：
 
 #### 4.3.3 协议级hidden service发现
 
-协议级hidden service发现（Ling, Zhen, et al. "Protocol-level hidden server discovery." INFOCOM, 2013 Proceedings IEEE IEEE, 2013:1043-1051.）
+协议级hidden service发现 [论文：Ling, Zhen, et al. "Protocol-level hidden server discovery." INFOCOM, 2013 Proceedings IEEE IEEE, 2013:1043-1051.](http://cse.seu.edu.cn/PersonalPage/zhenling/publications_files/infocom2013_Protocol-level_Hidden_Server_Discovery.pdf)
 
 - 原理：HS在接收到损坏的数据包时，会根据Tor协议拆除到RP的虚电路，入口节点可以通过捕获拆除虚电路时发送的cell序列进而识别出该事件，然后在时间上进行关联，发现HS正在使用攻击者控制的节点作为入口节点，这样攻击者就能知道HS的IP地址。
 - 前提：控制一些入口节点，一个客户端，一个RP，一台中央服务器CS用来记录数据。
