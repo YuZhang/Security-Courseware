@@ -272,8 +272,10 @@ PoW、激励和P2P网络还不能解决一致性问题，因为还是无法得�
 - 参与的矿工通过发送以大量零（d'= 40）开头、非有效的近似区块来证明（概率上地）已完成的工作量。
 - 由于风险分担，矿池成员回报差异较小，代价是预期收入小幅下降以支付管理费。
 - 尽管原始协议未描述矿池，且可能也未预料到，但自2013年以来大部分采矿能力已组织为矿池。许多公式被用于矿池成员之间收入分配，以鼓励忠诚度、尽量减少“跳池”，对新成员友好。
-
 - 通常认为，比特币采矿奖励与算力所占份额成比例。相对于独自采矿，形成矿池并不会提高总体算力所占比例，因此也不会提高奖励。在实践中，矿池规模效应会降低设备采购和运营成本，但这里我们忽略这些。
+
+- [blocktrail.com上矿池份额统计](https://www.blocktrail.com/BTC/pools?resolution=1y)
+- [bitcoinwiki上矿池信息](https://en.bitcoin.it/wiki/Comparison_of_mining_pools)
 
 #### 2.1.1 自私采矿（Selfish Mining）
 
@@ -281,7 +283,7 @@ PoW、激励和P2P网络还不能解决一致性问题，因为还是无法得�
 vulnerable. In Financial Cryptography, 2014.]
 (http://www.ifca.ai/fc14/papers/fc14_submission_82.pdf)
 
-“自私采矿”（“临时区块隐瞒”）：藏匿新发现的区块，有选择地替代当前区块链，导致其他节点算力付诸东流。
+“自私采矿”（“临时区块隐瞒”）：矿池藏匿新发现的区块，有选择地替代当前区块链，导致其他节点算力付诸东流，从而获得高于算力占比的奖励占比。
 
 1. 矿工在发现新区块后并不立即发出，而是先将其保密并故意制造分叉。
 2. 如果矿工发现自己超过了已知最长链两个区块，那么它知道手中的区块不会遭到反对。
@@ -301,7 +303,7 @@ on Init
 on My pool found a block
     lead <- length(private chain) − length(public chain)
     append new block to private chain
-    privateLen <- privateLen + 1
+    privateLen <- privateLen + 1          (hide when privateLen = 1)
     if lead = 0 and privateLen = 2 then   (Was tie with branch of 1)
         publish all of the private chain   (Pool wins due to the lead of 1)
         privateLen <- 0
@@ -322,13 +324,29 @@ on Others found a block
         publish first unpublished block in private block.   (lead > 2)
         Mine at the head of the private chain.
 ```
+
+当自私矿池发现一个新块，但也会将其公开的情况`lead = 0 and privateLen = 2`：
+
+```
+(0)   B1 --- B2    \\ lead = 0, privateLen = 0
+
+(1)   B1 --- B2 --- Private Block (B3)  \\ lead = 0, privateLen = 1
+
+(2)   B1 --- B2 --- B3   \\  lead = 1, privateLen = 1 
+                \-- Public Block (B3') 
+(4)   B1 --- B2 --- B3 --- B4  \\  lead = 0, privateLen = 2
+                \-- B3'
+```
+
 #### 2.1.3 自私采矿收益分析
+
+为什么自私采矿可能获得更高收益？直觉上，若一个新区块被即时发布，则矿工们在新区块基础上竞争，发现下一个区块并获得收益的概率与算力成正比。若一个新区块被藏匿，并且自私矿工在其基础上获得更长的私有区块链，而这时诚实矿工在较短的公开区块链上工作，两者并未在相同链上竞争。由于私有链最终替代了公开链，这导致诚实矿工的工作其实是“无用功”。自私矿工在私有链上缺乏来自其他矿工的竞争，所以收益更高。
 
 自私矿池领先长度的状态机： 
 
 - a - 自私矿池算力占比
 - r - 算力占比r的诚实矿工先收到自私链上的区块，因此在自私链上采矿。
-- 0’ - 诚实链比自私链长1
+- 0’ - 诚实链（公开链）与自私链（私有链）等长，但有一个长度1的分叉。
 
 <!--
 ```
@@ -350,6 +368,8 @@ on Others found a block
 
 ![State machine of lead](self-mining/state-machine.png)
 
+各种情况下，自私采矿收益分析：略。
+
 自私矿池收益占比共识：
 
 ![Revenue fomula](self-mining/revenue-fomula.png)
@@ -367,6 +387,7 @@ on Others found a block
 - 当自私算力占比 a > 1/3 (r=0)，则自私采矿收益优于其算力占比；
 - 当诚实节点在自私链上采矿算力占比r=1/2，a > 1/4，则自私采矿收益优于其算力占比。
 - 通过自私矿池通过更快地泛洪区块来提高r，可将a降低到0。
+- 一旦自私采矿收益高于诚实采矿，理性的“逐利”矿工会加入到自私矿池，导致自私矿池规模逐渐扩大并超过51%。
 
 为了限制r，从而提高a，作者提出一种缓解自私采矿的方法，对现有比特币采矿机制做出改变。当矿工收到分叉区块时，并不按照收到区块的先后顺序，而是随机挑选一个。这样r ~ 1/2，因此a > 1/4。
 
