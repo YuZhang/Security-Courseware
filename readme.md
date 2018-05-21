@@ -11,15 +11,14 @@
 
 课件：[https://github.com/YuZhang/Security-Courseware](https://github.com/YuZhang/Security-Courseware)
 
-实验材料：[https://pan.baidu.com/s/1c1AV0Bm](https://pan.baidu.com/s/1c1AV0Bm)
-
 教学大纲：
 
 1. [安全概述](introduction.md)
 2. [缓冲区溢出](buffer-overflow) (实验1)
 	1. [原理与实验](buffer-overflow/buffer-overflow-1.md)
 	2. [漏洞利用](buffer-overflow/buffer-overflow-2.md) (Shellcode)
-	3. [攻防技术](buffer-overflow/buffer-overflow-3.md) (Baggy, BROP)
+	3. 实验材料：[https://pan.baidu.com/s/1c1AV0Bm](https://pan.baidu.com/s/1c1AV0Bm)
+	4. [攻防技术](buffer-overflow/buffer-overflow-3.md) (Baggy, BROP)
 3. [系统安全](system-security)
 	1. [特权分离](system-security/privilege-separation.md) (OKWS)
 	2. [能力与沙箱](system-security/capabilities-sandbox.md) (Capsicum)
@@ -27,14 +26,15 @@
 4. [网络安全](network-security)
  	1. [TCP/IP安全](network-security/tcp-ip-sec.md) (TCP Hijack)
 	2. [分布式拒绝服务(DDoS)](network-security/ddos.md) (Shrew, IP-Traceback)
-	3. [DNS安全](network-security/dns-sec.pptx) (Cache Poisoning, DNSSEC)
-	4. [BGP安全](network-security/bgp-sec.pptx) (Prefix Hijack, RPKI)
+	3. [SSL/TLS安全](web-security/tls.md)（BEAST, CRIME, POODLE, 3HS...）
+	4. [匿名通信](application-security/anonymous.md) (Crowds, Mix, Tor)
 5. [Web安全](web-security)
 	1. [Injection，XSS与CSRF](web-security/web-sec-1.md)
 	2. [Phishing与Clickjacking](web-security/web-sec-2.md)
-	3. [SSL/TLS安全](web-security/tls.md)（BEAST, CRIME, POODLE, 3HS...）
-6. [新进展](application-security)
-	1. [匿名通信（Tor，I2P）](application-security/anonymous.md)
-	2. [BitCoin与Blockchain](application-security/blockchain.md)
+6. 互联网基础设施安全
+	3. [DNS安全](network-security/dns-sec.pptx) (Cache Poisoning, DNSSEC)
+	4. [BGP安全](network-security/bgp-sec.pptx) (Prefix Hijack, RPKI)
+7. [新进展](application-security)
+	1. [区块链](application-security/blockchain.md) (Bitcoin, Selfish-mining)
 7. [总结](summary.md)
-8. [论文阅读](reading.md)
+8. [2017论文阅读](reading.md)
