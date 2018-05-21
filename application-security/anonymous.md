@@ -340,18 +340,29 @@ Tor为服务器提供了名为hidden service（HS）特殊的保护机制，目�
 HS通过它随机选取的几个introduction point（TP）作为它的联系点，隐藏自己的IP地址并公布所有TP的IP地址。客户端想要访问HS，需要选取一个洋葱路由作为其RP，然后连接HS的其中一个TP，告知HS关于RP的信息，之后客户端与HS之间的通信通过RP来完成。具体步骤如下：
 
 1. HS注册：
-	1. HS选择几个TP，并与他们之间分别建立虚电路。
-	2. HS建立与目录服务器的虚电路，并告知服务描述符号，包括HS的公钥和TP的信息。
+	1. (1) HS选择几个TP，并与他们之间分别建立虚电路。
+	2. (2) HS建立与目录服务器的虚电路，并告知服务描述符号，包括HS的公钥和TP的信息。
 	3. 然后HS可以公布它后缀为.onion的域名吸引用户访问。
 2. 当客户端想访问某个HS：
-	1. 客户端从目录服务器获取相关的HS信息，包括TP信息。
-	2. 客户端选择一个RP并建立一条虚电路，并发送cookie。
-	3. 客户端选择其中一个TP建立虚电路，并发送相关信息包括RP信息、cookie和DH算法的前一半密钥。
-	4. TP收到客户端信息后，将其重新打包发送到HS。
+	1. (3) 客户端从目录服务器获取相关的HS信息，包括TP信息。
+	2. (4) 客户端选择一个RP并建立一条虚电路，并发送cookie。
+	3. (5) 客户端选择其中一个TP建立虚电路，并发送相关信息包括RP信息、cookie和DH算法的前一半密钥。
+	4. (5) TP收到客户端信息后，将其重新打包发送到HS。
 3. HS收到客户端信息后：
-	1. 建立一条到RP的虚电路，并发送DH算法的后一半密钥、哈希值和cookie。
-	2. RP收到信息后，将客户端和HS的cookie匹配后，将DH算法的后一半密钥、哈希值和cookie重新打包发送到客户端。
-	3. 客户端收到HS信息后，生成会话密钥，完成握手，建立一条经过RP的虚电路。
+	1. (6) 建立一条到RP的虚电路，并发送DH算法的后一半密钥、哈希值和cookie。
+	2. (6) RP收到信息后，将客户端和HS的cookie匹配后，将DH算法的后一半密钥、哈希值和cookie重新打包发送到客户端。
+	3. (7) 客户端收到HS信息后，生成会话密钥，完成握手，建立一条经过RP(作为Exit)的虚电路。
+
+```
+ OP             TP                    HS
+  |             |<----1(choose)-------|
+  |--5(RP,key)->|-------------------->|
+  |                 DS<----2(TP)------|
+  |<----3(TP)------>|                 |
+  |-----4(choose)----->RP             |
+  |<----6--------------|<--6(key,VC)--|
+  |-----7(VC)--------->|
+```
 
 ### 4.3	去匿名化攻击
 
@@ -377,23 +388,31 @@ HS通过它随机选取的几个introduction point（TP）作为它的联系点�
 #### 4.3.1 Cell计数攻击
 
 cell计数攻击 [论文：Ling, Zhen, et al. "A new cell counter based attack against tor." ACM Conference on Computer and Communications Security ACM, 2009:578-589.](http://delivery.acm.org/10.1145/1660000/1653732/p578-ling.pdf)
-
-OR内部的工作模式如下图：
  
+- 目的：关联发送者与接收者 
 - 原理：当OR接收到数据流时，经过传输层的解析后，得到chunk的序列，一个chunk中可能包含一个或多个cell，每个cell经过OR的处理后，得到新的cell保存在输出缓冲区中，此时cell需要被重新打包成chunk，然后输出。因此可以通过对cell采用不同的打包方式，在流量中插入编码。
 - 前提：攻击者已经控制入口节点和出口节点。
 
 方法：本攻击可以从入口节点或出口节点处发起，下面假设从出口节点发起攻击：
 
-- step 1：出口节点收到cell_created和cell_relay_connected，得知接下来的cell序列都是cell_relay_data，因此执行step 2。
-- step 2：攻击者通过数据包的封装方式，向流量中插入一个二进制编码信号，三个cell从队列流出代表“1”，一个cell从队列流出代表“0”。
-- step 3：入口节点收到2个cell_relay_extended和1个cell_relay_connected，便得知接下来的序列都是cell_relay_data，因此开始记录到达的cell。
+- step 1：出口节点见过`cell_created`和`cell_relay_connected`之后，得知接下来是`cell_relay_data`。
+- step 2：攻击者在出口节点对来自网站的`response`数据通过数据包的封装方式，插入二进制编码信号：三个cell从队列流出代表“1”，一个cell从队列流出代表“0”。
+- step 3：入口节点收到2个`cell_relay_extended`和1个`cell_relay_connected`之后，得知接下来的序列都是`cell_relay_data`。
 - step 4：攻击者在入口节点处识别该信号，并将消息发送者和接收者的IP地址关联起来。
+
+```
+OP --------- Entry --------- Mid --------- Exit --------- Website
+                                 <------(1) connected
+                                <-----(2) encode singals in cells
+   <-----(3) connected-----
+   <-----(4) inspect signals
+```
 
 #### 4.3.2 重放攻击
 
 重放攻击 [论文：Pries, R., et al. "A New Replay Attack Against Anonymous Communication Networks." IEEE International Conference on Communications IEEE, 2008:1578-1582.](http://pdfs.semanticscholar.org/be1f/95a923d3c8a8b1bc3089913d4187626c2d7d.pdf)
 
+- 目的：关联发送者与接收者
 - 原理：由于Tor使用计数模式的AES加密，因此如果在通信时复制任意cell，则会导致消息的解码失败，可以在出口节点处捕获这一事件，然后通过时间关联入口节点和出口节点，进而关联消息的发送端与接收端。
 - 前提：攻击者已经控制入口节点和出口节点，并有一台中央服务器CS。
 
@@ -403,21 +422,33 @@ OR内部的工作模式如下图：
 - step 2：出口节点在处理被复制的cell时会出现解码错误，此时记录并向CS上传目的IP地址和发现时间。
 - step 3：使用对这两个事件进行时间关联，进而得到消息发送端和接收端的通信关系。
 
+```
+OP --------- Entry --------- Mid --------- Exit --------- Website
+     ---(1) duplicate cells-->              |
+                                   ---(2) report errors-->                           
+```
+
 #### 4.3.3 协议级hidden service发现
 
 协议级hidden service发现 [论文：Ling, Zhen, et al. "Protocol-level hidden server discovery." INFOCOM, 2013 Proceedings IEEE IEEE, 2013:1043-1051.](http://cse.seu.edu.cn/PersonalPage/zhenling/publications_files/infocom2013_Protocol-level_Hidden_Server_Discovery.pdf)
 
+- 目的：发现HS 
 - 原理：HS在接收到损坏的数据包时，会根据Tor协议拆除到RP的虚电路，入口节点可以通过捕获拆除虚电路时发送的cell序列进而识别出该事件，然后在时间上进行关联，发现HS正在使用攻击者控制的节点作为入口节点，这样攻击者就能知道HS的IP地址。
 - 前提：控制一些入口节点，一个客户端，一个RP，一台中央服务器CS用来记录数据。
 
 方法：
 
 - step 1：OP从目录服务器获取HS的介绍点信息，然后建立到介绍点的虚电路，并告知CS发现开始。
-- step 2：HS建立到RP的虚电路，如果HS选取我们控制的入口节点，入口节点会收到相应的数据包序列，具有协议特性，入口节点收到该序列的数据包后向CS报告相关信息。最后RP会收到Relay_Command_Rendezvous。但这并不一定表示HS选择了我们的入口节点，以下步骤来验证这一假设。
+- step 2：HS建立到RP的虚电路，如果HS选取我们控制的入口节点，入口节点会收到相应的数据包序列，具有协议特性，入口节点收到该序列的数据包后向CS报告相关信息。最后RP会收到`Relay_Command_Rendezvous`。但这并不能唯一识别HS，还需要以下步骤。
 - step 3：一旦OP和HS的连接建立，OP会向HS发送数据，但RP此时会操纵数据包，向HS转发一个损坏的数据包，RP同时向CS报告这一行为。
-- step 4：损坏的数据包到达HS后，无法正确解密数据包，因此它会拆除虚电路并发送相应的数据包，这个数据包会穿过整条路径到达OP，入口节点在接收到该数据包时会向CS报告，RP也会检测到这一数据包并向CS报告。
-- step 5：为了判断HS是否选择我们的节点作为入口节点，CS查询并比较以下三个记录的时间：RP发送损坏数据包、RP接收到拆除数据包、入口节点接收到拆除数据包。一旦三个记录的时间关联被发现，就能通过入口节点获得HS的IP地址。
+- step 4：损坏的数据包到达HS后，无法正确解密数据包，因此它会拆除虚电路并发送相应的数据包，这个数据包会穿过整条路径到达OP。入口节点在接收到该数据包时会向CS报告，RP也会检测到这一数据包并向CS报告。
+- step 5：为了判断HS是否选择我们的节点作为入口节点，CS查询并比较以下三个记录的时间：RP发送损坏数据包、RP接收到拆除数据包、入口节点接收到拆除数据包。一旦发现三个记录的时间关联，就能通过入口节点获得HS的IP地址。
 
+```
+OP --------- RP --------- Entry ----- HS
+              -------(3) bad cell----->
+ <-----------(4) destroy--------------
+```
 
 ----
 
