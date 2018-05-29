@@ -1,16 +1,18 @@
-# 域际路由安全
+# 域际路由安全II
 
 本节学习三个方面与BGP安全相关内容：
 
-1. 抵御DoS攻击的BGP黑洞技术（不是BGP本身安全问题，是利用BGP解决安全问题）
-2. 路由泄露检测与防御
-3. BGP操作安全
+1. 抵御DoS攻击的BGP黑洞技术。不是BGP本身安全问题，是利用BGP解决安全问题。其中，会学习IXP相关知识。
+2. 路由泄露概念，以及IETF正在（201805）研究的路由泄露检测与防御方法。
+3. 一份全面的BGP操作安全指南，作为整个BGP安全部分的总结。
 
 ## 1. 抵御DoS攻击的BGP黑洞技术
 
 BGP黑洞（BGP blackholing）：利用BGP协议来限制指定目标IP地址的流量，通常用于缓解DoS攻击。
 
-### 1.1 [RFC7999: Blackhole Community (2016)](https://www.rfc-editor.org/rfc/rfc7999.txt)
+### 1.1 Blackhole Community
+
+参考资料：[RFC7999: Blackhole Community (2016)](https://www.rfc-editor.org/rfc/rfc7999.txt)
 
 一个起源AS利用“BLACKHOLE”团体属性令邻居AS丢弃以指定IP前缀为目的的流量。利用定义的团体属性实现黑洞的好处是有统一标准会更容易地实现和监测黑洞。
 
@@ -24,7 +26,33 @@ BGP黑洞（BGP blackholing）：利用BGP协议来限制指定目标IP地址的
 	- 一个AS声明的黑洞前缀应该被该AS有权声明的前缀所覆盖。
 	- 接收方已经同意在特定BGP会话中接受BLACKHOLE团体。
 
-### 1.2 [DE-CIX黑洞服务 (2018)](https://www.de-cix.net/en/resources/de-cix-blackholing-guide) [[幻灯片]](https://www.de-cix.net/_Resources/Persistent/4277e7d4867a78ae923c0f5b3b66d7ff6aeb61f8/DE-CIX-Blackholing-Service.pdf)
+### 1.2 IXP提供的黑洞服务
+
+#### 1.2.0 IXP
+首先，了解一个重要的互联网基础设施——IXP——的概念。
+
+- [IXP（Internet Exchange Point）](https://en.wikipedia.org/wiki/Internet_exchange_point)：互联网交换中心是为电信运营商(ISP)/内容服务提供商(CSP)之间建立的集中交换平台，一般由第三方中立运营，是互联网重要基础设施。典型的IXP具备以下特点：
+	1. 中立性：一般由非电信运营商控制的第三方建立并运营；
+	2. 对等互联：AS之间一般采用免费对等互联（Peering);
+	3. 微利或非盈利性：本身只提供接入平台，不参与成员间的流量交换，在收费模式上只收取端口占用费。
+- IXP利于本地ISP之间对等互联，降低互联成本，提高带宽，降低延迟，促进互联网扁平化。
+- IXP的经济学动机来自于在流量相当的ISP之间、ISP与CSP之间的免费互联来降低成本，并具有[“网络效应”](https://en.wikipedia.org/wiki/Internet_exchange_point)，即IXP成员越多，对每个成员带来的好处越大。
+- IXP现状
+	- [Packet Clearing House上的IXP列表](https://www.pch.net/ixp/dir)
+	- [PeeringDB数据库](https://www.peeringdb.com)
+	- [Hurricane Electric的IXP报告](https://bgp.he.net/report/exchanges#_exchanges)
+- 路由服务器（Route Server）：IXP提供的一个BGP路由器，只转发路由消息（参与控制平面），但不转发流量（不参与数据平面）。路由服务器将N个路由器之间NxN个BGP会话稀疏化为与路由服务器之间的N个会话。
+
+#### 1.2.1 IXP上BGP黑洞服务
+
+如何在IXP上实现路由黑洞，见[DE-CIX黑洞服务 (2018)](https://www.de-cix.net/en/resources/de-cix-blackholing-guide) [[幻灯片]](https://www.de-cix.net/_Resources/Persistent/4277e7d4867a78ae923c0f5b3b66d7ff6aeb61f8/DE-CIX-Blackholing-Service.pdf)。
+
+基本方法：
+
+- 被攻击的AS声明带有黑洞团体属性的被攻击IP前缀
+- 路由服务器将路由信息中下一跳(next-hop)改写为预定义的黑洞下一跳地址BN
+- 所有AS选择该前缀为最优路径，获得黑洞地址BN的MAC地址；
+- 以BN的MAC地址为目的的流量通过链路层ACL来丢弃
 
 ### 1.3 BGP黑洞测量
 
@@ -88,7 +116,68 @@ Intended blank space
 
 - 答案：AS7、AS5、AS8、AS4、AS7、
 
-下面介绍两种正在研究中的路由泄露防御手段。一种是AS内部防止泄露路由给邻居；另一种是检测来自邻居AS的路由泄露。
+- 一种实现商业关系的BGP配置示例，其中本地AS100，其provider、peer和customer分别为AS200、AS300、AS400。
+
+```
+! 配置本地路由器
+router bgp 100
+bgp router-id 1.0.0.1
+  network 1.0.0.0/24
+
+！配置三个peer-group对邻居AS赋予商业关系角色  
+! 配置PROVIDER的peer-group
+neighbor PROVIDER peer-group
+neighbor PROVIDER route-map RM-PROVIDER-IN   in
+neighbor PROVIDER route-map RM-PROV-PEER-OUT out
+
+! 配置PEER的peer-group
+neighbor PEER     peer-group
+neighbor PEER     route-map RM-PEER-IN       in
+neighbor PEER     route-map RM-PROV-PEER-OUT out
+  
+! 配置CUSTOMER的peer-group
+neighbor CUSTOMER peer-group
+neighbor CUSTOMER route-map RM-CUSTOMER-IN  in
+  
+! 配置邻居信息，给邻居按角色分组
+neighbor 2.0.0.1 remote-as 200
+neighbor 2.0.0.1 peer-group PROVIDER
+neighbor 3.0.0.1 remote-as 300
+neighbor 3.0.0.1 peer-group PEER
+neighbor 4.0.0.1 remote-as 400
+neighbor 4.0.0.1 peer-group CUSTOMER
+ 
+! 配置PROVIDER的路由入规则，添加对角色对应的community属性，和local prefernece
+route-map RM-PROVIDER-IN permit 10
+set community 100:3080 additive
+set local-preference 80
+route-map RM-PROVIDER-IN permit 20
+ 
+! 配置PEER的路由入规则，添加对角色对应的community属性，和local prefernece
+route-map RM-PEER-IN permit 10
+set community 100:3090 additive
+set local-preference 90
+route-map RM-PEER-IN permit 20
+ 
+! 配置PROVIDER/PEER的路由出规则，阻止来自provider和peer的路由被转发给provider和peer
+route-map RM-PROV-PEER-OUT deny 10
+match community prov-peer
+route-map RM-PROV-PEER-OUT permit 20
+ 
+! 配置CUSTOMER的路由入规则，添加对角色对应的community属性，和local prefernece
+route-map RM-CUSTOMER-IN permit 10
+set community 100:3100
+set local-preference 100
+route-map RM-CUSTOMER-IN permit 20
+ 
+! 配置community-list
+ip community-list standard prov-peer permit 100:3080
+ip community-list standard prov-peer permit 100:3090
+ip community-list standard prov-peer deny
+```
+
+如果上述配置正确，则不会发生路由泄露事故，否则可能导致路由泄露。
+下面介绍IETF正在研究的两种路由泄露防御手段：一种是AS内部防止泄露路由给邻居；另一种是检测来自邻居AS的路由泄露。
 
 ### 2.2 基于角色的路由泄露阻止
 
@@ -190,7 +279,6 @@ Intended blank space
 - 速率限制可以用来防止BGP流量过载
 - - [RFC6192: Protecting the Router Control Plane](https://tools.ietf.org/html/rfc6192)
 
-
 ### 3.2 保护BGP会话
 
 - 威胁：例如，发送伪造 TCP RST包；通过ARP伪造来在TCP流中注入数据包；
@@ -237,26 +325,91 @@ Intended blank space
 - 对末端（Leaf）网络的前缀过滤建议：
 	- 入界过滤：特殊前缀、太长、本地AS、缺省（或只采纳缺省路由）
 	- 出界过滤：只声明本地前缀
-- 路由摆动抑制：限制路由更新数量/频率，详见[RFC7196: Making Route Flap Damping Usable](https://tools.ietf.org/html/rfc7196)
-- 最大前缀数量：限制来自邻居AS的路由数量
-	- Peer：低于互联网中路由数量
-	- Provider：高于互联网中路由数量
-	- 超过限制后，可以出发日志记录，或关闭会话
-- AS路径过滤
-	- 只从customer接受包含该cusotmer的路径
-	- 不接受包含私有ASN的路径，除非为了实现黑洞
-	- 不接受第一个AS不是相连邻居的路径，除非是IXP的
-	- 不应以一个非空路径来通告一个起源前缀，除非有意为其提供传递
-	- 不应路由泄露
-	- 不应改变BGP缺省行为，例如不应接收包含自己ASN的路径
-	- [RFC7132: Threat Model for BGP Path Security](https://tools.ietf.org/html/rfc7132)
-- 下一跳过滤
-	- 缺省情况下，只接受路由信息的发送方为下一跳
-	- 在共享网络中互联时，例如IXP，可以通告一个带有第三方（即非声明前缀的路由器）下一跳的前缀。一种典型的情景就是IXP中的路由服务器，只转发路由消息而不转发流量，详见[RFC7947: Internet Exchange BGP Route Server](https://tools.ietf.org/html/rfc7947)。
-	- 黑洞也采用第三方下一跳
-- 团体属性清理
-	- 应清理入界路径中包含自己ASN的团体属性，并只允许这些团体属性作为customer/peer的信令机制
-	- 不应删除其他团体属性。
+
+### 3.4  路由摆动抑制：限制路由更新数量/频率，详见[RFC7196: Making Route Flap Damping Usable](https://tools.ietf.org/html/rfc7196)
+
+### 3.5  最大前缀数量：限制来自邻居AS的路由数量
+
+- Peer：低于互联网中路由数量
+- Provider：高于互联网中路由数量
+- 超过限制后，可以出发日志记录，或关闭会话
+
+### 3.6 AS路径过滤
+
+- 只从customer接受包含该cusotmer的路径
+- 不接受包含私有ASN的路径，除非为了实现黑洞
+- 不接受第一个AS不是相连邻居的路径，除非是IXP的
+- 不应以一个非空路径来通告一个起源前缀，除非有意为其提供传递
+- 不应路由泄露，详见本节第2部分
+- 不应改变BGP缺省行为，例如不应接收包含自己ASN的路径
+- [RFC7132: Threat Model for BGP Path Security](https://tools.ietf.org/html/rfc7132)
+
+### 3.7  下一跳过滤
+
+- 缺省情况下，只接受路由信息的发送方为下一跳
+- 在共享网络中互联时，例如IXP，可以通告一个带有第三方（即非声明前缀的路由器）下一跳的前缀。一种典型的情景就是IXP中的路由服务器，只转发路由消息而不转发流量，详见[RFC7947: Internet Exchange BGP Route Server](https://tools.ietf.org/html/rfc7947)。
+- 黑洞也采用第三方下一跳
+
+### 3.8  团体属性清理
+
+- 应清理入界路径中包含自己ASN的团体属性，并只允许这些团体属性作为customer/peer的信令机制
+- 不应删除其他团体属性。
+
+### 3.9 MANRS
+
+- [MANRS](https://www.manrs.org)（Mutually Agreed Norms for Routing Security）是由互联网协会（Internet Soceity）发起的以抵御路由威胁的一项全球行动。
+- [MANRS操作手册](https://www.manrs.org/manrs/)给出了具体的路由安全操作指南，包含4个部分：
+	1. [阻止不正确路由信息传播（BGP安全操作）](https://www.manrs.org/guide/filtering/)
+	2. [阻止伪造源地址的流量（源地址验证，反向路径转发）](https://www.manrs.org/guide/antispoofing/)
+	3. [促进运营商间操作沟通与协作（注册联系信息）](https://www.manrs.org/guide/coordination/)
+	4. [促进全球路由信息验证（注册路由信息政策和RPKI等）](https://www.manrs.org/guide/global-validation/)
+
+在IRR（Internet Routing Registry）上的前缀起源注册示例：
+
+```
+    route6:           2001:db8:1000::/36
+    descr:            Provider 64500
+    origin:           AS64500 
+    mnt-by:           MAINT-AS64500
+    created:          2012-10-27T12:14:23Z
+    last-modified:    2016-02-27T12:33:15Z
+    source:           RIPE
+```
+路由政策注册示例：
+
+```
+    aut-num:          AS64500
+    descr:            Provide 64500
+    remarks:          ++ Customers ++
+    mp-import:        from AS64501 accept AS64501[AR2]    
+    mp-export:        to AS64501 announce ANY
+    mp-import:        from AS64502 accept AS64502
+    mp-export:        to AS64502 announce ANY
+    remarks:          ++ Peers ++
+    mp-import:        from AS64511 accept AS64511:AS-ALL       
+    mp-export:        to AS64511 announce S64500:AS-ALL
+    remarks:          ++ Transit ++
+    mp-import:        from AS64510 accept ANY except FLTR-BOGONS
+    mp-export:        to AS64510 announce AS64500:AS-ALL
+    mnt-by:           MAINT-AS64500
+    created:          2012-10-27T12:14:23Z
+    last-modified:    2016-02-27T12:33:15Z
+    source:           RIPE
+```
+
+高级路由政策注册示例：
+
+```
+    mp-import:    afi ipv4.unicast
+                  from AS64510 192.0.2.1 at 192.0.2.2
+                  action pref = 10; med = 0;
+                  community.append(64500:10);
+                  aspath.prepend(AS64500, AS64500)
+                  accept ANY except FLTR-BOGONS          
+    mp-export:    protocol BGP4 into OSPF
+                  to AS64500 announce ANY
+    default:      to AS64510 192.0.2.100 at 192.0.2.101
+```
 
 ---------------
 
