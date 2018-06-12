@@ -3,12 +3,20 @@
 本节学习三个方面与BGP安全相关内容：
 
 1. 抵御DoS攻击的BGP黑洞技术。不是BGP本身安全问题，是利用BGP解决安全问题。其中，会学习IXP相关知识。
-2. 路由泄露概念，以及IETF正在（201805）研究的路由泄露检测与防御方法。
+2. 路由泄露概念，以及IETF正在（2018年5月）研究的路由泄露检测与防御方法。
 3. 一份全面的BGP操作安全指南，作为整个BGP安全部分的总结。
 
 ## 1. 抵御DoS攻击的BGP黑洞技术
 
 BGP黑洞（BGP blackholing）：利用BGP协议来限制指定目标IP地址的流量，通常用于缓解DoS攻击。
+
+```
+           +--Peering AS---+            +--Victim AS--+
+ DoS  ===> |======||       |<===BGP ===>|===> target  |
+traffic    +------||-------+            +-------------+
+                  V
+               blackhole
+```
 
 ### 1.1 Blackhole Community
 
@@ -17,9 +25,10 @@ BGP黑洞（BGP blackholing）：利用BGP协议来限制指定目标IP地址的
 一个起源AS利用“BLACKHOLE”团体属性令邻居AS丢弃以指定IP前缀为目的的流量。利用定义的团体属性实现黑洞的好处是有统一标准会更容易地实现和监测黑洞。
 
 - 团体（community）属性可以添加在每一个路由前缀中，由RFC1997定义，是一个transitive optional属性。包含有团体属性的路由，表示该路由是一个路由团体中的一员，该路由团体具有某种或多种相同的特征。
-- 黑洞团体注册为：一个"BGP Well-known Communities" `BLACKHOLE (= 0xFFFF029A)`，其中最低两个16进制数对应的十进制是666，这是网络运营商常用的值。
-- 当一个网络遭受DDoS攻击时，该网络可以声明一个涵盖了受害者IP地址的IP前缀，该声明附带BLACKHOLE团体属性，来通知邻居网络任何以该IP地址为目的的流量都应该被丢弃。
-- BLACKHOLE团体可以用来触发基于目的的远程触发黑洞（RTBH）[RFC5635](https://tools.ietf.org/html/rfc5635)。
+- 团体属性类型码为8，数值为32位，高16位`0x0000`和`0xFFFF`为保留，其余通常为`ASN`；低16位按功能来定义。
+- 黑洞团体注册为："BGP Well-known Communities" `BLACKHOLE (= 0xFFFF029A)`，低16位数值666，为ISP常用值。
+- 当一个网络遭受DDoS攻击时，该网络可以声明一个涵盖了受害者IP地址的IP前缀，该声明附带黑洞团体属性，来通知邻居网络任何以该IP地址为目的的流量都应该被丢弃。
+- 黑洞团体可以用来触发基于目的的远程触发黑洞（RTBH）[RFC5635](https://tools.ietf.org/html/rfc5635)。
 - 局部黑洞：当一台路由器收到带有黑洞团体属性的路由声明时，应该添加`NO_ADVERTISE`（0xFFFFFF02，该路径禁止被通告给其他相连路由器）或`NO_EXPORT`（0xFFFFFF01，该路径禁止被通告给AS或联盟外部的路由器）团体来组织该前缀被传播到本自治域之外。
 - 接受黑洞IP前缀：
 	- 通常BGP路由器不会接受长度大于/24 (IPv4)和/48 (IPv6)的声明。但黑洞前缀长度应该尽可能的长来防止未被攻击的IP地址收到影响。通常，黑洞前缀采用/32 (IPv4)和/128 (IPv6)。
@@ -59,6 +68,14 @@ BGP黑洞（BGP blackholing）：利用BGP协议来限制指定目标IP地址的
 论文：Inferring BGP Blackholing Activity in the Internet, IMC'17. (2017) [[论文]](https://conferences.sigcomm.org/imc/2017/papers/imc17-final90.pdf) [[幻灯片]](https://conferences.sigcomm.org/imc/2017/slides/IMC2017-BGP-Blackholing.pdf) ：
 
 开发并评估了一种自动检测现实网络中BGP黑洞活动的方法，应用于公共和私有BGP数据集发现，包括大型transit提供商在内的数百个网络，以及约50个互联网交换点（IXP）或黑洞服务商为其客户，对等体和成员提供服务。在2014-2017年之间，黑洞前缀数量增加了6倍，达到5K，同时来自400个自治域。使用定向主动测量和被动数据集来评估数据平面上黑洞效果，发现在到达黑洞目的地之前丢弃流量确实非常有效，尽管它也丢弃了合法流量。
+
+- 根据ISP/IXP的注册信息和网站等获得黑洞community字典
+- 根据BGP路由数据获得黑洞活动：前缀，提供商(community前16位)，用户（起源AS），起始时间
+- 约一半的黑洞事件是从Bundling中获得的，即一个路由消息中包含多个黑洞community
+- 黑洞事件爆发与DDoS事件相关
+- 利用traceroute探测来比较黑洞事件前后通往黑洞前缀的路径长度，黑洞会减少IP级跳数5跳，AS级跳数3跳
+- 43%的黑洞前缀来自于内容提供商
+- 70%的黑洞事件小于1分钟，由于黑洞使用时的On-Off模式
 
 ## 2. 路由泄露防御
 
@@ -277,7 +294,7 @@ ip community-list standard prov-peer deny
 - ACL应通过控制平面实现（receive-ACL,、控制平面政策等），避免通过数据平面过滤器实现。
 - 一些路由器会根据配置来自动生成ACL；另一些的ACL则需要人工配置
 - 速率限制可以用来防止BGP流量过载
-- - [RFC6192: Protecting the Router Control Plane](https://tools.ietf.org/html/rfc6192)
+- [RFC6192: Protecting the Router Control Plane](https://tools.ietf.org/html/rfc6192)
 
 ### 3.2 保护BGP会话
 
