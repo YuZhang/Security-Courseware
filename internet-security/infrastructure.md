@@ -61,11 +61,13 @@
 - 其他参考资料：
 	- [Anatomy of a Large European IXP, SIGCOMM 2012.](https://www.cs.rutgers.edu/~badri/552dir/papers/meas/ager2012.pdf) [[slides]](http://www.caida.org/workshops/wie/1412/slides/wie2014_icastro.pdf)
 	- [Remote Peering: More Peering without Internet Flattening. CoNEXT 2015](http://conferences2.sigcomm.org/co-next/2014/CoNEXT_papers/p185.pdf) [[slides]](http://www.caida.org/workshops/wie/1412/slides/wie2014_icastro.pdf)
+	- [Layer 1-Informed Internet Topology Measurement. IMC'14.]()
+
 
 
 ## 1. 检测互联基础设施停运
 
-参考文献：[Detecting Peering Infrastructure Outages in the Wild, ACM SIGCOMM 2017.](http://www.caida.org/publications/presentations/2017/detecting_peering_infrastructure_outages_ucla/)
+参考文献：[Detecting Peering Infrastructure Outages in the Wild, ACM SIGCOMM 2017. (with slides)](http://www.caida.org/publications/presentations/2017/detecting_peering_infrastructure_outages_ucla/)
 
 摘要：互联(peering)基础设施，即主机托管设施(colocation)和互联网交换点(IXP)，位于每个主要城市，拥有数百个网络成员，并支持全球数十万的网络互联。这些基础设施的配置和管理都很好，但是由于电源故障、人为错误，攻击和自然灾害等原因，可能会造成中断。然而，对于这些关键基础设施的停运频率和影响知之甚少。开发了一种新颖轻量级的方法来检测互联基础设施停运。我们的方法论依赖于一个观察：BGP路由更新中声明的BGP团体属性是一个极好但尚未开发的信息源，使我们能够很准确地定位停运位置。我们建立并运营一套系统，可以在建筑物级别定位基础设施停运的中心，并近乎实时地追踪网络的反应。与过去几年公开报道的相比，我们的分析发现了四倍的停运。这种中断对远程网络和互联基础设施产生了重大影响。我们的研究提供了一个互联网在压力下的行为的独特视角，这种压力往往没有报道。
 

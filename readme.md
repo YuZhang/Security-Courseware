@@ -30,12 +30,13 @@
  	1. [TCP/IP安全](network-security/tcp-ip-sec.md) (TCP Hijack)
 	2. [分布式拒绝服务(DDoS)](network-security/ddos.md) (Shrew, IP-Traceback)
 	3. [SSL/TLS安全](web-security/tls.md)（BEAST, CRIME, POODLE, 3HS...）
-	4. [匿名通信](application-security/anonymous.md) (Crowds, Mix, Tor)
+	4. [匿名通信](application-security/anonymous.md) (Crowds, Mix, Tor and deanonymization)
+	5. [基础设施测量](internet-security/infrastructure.md)（Mapping facilities and IXP）
 6. [互联网基础设施安全](internet-security)
-	1. [DNS安全](internet-security/dns-sec.pptx) (Cache Poisoning, DNSSEC)
+	1. [DNS安全](internet-security/dns-sec.pptx) (Root, Cache Poisoning, DNSSEC)
 	2. [BGP安全1](internet-security/bgp-sec.pptx) (Prefix Hijack, RPKI，BGPSec)
 	3. [BGP安全2](internet-security/sidr.md)（Blackholing against DoS，Route Leak，Operation security）
 7. [新进展](application-security)
 	1. [比特币](application-security/blockchain.md) (Bitcoin, Selfish-mining)
-7. [总结](summary.md)
-8. [2017论文阅读](reading.md)
+8. [总结](summary.md)
+9. [2017论文阅读](reading.md)
