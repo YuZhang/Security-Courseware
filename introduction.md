@@ -1,6 +1,6 @@
 # 介绍
 
-### 哈尔滨工业大学 网络与信息安全 张宇 2016
+### 哈尔滨工业大学 网络与信息安全 张宇 2016-2018
 
 ---
 
@@ -12,10 +12,10 @@
 
 ### 计算机与网络安全4大学术会议
 
-- NDSS (The Network and Distributed System Security Symposium) [2016](http://www.internetsociety.org/events/ndss-symposium-2016/ndss-2016-programme) [2017](https://www.ndss-symposium.org/ndss2017/)
-- USENIX Security (Symposium) [2016](https://www.usenix.org/conference/usenixsecurity16/technical-sessions) [2017](https://www.usenix.org/conference/usenixsecurity17)
-- CCS (ACM SIGSAC Conference on Computer and Communications Security) [2016](https://www.sigsac.org/ccs/CCS2016/wp-content/uploads/2016/08/Open-TOC-CCS.html) [2017](https://www.sigsac.org/ccs/CCS2017/)
-- S&P (IEEE Symposium on Security and Privacy) (Oakland) [2016](http://www.ieee-security.org/TC/SP2016/program-papers.html) [2017](http://www.ieee-security.org/TC/SP2017/program-papers.html)
+- NDSS (The Network and Distributed System Security Symposium) [2016](http://www.internetsociety.org/events/ndss-symposium-2016/ndss-2016-programme) [2017](https://www.ndss-symposium.org/ndss2017/) [2018](http://www.ndss-symposium.org/ndss2018/)
+- USENIX Security (Symposium) [2016](https://www.usenix.org/conference/usenixsecurity16/technical-sessions) [2017](https://www.usenix.org/conference/usenixsecurity17) [2018](https://www.usenix.org/conference/usenixsecurity18/technical-sessions)
+- CCS (ACM SIGSAC Conference on Computer and Communications Security) [2016](https://www.sigsac.org/ccs/CCS2016/wp-content/uploads/2016/08/Open-TOC-CCS.html) [2017](https://www.sigsac.org/ccs/CCS2017/) [2018](https://www.sigsac.org/ccs/CCS2018/)
+- S&P (IEEE Symposium on Security and Privacy) (Oakland) [2016](http://www.ieee-security.org/TC/SP2016/program-papers.html) [2017](http://www.ieee-security.org/TC/SP2017/program-papers.html) [2018](https://www.ieee-security.org/TC/SP2018/)
 
 从上面4个会议本年度论文中选取一篇，将论文PDF文件以 "学号-姓名-题目.pdf" 格式命名，并发给我。撰写一篇文字报告，并准备课堂报告。
 
@@ -40,7 +40,19 @@
 
 ### 安全事件统计
 
-[Verizon 2016 Data Breach Inveistigations Report](http://www.verizonenterprise.com/resources/reports/rp_dbir-2016-executive-summary_xg_en.pdf)：
+Verizon Data Breach Investigations Report [2016](http://www.verizonenterprise.com/resources/reports/rp_dbir-2016-executive-summary_xg_en.pdf), [2018](https://www.verizonenterprise.com/resources/reports/rp_DBIR_2018_Report_execsummary_en_xg.pdf)
+
+2018年统计：
+
+- 数据包含53,308起安全事故，2,216起数据泄露，65个国家。
+- 73%的攻击来自外部，其中一半的泄露背后涉及组织犯罪成员，12%涉及国家/政府。
+- 78%的人不会点击钓鱼链接，4%的人会点击任何钓鱼链接，通常会在16分钟内点击。
+- 68%的数据泄露事故在数月之后发现。
+- 勒索软件首次在2013年发现，在2018年已占被识别恶意软件的39%，例如[WannaCry](https://en.wikipedia.org/wiki/WannaCry_ransomware_attack)。
+- 9大安全事故分类：
+	- Web App (414), Misc. Errors (347), Point of Sale (324), Everything Else (308), Privilege Misuse (276), Cyber-Espionage (171), Lost and Stolen Assets (145), Crimeware (140), Payment Card Skimmers (111), Denial of Service (0).
+
+2016年的事故分类统计：
 
 - 已确认的数据泄露中63%与弱口令，缺省口令和口令被盗相关
 - 95%的泄露和86%的事故，可分为9中模式：
@@ -77,6 +89,11 @@ CWE (Common Weakness Enumberation, 通用弱点列表)中[2011年Top25最危险�
 - CWE-434: 危险类型文件无限制上传
 - CWE-807: 安全决策中相信不可信输入
 
+CVE （Common Vulnerabilities & Exposures，通用漏洞披露）2018统计
+
+- [50个产品](https://www.cvedetails.com/top-50-products.php?year=2018)中Top5：Debian Linux (472), Android (388), Firefox (303), Ubuntu (232), Sd 650 Firmware (197)
+- [50个厂商](https://www.cvedetails.com/top-50-vendors.php?year=2018)中Top5：Oracle (492), Debian (472), Google (421), Microsoft (401), IBM (343)
+
 CVE（Common Vulnerabilities & Exposures，通用漏洞披露）中2016弱点最多的:
 
 - [50个产品](http://www.cvedetails.com/top-50-products.php?year=2016)中前五名：Andriod（385个漏洞），Debian（290），Ubuntu（254），Flash（226），Opensuse（220）
@@ -98,7 +115,8 @@ CVE（Common Vulnerabilities & Exposures，通用漏洞披露）中2016弱点最
 
 ### 僵尸网络：
 
-[史上最大规模DDoS](http://arstechnica.com/security/2016/09/botnet-of-145k-cameras-reportedly-deliver-internets-biggest-ddos-ever/)：根据2016年9月19日报道，超过14.5万被劫持摄像头发动了1.1Tbps的DDoS攻击
+[史上最大规模DDoS](http://arstechnica.com/security/2016/09/botnet-of-145k-cameras-reportedly-deliver-internets-biggest-ddos-ever/)：根据2016年9月19日报道，超过14.5万被劫持摄像头发动了1.1Tbps的DDoS攻击 (2018年2月Github.com遭受1.3Tbps的DDoS攻击，但是反射攻击，而非由僵尸网络攻击。)
+
 
 [2015年Level3 Botnet Research Report](http://www.level3.com/~/media/files/white-paper/en_secur_wp_botnetresearchreport.pdf)：
 
@@ -256,7 +274,6 @@ if ((options == (__WCLONE|__WALL)) && (current->uid = 0))
 - 在安卓中许多比特币钱包应用使用Java的SecureRandom API
 - 系统有时忘记给PRNG设定种子
 - 导致用户私钥容易被猜中，攻击者将用户的比特币转给自己 [[详情]](https://bitcoin.org/en/alert/2013-08-11-android)
-
 
 ### 心脏出血（Heartbleed）
 
