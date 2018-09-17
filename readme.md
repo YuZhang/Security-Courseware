@@ -1,6 +1,7 @@
-# 网络与信息安全
+# 网络与信息安全（2016-2018）
 
-哈尔滨工业大学 张宇 2016-2018
+哈尔滨工业大学
+张宇
 
 参考课程:
 
@@ -19,6 +20,7 @@
 	2. [漏洞利用](buffer-overflow/buffer-overflow-2.md) (Shellcode)
 	3. 实验材料：[https://pan.baidu.com/s/1c1AV0Bm](https://pan.baidu.com/s/1c1AV0Bm)
 	4. [攻防技术](buffer-overflow/buffer-overflow-3.md) (Baggy, BROP)
+2. [密码学简介](crush-course.pdf) 
 3. [系统安全](system-security)
 	1. [特权分离](system-security/privilege-separation.md) (OKWS)
 	2. [能力与沙箱](system-security/capabilities-sandbox.md) (Capsicum)

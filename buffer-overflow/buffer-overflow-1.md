@@ -1,6 +1,6 @@
 # 缓冲区溢出：原理与实验
 
-### 哈尔滨工业大学 网络与信息安全 张宇 2016
+### 哈尔滨工业大学 网络与信息安全 2016-2018
 
 ---
 
@@ -832,6 +832,7 @@ $4 = 8192
 `zookd`此时并不存在缓冲区溢出，接下来分析`zookfs`。
 
 在`zookfs.c`中，`http_serve()`函数以`REQUEST_URI`环境变量为参数。在`http_serve`处设置断点，分析栈结构。
+重新开始实验，并注意需要令gdb跟踪子进程`set follow-fork-mode child`。
 
 ``` gas
 $ gdb -p $(pgrep zookfs-exstack)
@@ -974,3 +975,4 @@ Program received signal SIGSEGV, Segmentation fault.
 
 
 
+ 
