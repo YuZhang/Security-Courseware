@@ -29,8 +29,10 @@
 	1. [Injection，XSS与CSRF](web-security/web-sec-1.md)
 	2. [Phishing与Clickjacking](web-security/web-sec-2.md)
 5. [网络安全](network-security)
- 	1. [TCP/IP安全](network-security/tcp-ip-sec.md) (TCP Hijack)
+ 	1. [TCP/IP安全1](network-security/tcp-ip-sec.md) (TCP Hijack)
+ 	2. [TCP/IP安全2](network-security/ip-sec.md)
 	2. [分布式拒绝服务(DDoS)](network-security/ddos.md) (Shrew, IP-Traceback)
+	3. [入侵检测系统(IDS)](network-security/ids.md) (Bro)
 	3. [SSL/TLS安全](web-security/tls.md)（BEAST, CRIME, POODLE, 3HS...）
 	4. [匿名通信](application-security/anonymous.md) (Crowds, Mix, Tor and deanonymization)
 	5. [基础设施测量](internet-security/infrastructure.md)（Mapping facilities and IXP）
