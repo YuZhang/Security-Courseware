@@ -161,23 +161,7 @@ Sender     <———————————————    Reciever
 
 #### 源路由（source routing）攻击：
 
-- IP loose source and record route (LSRR) 选项（参考[RFC1812:   Requirements for IP Version 4 Routers](https://tools.ietf.org/html/rfc1812)）可指定包经过路径/返回路径
-	- 源地址始终为最初发包者，目的地址在每一跳都更新为LSRR选项中下一地址
-	- 最终接收者用LSRR选项以源路径的逆序来应答
-
-- 攻击者A冒充节点V（源地址欺骗），令目的IP地址为T的数据包经过A
-- T上的防火墙或应用以为是V来访问，T以A为中间节点将应答包发送给V
-
-```
-                    src  dst  LSRR             
-                     |    |     | 
-                from V to T via A
- Attacker (A)   —————————————————>   Target (T)  
-       ^                                 |
-       |        from T to V via A        |
-       +—————————————————————————————————+ 
-```
-
+- IP loose source and record route (LSRR) 选项（参考[RFC1812:   Requirements for IP Version 4 Routers](https://tools.ietf.org/html/rfc1812)）可指定包经过路径/返回路径，后面会具体学习
 - 防御：禁止LSRR
 
 
