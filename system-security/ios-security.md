@@ -1,14 +1,15 @@
 #  移动系统安全
 
-### 哈尔滨工业大学 网络与信息安全 张宇 2016
+### 哈尔滨工业大学 网络与信息安全 张宇 2016-2018
 
 ---
 
-本课程学习Apple iOS中安全机制，以及最近披露的首个用于攻击的远程越狱漏洞“三叉戟”及Pegasus恶意软件。
+本课程学习Apple iOS中安全机制，以及最近披露的首个用于攻击的远程越狱漏洞“三叉戟”及Pegasus恶意软件。主要内容更新截止于2016年iOS9。
 
 参考资料：
 
-- [iOS Security Guide (iOS9.3 or later, May 2016) [local]](supplyments/iOS_Security_Guide.pdf) [[online]](http://www.apple.com/business/docs/iOS_Security_Guide.pdf)
+- [Apple Security Updates](https://support.apple.com/en-us/HT201222)
+- [iOS Security Guide (iOS12, 2018) [local]](supplyments/iOS_Security_Guide.pdf) [[online]](http://www.apple.com/business/docs/iOS_Security_Guide.pdf)
 - [Analysis and exploitation of Pegasus kernel vulnerabilities [local]](supplyments/Pegasus.pdf) 
 [[online]](http://jndok.github.io/2016/10/04/pegasus-writeup/) [[POC]](https://github.com/jndok/PegasusX)
 - [iOS Hackers Handbook](https://www.amazon.com/iOS-Hackers-Handbook-Charlie-Miller/dp/1118204123)
@@ -54,7 +55,7 @@
 
 安全技术：
 
-盘古团队总结的[iOS主要安全功能时间线](- [Hacking from iOS8 to iOS9 (Pangu Team @ RUXCON 2015 / POC 2015)](http://blog.pangu.io/wp-content/uploads/2015/11/POC2015_RUXCON2015.pdf))：
+盘古团队总结的iOS主要安全功能时间线：([Hacking from iOS8 to iOS9 (Pangu Team @ RUXCON 2015 / POC 2015)](http://blog.pangu.io/wp-content/uploads/2015/11/POC2015_RUXCON2015.pdf))：
 
 - 1.x：无保护 
 - 2.x：Code Signing：代码签名防止代码被篡改，并禁止非授权应用
@@ -126,6 +127,7 @@ KPP就是运行在Application Process的EL3中，目的是用来保证：只读�
 - 比passcode更安全，更方便
 - 指纹识别1个手指与其他人随机匹配的概率是1/50,000，只允许连续尝试5次
 - 指纹扫描信息临时存储在SE中加密内存，有损处理后丢弃重构指纹所需信息，得到的结果图加密存储在SE中，不会发送给Apple或在iCloud或iTunes中备份
+
 - Touch ID如何锁定设备：
 	- 当Touch ID关闭，当设备锁定时，SE中Data Protection中Complete类的密钥集合C被丢弃，该类中的文件和keychain都不可访问；直到用户用passcode来解锁，重新获得C
 	- 当Touch ID启动 (监测到有手指)
@@ -205,9 +207,10 @@ KPP就是运行在Application Process的EL3中，目的是用来保证：只读�
 	- 问题：在创建文件时，因为没解锁，不能获得加密FK用的CK，该怎么办？
 	- 用非对称密码ECDH over Curve25519实现（[NIST SP 800-56A](http://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-56Ar2.pdf)）：创建文件时不需要CK，打开文件时才需要CK
 		- 为类生成一个静态公私钥对C-PK/SK，C-PK不需要保密，C-SK未解锁时需要保密
-		- 创建文件时，为文件生成临时公私钥F-PK/SK；用F-SK + C-PK协商出一个共享密钥SK
+		- 创建文件时，为文件生成临时公私钥F-PK/SK；用F-SK与C-PK协商出一个共享密钥SK
 		- SK将FK加密封装；F-PK与封装的FK一起存储；F-SK可以丢弃
-		- 需打开文件时，解锁系统获得C-SK，用C-SK + F-PK重新生成相同的SK，解密FK
+		- 需打开文件时，解锁系统获得C-SK，用C-SK与F-PK重新生成相同的SK，解密FK
+		- 一个例子就是类似DH密钥交换协议：`x`是C-SK，`g^x`是C-PK；`y`是F-SK，`g^y`是F-PK；SK就是`g^{xy}`
 - Protect Until First User Anthentication（PUFUA） ：
 	- 与完全保护类一样，除了当设备锁定后，并不从内存中丢弃CK
 	- 用于系统软件Calendar, Contacts, Reminders, Notes, Messages, Photos
@@ -293,7 +296,7 @@ iOS允许一个App通过Extension为其他App提供功能，扩展是一个专�
 MFi（Made for iPhone/iPod/iPad）许可计划为附件制造商提供了iAP（iPod Accessories Protocol）和必要的支撑硬件组件。
 
 - MFi附件与iOS设备通过Lightning接口或蓝牙通讯时，需提供Apple颁发的证书
-- 验证过程通过定制继承电路实现，由Apple提供给制造商，对附件本身透明
+- 验证过程通过定制集成电路实现，由Apple提供给制造商，对附件本身透明
 - 若附件不能提供认证，则只能访问模拟音频，和串行音频播放控制的一个子集
 - AirPlay/CarPlay利用授权IC来验证接收者是否被Apple批准
 - AirPlay音频/CarPlay视频流利用MFi-SAP（Secure Associateion Protocol）实现加密通信
@@ -500,9 +503,9 @@ C++中，对象方法通过虚表来调用父类实现，通过伪造一个假�
 	- `OSString`的虚表指针为前8字节（64位）= 全0
 	- `retain`指针在虚表内的偏移量为0x20字节
 	- 调用`retain`时，`RIP`（64位指令指针）= [0x20]
-	- 映射NULL页
-		- 禁止__PAGEZERO段，将NULL页留作布置ROP链
 - 在NULL页中偏移量0x20字节处放置一个[stack pivot（栈轴）](https://blogs.mcafee.com/mcafee-labs/emerging-stack-pivoting-exploits-bypass-common-security/)： (转移到转移链)
+	- 映射NULL页：将攻击负载添加到堆中从地址0开始的地方
+		- Apple为了兼容传统32位二进制程序，允许禁止`__PAGEZERO`段，将NULL页留作布置ROP链 
 	- stack pivoting: 将栈指针指向一个攻击者控制的缓冲
 	- gadget：`xchg eax, esp; ret` (二进制`{0x94, 0xC3}`)
 		- 先将`esp`设置为`eax`（0），再将栈顶（0）弹出到`RIP`
