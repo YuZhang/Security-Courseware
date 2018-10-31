@@ -38,9 +38,8 @@
 	1. [DNS安全](internet-security/dns-sec.pptx) (Root issue, Cache Poisoning, DNSSEC)
 	2. [BGP安全1](internet-security/bgp-sec.pptx) (Prefix Hijack, RPKI，BGPSec)
 	3. [BGP安全2](internet-security/sidr.md)（Blackholing against DoS，Route Leak，Opt-security）
-7. [新进展](application-security)
-	1. [匿名通信](application-security/anonymous.md) (Crowds, Mix, Tor and deanonymization)
-	2. [基础设施测量](application-security/infrastructure.md)（Mapping facilities and IXP）
-	3. [比特币](application-security/blockchain.md) (Bitcoin, Selfish-mining)
+7. [新进展](advance)
+	1. [匿名通信](advance/anonymous.md) (Crowds, Mix, Tor and deanonymization)
+	2. [基础设施测量](advance/infrastructure.md)（Mapping facilities and IXP）
+	3. [比特币](advance/blockchain.md) (Bitcoin, Selfish-mining)
 8. [总结](summary.md)
-9. [2017论文阅读](reading.md)

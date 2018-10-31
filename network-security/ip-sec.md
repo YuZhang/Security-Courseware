@@ -47,7 +47,7 @@ ID：许多系统以协议无关、递增的方式来使用ID，这导致很多�
 
 ```
 SCAN AN OPEN PORT:
-Attacker                             Zombile                    Target
+Attacker                             Zombie                    Target
     |-------- (1) SYN/ACK ---------->   |                          |
     <------- (2) RST; ID=31337 ---------|                          |
     |-------------------- (3) SYN "from" Zombie ------------------>|
@@ -59,7 +59,7 @@ Attacker                             Zombile                    Target
 
 ```
 SCAN A CLOSED PORT:
-Attacker                             Zombile                    Target
+Attacker                             Zombie                    Target
     |-------- (1) SYN/ACK ---------->   |                          |
     <------- (2) RST; ID=31337 ---------|                          |
     |-------------------- (3) SYN "from" Zombie ------------------>|
@@ -71,7 +71,7 @@ Attacker                             Zombile                    Target
 
 ```
 SCAN A FILTERED PORT:
-Attacker                             Zombile                    Target
+Attacker                             Zombie                    Target
     |-------- (1) SYN/ACK ---------->   |                          |
     <------- (2) RST; ID=31337 ---------|                          |
     |-------------------- (3) SYN "from" Zombie ------------------>|
