@@ -10,9 +10,9 @@
 
 **预备知识**: Linux，x86体系结构，x86汇编，C语言，gdb
 
-- [PC Assembly Language](supplyments/PC-Assembly-Language.pdf)
-- [gcc x86 Assembly Quick Reference](supplyments/gcc-x86-Assembly.pdf)
-- [GDB Quick Reference](supplyments/gdb-refcard.pdf)
+- [PC Assembly Language](supplements/PC-Assembly-Language.pdf)
+- [gcc x86 Assembly Quick Reference](supplements/gcc-x86-Assembly.pdf)
+- [GDB Quick Reference](supplements/gdb-refcard.pdf)
 
 **缓冲区溢出（buffer overflow）**：在计算机安全和程序设计中的一种异常，当一个程序向缓冲区写入数据时，超出了缓冲区边界并且覆盖了相邻内存。
 
@@ -22,7 +22,7 @@
 
 **Linux进程内存布局**
 
-- [Memory Layout (Virtual Address Space of a C process)](supplyments/memorylayout.pdf)
+- [Memory Layout (Virtual Address Space of a C process)](supplements/memorylayout.pdf)
 
 ```
 +——————————————+ 0xFFFFFFFF (high address)
@@ -493,7 +493,7 @@ httpd     4454  4448  0 15:44 pts/3    S+     0:00 zookfs-exstack 6
 
 ## HTTP简介
 
-参考资料：[How the web works: HTTP and CGI explained](supplyments/How-the-web-works.pdf)
+参考资料：[How the web works: HTTP and CGI explained](supplements/How-the-web-works.pdf)
 
 HTTP请求格式：
 

@@ -34,7 +34,7 @@
 - 高级钓鱼攻击：
 	- Social phishing：攻击者伪装为熟人（70%用户被骗）
 	- Context-aware phishing：钓鱼邮件中包含用户相关信息，例如最近的购物交易信息（10%用户被骗）
-	- 两者结合：一个对西点军校学员的实验中，在学期末发送一封邮件“There was a prolbem with your last grade report; click here to resolve it.”，80%的学员点击
+	- 两者结合：一个对西点军校学员的实验中，在学期末发送一封邮件“There was a problem with your last grade report; click here to resolve it.”，80%的学员点击
 
 攻击技术：
 
@@ -84,7 +84,7 @@ response_type=code&scope=get_user_info%2Cadd_share
 
 [Clickjacking](https://en.wikipedia.org/wiki/Clickjacking)：也称作“User Interface redress attack”，欺骗用户鼠标点击一个对象，该对象与用户本以为要点击的不同。
 
-演示：[POC网页与攻击截图](supplyments/clickjacking-example/clickjacking.html)
+演示：[POC网页与攻击截图](supplements/clickjacking-example/clickjacking.html)
 
 - 例1：利用Javascript更改用户点击后触发的动作
 - 例2：利用iframe覆盖实际访问的网页，绕过同源规则（Same origin）
@@ -100,21 +100,21 @@ response_type=code&scope=get_user_info%2Cadd_share
 - 关注某人，分享链接，点赞
 - 点击广告来产生pay per click收入
 
-### Framebluster
+### Framebuster
 
-参考资料：[Busting Frame Busting: a Study of Clickjacking Vulnerabilities on Popular Sites (IEEE Web 2.0 S&P workshop 2010)](supplyments/busting-frame.pdf) [[online]](http://seclab.stanford.edu/websec/framebusting/)
+参考资料：[Busting Frame Busting: a Study of Clickjacking Vulnerabilities on Popular Sites (IEEE Web 2.0 S&P workshop 2010)](supplements/busting-frame.pdf) [[online]](http://seclab.stanford.edu/websec/framebusting/)
 
 [Framebuster](https://en.wikipedia.org/wiki/Framekiller)：（Frame Busting, framekiller）：通过嵌入脚本来阻止网页被其他网页framing
 
-framebluster脚本通常有以下模式：先判断自己是否被嵌套，若是则采取对策
+Framebuster脚本通常有以下模式：先判断自己是否被嵌套，若是则采取对策
 
 ```javascript
 if (top.location != self.location)
     top.location = self.location;
 ```
-演示：将framebuster应用于[被嵌套网页](supplyments/clickjacking-example/attacker.html)
+演示：将framebuster应用于[被嵌套网页](supplements/clickjacking-example/attacker.html)
 
-下面介绍若干针对framebluster的攻击：
+下面介绍若干针对framebuster的攻击：
 
 - Double framing：通过双重framing来绕过基于`parent.location`的防御方法，例如
 
@@ -123,23 +123,23 @@ if (top.location != self.location) {    parent.location = self.location;
 }
 ```
 
-- `onBeforeUnload`事件：当framing网页将要被卸载时会触发`onBeforeUnload`事件，通过注册一个事件句柄来让用户取消掉framebluster的对策。PayPal曾存在该漏洞。
+- `onBeforeUnload`事件：当framing网页将要被卸载时会触发`onBeforeUnload`事件，通过注册一个事件句柄来让用户取消掉framebuster的对策。PayPal曾存在该漏洞。
 
 ```javascriptwindow.onbeforeunload = function ()
 {    return "Asking the user nicely";
 }
 ```
 
-演示：应用`onBeforeUnload`事件来绕过之前的framebuster，[POC](supplyments/clickjacking-example/clickjacking.html)
+演示：应用`onBeforeUnload`事件来绕过之前的framebuster，[POC](supplements/clickjacking-example/clickjacking.html)
 
-- 利用XSS过滤器：浏览器为防御XSS攻击过滤恶意脚本，可利用该机制来过滤framebluster
+- 利用XSS过滤器：浏览器为防御XSS攻击过滤恶意脚本，可利用该机制来过滤framebuster
 
 ```javascript
-framebluster:
+framebuster:
 if (top != self) {    top.location=self.location;}
 Attacker:<iframe src="http://www.victim.com/?v=if(top+!%3D+self)+%7B+top.location%3Dself.location%3B+%7D">
 ```
-- Referer检查问题：`referer`属性返回载入当前文档的文档，利用`referer`实现的framebluster可能存在漏洞。沃尔玛和纽约时报网站曾存在该漏洞。
+- Referer检查问题：`referer`属性返回载入当前文档的文档，利用`referer`实现的framebuster可能存在漏洞。沃尔玛和纽约时报网站曾存在该漏洞。
 
 ```javascript
 if (top.location != location) { 
@@ -168,13 +168,13 @@ if (matchDomain == −1) { //bust }
 
 挪威state house银行(http://www.husbanken.no)和莫斯科银行(http://www.rusbank.org)也能通过检查
 
-- IE Restricted Zone：通过浏览器来禁用javascript来关闭framebluster
+- IE Restricted Zone：通过浏览器来禁用javascript来关闭framebuster
 
 ```html
 <iframe src=”http://www.victim.com”        security=”restricted”></iframe>
 ```
 
-[Framebluster最佳实践](https://www.codemagi.com/blog/post/194):
+[Framebuster最佳实践](https://www.codemagi.com/blog/post/194):
 
 在文档HEAD结尾定义一个style来禁止显示网页：
 
@@ -182,7 +182,7 @@ if (matchDomain == −1) { //bust }
 <style id="antiClickjack">body{display:none !important;}</style>
 ```
 
-在文档BODY结尾执行flamebluster脚本：若未被framed，则显示网页（移除禁止显示网页的style）；若被framed，则将自己设置为顶层。
+在文档BODY结尾执行framebuster脚本：若未被framed，则显示网页（移除禁止显示网页的style）；若被framed，则将自己设置为顶层。
 
 ```javascript
 if (self === top) {
@@ -197,7 +197,7 @@ if (self === top) {
 
 ### 其他防御方案：
 
-- [NoScirpt](https://en.wikipedia.org/wiki/NoScript)中的ClearClick功能阻止用户点击那些不可见或被修改的网页元素
+- [NoScript](https://en.wikipedia.org/wiki/NoScript)中的ClearClick功能阻止用户点击那些不可见或被修改的网页元素
 - X-Frame-Options：允许一个网页通过在HTTP应答头部添加新选项来说明frame策略 [RFC7034: HTTP Header Field X-Frame-Options](https://tools.ietf.org/html/rfc7034)
 	- `SAMEORIGIN`：只允许显示在同源网站的frame中
 	- `DENY`：禁止被显示在frame中

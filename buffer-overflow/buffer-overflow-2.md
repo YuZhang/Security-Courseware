@@ -8,7 +8,7 @@
 
 ## Shellcode原理
 
-参考资料：[Smashing The Stack For Fun And Profit](supplyments/Smashing-The-Stack-For-Fun-And-Profit.pdf) [[online]](http://phrack.org/issues/49/14.html#article)
+参考资料：[Smashing The Stack For Fun And Profit](supplements/Smashing-The-Stack-For-Fun-And-Profit.pdf) [[online]](http://phrack.org/issues/49/14.html#article)
 
 利用缓冲区溢出漏洞改写函数返回地址来劫持程序控制流，令其指向预执行代码。通常该代码会启动一个shell，称作"shellcode"。
 

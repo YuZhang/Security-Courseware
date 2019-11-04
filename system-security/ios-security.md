@@ -9,8 +9,8 @@
 参考资料：
 
 - [Apple Security Updates](https://support.apple.com/en-us/HT201222)
-- [iOS Security Guide (iOS12, 2018) [local]](supplyments/iOS_Security_Guide.pdf) [[online]](http://www.apple.com/business/docs/iOS_Security_Guide.pdf)
-- [Analysis and exploitation of Pegasus kernel vulnerabilities [local]](supplyments/Pegasus.pdf) 
+- [iOS Security Guide (iOS12, 2018) [local]](supplements/iOS_Security_Guide.pdf) [[online]](http://www.apple.com/business/docs/iOS_Security_Guide.pdf)
+- [Analysis and exploitation of Pegasus kernel vulnerabilities [local]](supplements/Pegasus.pdf) 
 [[online]](http://jndok.github.io/2016/10/04/pegasus-writeup/) [[POC]](https://github.com/jndok/PegasusX)
 - [iOS Hackers Handbook](https://www.amazon.com/iOS-Hackers-Handbook-Charlie-Miller/dp/1118204123)
 
@@ -269,7 +269,7 @@ KPP就是运行在Application Process的EL3中，目的是用来保证：只读�
 	- 第三方App访问用户信息，iCloud或扩展需要声明权利
 	- 系统App和精灵进程执行特权操作通过申明特权，而不需要以root来运行
 - 采用地址空间布局随机化（ASLR）来防御内存破坏，Xcode采用ASLR来编译第三方App
-- 采用ARM Excute Never (XN)来令内存页不可执行
+- 采用ARM Execute Never (XN)来令内存页不可执行
 - 采用Apple-only dynamic code-signing权利来令内存页可写与可执行
 	- Safari以此实现JavaScript JIT编译器
 - 沙箱（访问控制）不能完全阻止软件恶意行为：
@@ -322,7 +322,7 @@ MFi（Made for iPhone/iPod/iPad）许可计划为附件制造商提供了iAP（i
 
 ### 三叉戟漏洞
 
-参考资料：[Analysis and exploitation of Pegasus kernel vulnerabilities](supplyments/Pegasus.pdf) 
+参考资料：[Analysis and exploitation of Pegasus kernel vulnerabilities](supplements/Pegasus.pdf) 
 [[online]](http://jndok.github.io/2016/10/04/pegasus-writeup/) [[POC]](https://github.com/jndok/PegasusX)
 
 1. CVE-2016-4657：Safari的Webkit内核上的内存漏洞执行远程代码

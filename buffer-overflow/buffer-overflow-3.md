@@ -226,7 +226,7 @@ int *ptr = malloc(sizeof(int) * 2);while(1){     *ptr = 42;    <———    
 
 ## Baggy Bounds Checking
 
-阅读资料：[Baggy Bounds Checking (USENIX Security 2009)](supplyments/baggy-bound-checking-USENIX2009.pdf) [[online]](https://www.usenix.org/legacy/events/sec09/tech/full_papers/akritidis.pdf)
+阅读资料：[Baggy Bounds Checking (USENIX Security 2009)](supplements/baggy-bound-checking-USENIX2009.pdf) [[online]](https://www.usenix.org/legacy/events/sec09/tech/full_papers/akritidis.pdf)
 
 思想：为每个分配的对象，通过malloc或编译器来确定对象大小，并把对象大小记录下来。在两种指针操作中，检查指针是否出界：
 
@@ -358,7 +358,7 @@ char *p = malloc(32);char *q = p + 32;char ch = *q;```
 
 ## Blind Return-Oriented Programming
 
-阅读资料：[Hacking Blind (S&P 2014)](supplyments/blind-return-oriented-programming.pdf) [[Slides]](blind-return-oriented-programming-slides.pdf) [[online]](http://www.scs.stanford.edu/brop/bittau-brop-slides.pdf)
+阅读资料：[Hacking Blind (S&P 2014)](supplements/blind-return-oriented-programming.pdf) [[Slides]](blind-return-oriented-programming-slides.pdf) [[online]](http://www.scs.stanford.edu/brop/bittau-brop-slides.pdf)
 
 假设目标系统实现了DEP和ASLR，那么缓冲区溢出攻击还能实施吗？如目标系统只实现了DEP而没有实现ASLR，可实施ROP攻击。若也实现了ASLR，则可实施BROP攻击。
 

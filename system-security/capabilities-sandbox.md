@@ -96,7 +96,7 @@
 
 ## Capsicum
 
-参考资料：[Capsicum: practical capabilities for UNIX (USENIX Security 2010) [local]](supplyments/Capsicum.pdf)
+参考资料：[Capsicum: practical capabilities for UNIX (USENIX Security 2010) [local]](supplements/Capsicum.pdf)
 
 一种轻量级操作系统能力和沙箱框架（for FreeBSD）
 
@@ -208,7 +208,7 @@
 	- 与Layer-1一起沙箱化GPU进程 
 - 曾经采用，被已废弃的技术：Seccomp-legacy, SELinux, Apparmor
 
-#### 在实现Chromium浏览器时比较（来自[Capsicum 2004](supplyments/Capsicum.pdf)）：
+#### 在实现Chromium浏览器时比较（来自[Capsicum 2004](supplements/Capsicum.pdf)）：
 
 ```
 OS        Model        Loc       Description
@@ -217,10 +217,10 @@ Windows   ACL          22,350    Windows ACLs and SIDs
 Linux     chroot       605       setuid root helper sandboxes renderer
 ————————————————————————————————————————————————————————————————————————————
 Mac OS X  Seatbelt     560       Path-based MAC sandbox
-Linux     SELinux      200       Restricted sandbox type enforement domain
+Linux     SELinux      200       Restricted sandbox type enforcement domain
 ————————————————————————————————————————————————————————————————————————————
 Linux     seccomp      11,301    seccomp and userspace syscall wrapper
-FreeBSD   Capsicum     100       Capsicum sanboxing using cap_enter
+FreeBSD   Capsicum     100       Capsicum sandboxing using cap_enter
 
 ```
 ---
