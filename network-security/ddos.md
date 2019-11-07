@@ -315,7 +315,7 @@ NDSS'2007上的文章提出，利用针对TCP的低速DoS攻击，使得一对BG
 
 下面介绍一种具体的概率性标记方案：
 
-[Practical Network Support for IP Traceback (SIGCOMM 2000)](supplyments/IP-Traceback.pdf)
+[Practical Network Support for IP Traceback (SIGCOMM 2000)](supplements/IP-Traceback.pdf)
 
 #### 标记过程（边采样）
 

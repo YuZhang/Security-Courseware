@@ -25,8 +25,8 @@
 实现访问控制依赖于 [引用监视器（reference monitor）](https://en.wikipedia.org/wiki/Reference_monitor)：在操作系统中，对引用验证机制（reference validation mechanism，RVM）的一个设计需求集合，来强制实现访问控制策略，需满足一下需求：
 
 - 不可绕过（Non-bypassable）：RVM必须始终被调用（always invoked），完全介入（complete mediation）
-- 防篡改（tamperproof）：否则，不能保证不可绕过
-- 可验证（verifiable）：RVM必须足够小，以进行分析，测试，确保不可绕过
+- 防篡改（Tamper-proof）：否则，不能保证不可绕过
+- 可验证（Verifiable）：RVM必须足够小，以进行分析，测试，确保不可绕过
 
 实现引用监视器依赖于 [可信计算基（trusted computing base）](https://en.wikipedia.org/wiki/Trusted_computing_base)：实现安全策略的关键硬件、固件、软件的集合，若发生故障则无法实现安全；区别于其他即使发生故障也不会影响安全的组件
 
@@ -85,7 +85,7 @@ Unix系统采用强制访问控制，**‘root’**特权用户（UID=0）拥有
   [type][owner][group][other]    
   [-   ][rwx  ][rwx  ][rwx  ]    +—> [s]etuid/gid
    |     |                       |—> s[t]icky
-   |     |——> [r]ead, [w]rite, e[x]ecutable
+   |     |——> [r]ead, [w]rite, e[x]ecute
    |
    |——> [-]ordinary, [d]irectory, [l]ink,
    |——> [s]ocket, [p]ipe, [c]haracter, [b]lock
@@ -122,9 +122,9 @@ Unix系统采用强制访问控制，**‘root’**特权用户（UID=0）拥有
 - `setuid()`函数族设置`uid/gid`，但实际情况比较复杂，详见[Setuid Demystified (USENIX Security 2002)](https://www.usenix.org/legacy/events/sec02/full_papers/chen/chen.pdf)
 - `sudo`命令：临时以特定用户（缺省root）特权来执行命令。例如，`sudo apt-get`
 
-[特权扩大（priviledge escalation）](https://en.wikipedia.org/wiki/Privilege_escalation)：利用操作系统或软件应用中的bug、设计缺陷或配置疏漏来获得访问被保护资源的特权。
+[特权扩大（privilege escalation）](https://en.wikipedia.org/wiki/Privilege_escalation)：利用操作系统或软件应用中的bug、设计缺陷或配置疏漏来获得访问被保护资源的特权。
 
-- 垂直特权扩大：即特权提升（priviledge elavation），低特权用户获得高特权用户的特权，通常获得系统管理权。例如，Unix系统中越狱(jailbreakig)打破`chroot`或`jail`限制，以及Andriod中获取root。
+- 垂直特权扩大：即特权提升（privilege elevation），低特权用户获得高特权用户的特权，通常获得系统管理权。例如，Unix系统中越狱(jailbreaking)打破`chroot`或`jail`限制，以及Android中获取root。
 	- [`chroot`](https://en.wikipedia.org/wiki/Chroot)命令：
 		- 该命令只有root可以执行：`chroot /tmp/guest`, `su guest`
 		- 改变当前进程的根目录，将进程文件系统特权限制在指定jail目录下
@@ -153,7 +153,7 @@ Unix系统采用强制访问控制，**‘root’**特权用户（UID=0）拥有
 
 ## OKWS
 
-参考文献：[Building Secure High-Performance Web Services with OKWS (USENIX ATC 2004) [local]](supplyments/okws.pdf)
+参考文献：[Building Secure High-Performance Web Services with OKWS (USENIX ATC 2004) [local]](supplements/okws.pdf)
 
 实验系统`zookws`源自于OKWS，一个特权分离web服务器。OKWS实现以下目标：
 

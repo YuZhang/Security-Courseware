@@ -27,7 +27,7 @@
 HTTP请求（Request）格式：
 
 ```
-[METH] [REQUEST-URI] HTTP/[VER]
+[METHOD] [REQUEST-URI] HTTP/[VER]
 Field1: Value1
 Field2: Value2
 
@@ -509,7 +509,7 @@ www.attacker.com                          Browser                       wwww.ban
 
 - Secret Validation Token：由服务器生成一个随机token发送给浏览器，后续请求需携带token；没有该token的伪造请求不能得到应答
 	- Token必须保证不能为预测或伪造，例如令Token=MAC(server-key, session-ID)
-	- Sychronizer token pattern：将token嵌入在网页里，例如`<input type="hidden" name="csrftoken" value="KbyUmhTLMpYj7CD2" />`
+	- Synchronizer token pattern：将token嵌入在网页里，例如`<input type="hidden" name="csrftoken" value="KbyUmhTLMpYj7CD2" />`
 	- Cookie-to-Header token：将token放入cookie `Csrf-token`中，浏览器用JS读取token并在请求时携带`X-Csrf-Token`头部，但这与HttpOnly冲突
 	- 缺点：攻击者若能获取token，则可以伪装为用户
 - Referer Validation：当浏览器发出请求时，携带发出请求网页的URL，来区分是同站请求还是跨站请求

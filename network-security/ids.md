@@ -45,7 +45,7 @@ TTL=20                   |
 
 ## 2. Bro
 
-本节学习一个滥用检测NIDS，Bro，最早的入侵检测系统研究之一。Bro: A System for Detecting Network Intruders in Real-Time Vern Paxson [[Slides](supplyments/bro-slides.pdf)]。其设计目标如下：
+本节学习一个滥用检测NIDS，Bro，最早的入侵检测系统研究之一。Bro: A System for Detecting Network Intruders in Real-Time Vern Paxson [[Slides](supplements/bro-slides.pdf)]。其设计目标如下：
 
 - 高速大流量监测（在1998年时，100M）
 - 不丢包，否则可能漏掉关键消息
@@ -62,7 +62,7 @@ Bro主要包括三个分部：
 - Event Engine，产生事件，例如，连接已经建立
 - Policy Script Interpreter，以政策脚本为输入，输出实时通知或日志
 
-我们通过[[Slides](supplyments/bro-slides.pdf)]来学习一下Bro。
+我们通过[[Slides](supplements/bro-slides.pdf)]来学习一下Bro。
 
 ## 3. 异常检测
 
@@ -91,7 +91,7 @@ Bro主要包括三个分部：
 | 0.00001 | 0.00002  | 0.99999  | 0.5      |
 ```
 
-下面我们通过一个[[Slides]](supplyments/anomaly.pdf)来学习这篇论文。
+下面我们通过一个[[Slides]](supplements/anomaly.pdf)来学习这篇论文。
 
 ----
 
