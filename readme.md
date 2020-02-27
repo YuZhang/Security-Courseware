@@ -1,9 +1,13 @@
-# 网络与信息安全（2016-2018）
+# 网络与信息安全（2016-2020）
+
 
 哈尔滨工业大学
 张宇
 
-参考课程:
+- 网络与信息安全（硕士研究生课程，秋季学期，2016 ～）
+- 互联网基础设施安全（硕士研究生课程，春季学期，2019 ～）
+
+部分参考课程:
 
 - [MIT 6.858 Computer Systems Security](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014/index.htm)
 - [Stanford CS155 Computer and Network Security](https://crypto.stanford.edu/cs155/)
@@ -29,17 +33,18 @@
 4. [Web安全](web-security)
 	1. [Injection，XSS与CSRF](web-security/web-sec-1.md)
 	2. [Phishing与Clickjacking](web-security/web-sec-2.md)
-5. [网络安全](network-security)
+5. [网络安全1](network-security)
 	1. [TCP/IP安全1](network-security/tcp-ip-sec.md) (TCP Hijack)
 	2. [TCP/IP安全2](network-security/ip-sec.md) (Idle Scan, LSRR)
 	3. [分布式拒绝服务(DDoS)](network-security/ddos.md) (Shrew, IP-Traceback)
 	4. [入侵检测系统(IDS)](network-security/ids.md) (Bro，ML-based Anomaly Detection)
-6. [互联网基础设施安全](internet-security)
-	1. [DNS安全](internet-security/dns-sec.pptx) (Root issue, Cache Poisoning, DNSSEC)
-	2. [BGP安全1](internet-security/bgp-sec.pptx) (Prefix Hijack, RPKI，BGPSec)
-	3. [BGP安全2](internet-security/sidr.md)（Blackholing against DoS，Route Leak，Opt-security）
-7. [新进展](advance)
-	1. [匿名通信](advance/anonymous.md) (Crowds, Mix, Tor and deanonymization)
-	2. [基础设施测量](advance/infrastructure.md)（Mapping facilities and IXP）
+6. [网络安全2 - 互联网基础设施安全](internet-security)
+	1. [互联网基础设施安全课程简介](internet-security/intro.pptx)
+	2. [互联网体系结构与安全](internet-security/arch-sec.pptx) (from D. Clark "Design an internet")
+	3. [DNS安全](internet-security/dns-sec.pptx) (Root issue, Cache Poisoning, DNSSEC)
+	4. [BGP安全1](internet-security/bgp-sec.pptx) (Prefix Hijack, RPKI，BGPSec)
+	5. [BGP安全2](internet-security/sidr.md)（Blackholing against DoS，Route Leak，Opt-security）
+	6. [匿名通信](advance/anonymous.md) (Crowds, Mix, Tor and deanonymization)
+	7. [物理基础设施测量](advance/infrastructure.md)（Mapping facilities and IXP）
 	3. [比特币](advance/blockchain.md) (Bitcoin, Selfish-mining)
 8. [总结](summary.md)

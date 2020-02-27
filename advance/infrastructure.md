@@ -1,7 +1,11 @@
-# 基础设施安全
+# 网络拓扑测量
 
 
-## 0. 互联网基础设施测绘
+## 0. 互联网拓扑测量基础
+
+- 学习一些互联网拓扑测量基础知识，见[幻灯片](topology-measurement.pptx)
+
+## 1. 网络互联基础设施测量 
 
 - 参考文献：[Mapping Peering Interconnections to a Facility, CoNEXT 2015. (The best paper)](https://www.caida.org/publications/papers/2015/mapping_peering_interconnections/mapping_peering_interconnections.pdf) [[Slides]](http://www.caida.org/publications/presentations/2015/mapping_peering_interconnections_conext/mapping_peering_interconnections_conext.pdf)
 
