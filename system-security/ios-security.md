@@ -84,7 +84,7 @@
 3. -- 签名验证 --> iBoot (the Interactive BOOT menu system)
 4. -- 签名验证 --> iOS内核（XNU）
 	- 若载入或验证失败，进入“Connect to iTunes”界面 (recovery mode)
- 
+
 - 基带子系统和Secure Enclave采用类似的安全启动方案
 - [**Pwnage漏洞**](https://www.theiphonewiki.com/wiki/Pwnage)：iPhone，iPod touch和iPhone 3G中，Boot ROM没有检查LLB签名
 
@@ -165,7 +165,8 @@ KPP就是运行在Application Process的EL3中，目的是用来保证：只读�
 - 每次在数据分区中创建文件时，DP创建一个新的256位密钥FK（per-file key）
 	- 利用硬件AES引擎以AES CBC（或A8处理器的[AES-XTS](https://en.wikipedia.org/wiki/Disk_encryption_theory#XTS)）模式来加密文件
 	- 初始向量（IV）根据块偏移量计算，用FK的SHA-1哈希值来加密
-- 为文件分配class，用一个class密钥CK来封装FK（RFC3394并存储在文件元数据中
+- 为文件分配class，用一个class密钥CK来封装FK（RFC3394）
+- 并存储在文件元数据中
 	- CK用UID来封装；部分CK也需要用Passcode封装
 - 打开文件时，用FSK解密元数据，用CK解密封装的FK，用FK解密文件
 	- 所有封装FK处理在SE中执行，FK从来不暴露给应用处理器
@@ -397,12 +398,18 @@ case kOSSerializeNumber:
 为触发漏洞，向内核写入和读取数据采用[`IOUserClient`](https://developer.apple.com/library/content/samplecode/SimpleUserClient/Listings/User_Client_Info_txt.html)（[中文资料](http://www.tanhao.me/pieces/1547.html/)），该类负责应用程序与内核驱动程序间连接。具体触发漏洞的函数为`io_registry_entry_get_property_bytes`，其中读取过长缓冲的代码如下：
 
 ```cpp
-...else if( (off = OSDynamicCast( OSNumber, obj )))
-{	offsetBytes = off->unsigned64BitValue(); 
+...
+else if( (off = OSDynamicCast( OSNumber, obj )))
+{
+	offsetBytes = off->unsigned64BitValue(); 
 	len = off->numberOfBytes(); /* reads out malformed length, 0x200 */ 
-	bytes = &offsetBytes; /* bytes* ptr points to a stack variable */... 
-}...
-       *dataCnt = len;		bcopy( bytes, buf, len ); /* data leak */ }...
+	bytes = &offsetBytes; /* bytes* ptr points to a stack variable */
+... 
+}
+...
+       *dataCnt = len;
+		bcopy( bytes, buf, len ); /* data leak */ }
+...
 ```
 
 从泄露的内存中读取函数返回地址后，计算滑动量。

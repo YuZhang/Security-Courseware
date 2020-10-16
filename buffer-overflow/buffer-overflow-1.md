@@ -79,29 +79,35 @@ low  —————>  high address
 |           v            |
 ```
 
-* caller调用者；callee被调用者，即子函数
-* arguments：子函数参数，调用前入栈
-* return address： 子函数调用前将待执行下一条指令地址保存在返回地址中，待函数调用结束后，返回到调用者继续执行
-* `eip` 指令指针指向下一条指令地址
-* stack frame pointer 栈帧指针指向调用者的栈帧基址`ebp`
-* `ebp` 基址指针指向栈帧底（高地址）
-* `esp` 栈指针指向栈顶（低地址）
-* `e`表示32位，`%`表示寄存器
+caller调用者；callee被调用者，即子函数
 
-* caller（调用者）规则：
+arguments：子函数参数，调用前入栈
 
-	1. 子函数参数入栈，从右向左
-	- `call`指令，将下一条指令地址入栈（`push %eip`），并无条件跳转
-	- 子函数返回，返回值在`eax`中
+return address： 子函数调用前将待执行下一条指令地址保存在返回地址中，待函数调用结束后，返回到调用者继续执行
 
-* callee（被调用者）规则：
+`eip` 指令指针指向下一条指令地址
 
-	1. 保存caller的栈基址，设定callee新的栈基址为当前栈指针（`push %ebp`; `mov %esp, %ebp`）
-	- 为局部变量分配栈空间（`sub 123,%esp`）
-	- 执行函数，结果保存在`eax`中
-	- 执行`leave`复合指令，清除当前栈帧，恢复到调用者栈帧（`mov %ebp, %esp`; `pop %ebp`）
-	- 执行`ret`指令（`pop %eip`）
+stack frame pointer 栈帧指针指向调用者的栈帧基址`ebp`
 
+`ebp` 基址指针指向栈帧底（高地址）
+
+`esp` 栈指针指向栈顶（低地址）
+
+`e`表示32位，`%`表示寄存器
+
+caller（调用者）规则：
+
+1. 子函数参数入栈，从右向左
+2. `call`指令，将下一条指令地址入栈（`push %eip`），并无条件跳转
+3. 子函数返回，返回值在`eax`中
+
+callee（被调用者）规则：
+
+1. 保存caller的栈基址，设定callee新的栈基址为当前栈指针（`push %ebp`; `mov %esp, %ebp`）
+2. 为局部变量分配栈空间（`sub 123,%esp`）
+3. 执行函数，结果保存在`eax`中
+4. 执行`leave`复合指令，清除当前栈帧，恢复到调用者栈帧（`mov %ebp, %esp`; `pop %ebp`）
+5. 执行`ret`指令（`pop %eip`）
 ---
 ## 栈缓冲区溢出
 
@@ -975,4 +981,4 @@ Program received signal SIGSEGV, Segmentation fault.
 
 
 
- 
+

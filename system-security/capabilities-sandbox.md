@@ -80,7 +80,9 @@
 	- [FreeBSD jail](https://en.wikipedia.org/wiki/FreeBSD_jail)（chroot+网络限制）
 		- `jail jail-path hostname IP-addr cmd`
 		- 调用增强的chroot (无法用  “../../”  逃离)
-		- 只能绑定socket到指定IP地址和授权端口		- 只能与jail内进程通信		- root被限制，例如不能载入内核模块
+		- 只能绑定socket到指定IP地址和授权端口
+		- 只能与jail内进程通信
+		- root被限制，例如不能载入内核模块
 	- 优点：简单，不需要修改程序
 	- 缺点：粗粒度，不能阻止访问网络或令宿主操作系统崩溃
 - [seccomp (Secure Computing Mode)](https://en.wikipedia.org/wiki/Seccomp)：Linux内核中一种应用沙箱机制
@@ -130,27 +132,45 @@
 - 沙箱化：先以环境特权获得资源，之后进入能力模式
 
 ```c
-+       if (cap_enter() < 0)+               error("cap_enter: %s", pcap_strerror(errno));        status = pcap_loop(pd, cnt, callback, pcap_userdata);
++       if (cap_enter() < 0)
++               error("cap_enter: %s", pcap_strerror(errno));
+        status = pcap_loop(pd, cnt, callback, pcap_userdata);
 ```
 
 - 进一步改进，阻止从`stdin`读取，但允许输出
 
 
 ```c
-+ + + + + +if (lc_limitfd(STDIN_FILENO, CAP_FSTAT) < 0)        error("lc_limitfd: unable to limit STDIN_FILENO");if (lc_limitfd(STDOUT_FILENO, CAP_FSTAT | CAP_SEEK | CAP_WRITE) < 0)        error("lc_limitfd: unable to limit STDOUT_FILENO");if (lc_limitfd(STDERR_FILENO, CAP_FSTAT | CAP_SEEK | CAP_WRITE) < 0)        error("lc_limitfd: unable to limit STDERR_FILENO");
++ + + + + +
+if (lc_limitfd(STDIN_FILENO, CAP_FSTAT) < 0)
+        error("lc_limitfd: unable to limit STDIN_FILENO");
+if (lc_limitfd(STDOUT_FILENO, CAP_FSTAT | CAP_SEEK | CAP_WRITE) < 0)
+        error("lc_limitfd: unable to limit STDOUT_FILENO");
+if (lc_limitfd(STDERR_FILENO, CAP_FSTAT | CAP_SEEK | CAP_WRITE) < 0)
+        error("lc_limitfd: unable to limit STDERR_FILENO");
 ```
 
 - `procstat -fC`显示进程能力，`stdin`能力只有`fs`(`fstat()`)
 
 ```
- PID COMM            FD T     FLAGS CAPABILITIES PRO NAME1268 tcpdump          0 v rw------c           fs -   /dev/pts/01268 tcpdump          1 v -w------c     wr,se,fs -   /dev/null1268 tcpdump          2 v -w------c     wr,se,fs -   /dev/null1268 tcpdump          3 v rw-------            - -   /dev/bpf
+ PID COMM            FD T     FLAGS CAPABILITIES PRO NAME
+1268 tcpdump          0 v rw------c           fs -   /dev/pts/0
+1268 tcpdump          1 v -w------c     wr,se,fs -   /dev/null
+1268 tcpdump          2 v -w------c     wr,se,fs -   /dev/null
+1268 tcpdump          3 v rw-------            - -   /dev/bpf
 ```
 
 - `ktrace`显示`tcpdump`使用DNS需要访问文件和网络，而这些在能力模式下已经被禁止，因而出错
 	- 这也指出了一个软件设计问题：有些特权是按需的，并不是在程序启动时就需要，因此，沙箱化也需要在软件设计之处就考虑到
 
 ```c
-  1272 tcpdump CALL  open(0x80092477c,O_RDONLY,<unused>0x1b6)  1272 tcpdump NAMI  "/etc/resolv.conf"  1272 tcpdump RET   connect -1 errno 78 Function not implemented  1272 tcpdump CALL  socket(PF_INET,SOCK_DGRAM,IPPROTO_UDP)  1272 tcpdump RET   socket 4  1272 tcpdump CALL  connect(0x4,0x7fffffffe080,0x10)  1272 tcpdump RET   connect -1 errno 78 Function not implemented
+  1272 tcpdump CALL  open(0x80092477c,O_RDONLY,<unused>0x1b6)
+  1272 tcpdump NAMI  "/etc/resolv.conf"
+  1272 tcpdump RET   connect -1 errno 78 Function not implemented
+  1272 tcpdump CALL  socket(PF_INET,SOCK_DGRAM,IPPROTO_UDP)
+  1272 tcpdump RET   socket 4
+  1272 tcpdump CALL  connect(0x4,0x7fffffffe080,0x10)
+  1272 tcpdump RET   connect -1 errno 78 Function not implemented
 ```
 
 ### 应用于GZIP的例子
@@ -224,3 +244,4 @@ FreeBSD   Capsicum     100       Capsicum sandboxing using cap_enter
 
 ```
 ---
+
