@@ -28,7 +28,7 @@
 	2. [能力与沙箱](system-security/capabilities-sandbox.md) (Capsicum)
 	3. [移动系统安全](system-security/ios-security.md) (Apple iOS, Pegasus)
 3. [密码学与应用](crypto)
-	1. [密码学原理](crypto/crush-course.pdf) 
+	1. [密码学原理](crypto/crush-course.pdf) ([密码学原理本科课程课件](https://github.com/YuZhang/cryptography/)，包含[中文讲义](https://github.com/YuZhang/cryptography/tree/master/lecturenotes-Chinese))
 	2. 	[SSL/TLS安全](crypto/tls.md)（BEAST, CRIME, POODLE, 3HS...）
 4. [Web安全](web-security)
 	1. [Injection，XSS与CSRF](web-security/web-sec-1.md)
