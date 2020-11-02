@@ -222,7 +222,7 @@ if ((options == (__WCLONE|__WALL)) && (current->uid = 0))
 
 ### 所有SSL证书CA都可信？
 
-- 连接SSL支持的站点（HTTPS）需要验证CA办法的证书（身份和公钥的数字签名）
+- 连接SSL支持的站点（HTTPS）需要验证CA颁发的证书（身份和公钥的数字签名）
 - 多数浏览器相信上百个CA，任何一个CA被攻破，可伪造任何站点证书
 - 2011年，两个CA，[DigiNotar](http://en.wikipedia.org/wiki/DigiNotar)和[Comodo](http://en.wikipedia.org/wiki/Comodo_Group)，发布了包括google, yahoo等的假证书
 - 2012年，一个CA，[Trustwave](http://www.h-online.com/security/news/item/Trustwave-issued-a-man-in-the-middle-certificate-1429982.html)发布了一个对任意网站都有效的根证书
