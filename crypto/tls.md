@@ -165,13 +165,13 @@ TLS安全使用建议：[RFC7525 (BCP195): Recommendations for Secure Use of Tra
 
 BEAST (Browser Exploit Against SSL/TLS)（[CVE-2011-3389](http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2011-3389)）攻击针对TLS 1.0中CBC实现中可预测的初始向量（chaining IV）来破解报文，IV为前一个密文中的最后一个块，而不是新产生的随机串。
 
-在选择明文攻击下，攻击者可猜测一个之前观察到的明文块`P_i`是否为`x`?
+在选择明文（CPA）攻击下，攻击者可**猜测一个之前观察到的明文块`P_i`是否为`x`?**
 
 - CBC加密：`C_1 = E(IV xor P_1)`, `C_i = E(C_(i-1) xor P_i)` 
 - CBC解密：`P_1 = D(C_1) xor IV`, `P_i = D(C_i) xor C_(i-1)`
-- chaining IV：`IV`=前一个密文中的最后一个块，可以想象消息被串成一串
-- 选择下个消息的首个明文块`P_j = C_(j-1) xor C_(i-1) xor x`
-- 若`P_i = x`，则`C_j = E(P_j xor C_(j-1)) = E(C_(i-1) xor P_i) = C_i`
+- 漏洞 chaining IV：`IV`=前一个密文中的最后一个块，可以想象消息被串成一串
+- 敌手选择下个消息的首个明文块`P_j = C_(j-1) xor C_(i-1) xor x` ，猜测`P_i`是`x`
+- 若`P_i = x`（敌手猜测正确），则观察到密文也相同`C_j = E(P_j xor C_(j-1)) = E(C_(i-1) xor P_i) = C_i`
 
 ```
  IV    P_(i-1)    P_i       P_(j-1)   P_j = C_(j-1) xor C_(i-1) xor x
@@ -196,16 +196,18 @@ BEAST (Browser Exploit Against SSL/TLS)（[CVE-2011-3389](http://cve.mitre.org/c
 
 ```js
 var s = new WebSocket("wss://bob.com/websocket?ABCDEF");
-s.onopen = function(e) {    console . log (" opened ");
+s.onopen = function(e) {
+    console . log (" opened ");
     s.send("Hello, world!");
-    s.send("Here come the + ninjas");}
+    s.send("Here come the + ninjas");
+}
 ```
 
 破解请求头部中cookie的攻击步骤：
 
 - Step 1：攻击者令用户发送请求`POST /AAAAAA HTTP/1.1<CR><LF><REQUEST HEADERS><CR><LF><REQUEST BODY>`，被CBC模式加密后，发送给目标服务器。
 - Step 2: 攻击者获取所有密文，明文块`P_3`为`P/1.1<CR><LF><X>`，`X`是待猜测内容。
-- Step 3: 攻击者将`P_guess = C_last(IV) xor C_2 xor "P/1.1<CR><LF><Y>"`附加在`<REQUEST BODY>`前，用户加密后将`C_guess`发送给服务器。
+- Step 3: 攻击者猜测`X`为`Y`，将`P_guess = C_last(IV) xor C_2 xor "P/1.1<CR><LF><Y>"`附加在`<REQUEST BODY>`前，用户加密后将`C_guess`发送给服务器。
 - Step 4: 若`C_guess = C_3`，则`X = Y`；否则，改变`Y`并跳到Step 3。
 
 防御：[TLS 1.1中方案](https://tools.ietf.org/html/rfc4346#page-21)
@@ -297,12 +299,15 @@ SSL/TLS加密过程并不隐藏消息长度，即泄露了`len(encrypt(compress(
 请求示例：
 
 ```html
-GET /twid=aHost: twitter.com
+GET /twid=a
+Host: twitter.com
 User-Agent: Chrome
 Cookie: twid=secret 
 
 ...
-GET /twid=sHost: twitter.com
+
+GET /twid=s
+Host: twitter.com
 User-Agent: Chrome
 Cookie: twid=secret
 ```
@@ -348,9 +353,18 @@ TLS中压缩：
 
 ```python
 def next_byte(cookie, known, alphabet=BASE64):
-	candidates = list(alphabet)	while len(candidates) != 1:		url = random_16K_url(known)		record_lens = query(url)		length = record_lens[0]		record = "GET /%s%s%s" (url, REQ, known)
-		good = []		for c in candidates:			if len(compress(record + c)) == length:				good.append(c)
-		candidates = good	return candidates[0]
+	candidates = list(alphabet)
+	while len(candidates) != 1:
+		url = random_16K_url(known)
+		record_lens = query(url)
+		length = record_lens[0]
+		record = "GET /%s%s%s" (url, REQ, known)
+		good = []
+		for c in candidates:
+			if len(compress(record + c)) == length:
+				good.append(c)
+		candidates = good
+	return candidates[0]
 ```
 
 - 优点：无误报；压缩算法无关
@@ -403,7 +417,8 @@ November 2009](http://data.proidea.org.pl/confidence/6edycja/materialy/prezentac
 ```
 
 攻击示例：攻击者以自己发出的“支付账号和金额”以及受害用户发出的“cookie”一起拼凑一个支付请求，来盗取受害者账户。
-```
+
+```
 A<=>S:
 
 GET /ebanking/paymemoney.cgi?acc=LU00000000000000?amount=1000\n
@@ -411,7 +426,8 @@ Ignore-what-comes-now:   <--- without '\n'
 
 C<=>S:
 
-GET /ebanking\nCookie: AS21389:6812HSADI:3991238\n
+GET /ebanking\n
+Cookie: AS21389:6812HSADI:3991238\n
 
 The request to the server:
 
@@ -499,11 +515,14 @@ TLS中漏洞：
 - 2015年，埃及MSC Holding使用CNNIC签发的中级证书签发gmail假证书，导致Chrome和Firefox移除的CNNIC根证书 [[相关报道]](https://en.wikipedia.org/wiki/China_Internet_Network_Information_Center)
 
 
-- [Pinning](https://en.wikipedia.org/wiki/Transport_Layer_Security#Certificate_pinning)：PKP(Public-Key Pinning)将信任从根CA公钥转移到其他可信公钥，例如在浏览器内置公钥白名单，或采用首用信任TOFU(trust-on-first-use)机制。- 公证人方案：
+- [Pinning](https://en.wikipedia.org/wiki/Transport_Layer_Security#Certificate_pinning)：PKP(Public-Key Pinning)将信任从根CA公钥转移到其他可信公钥，例如在浏览器内置公钥白名单，或采用首用信任TOFU(trust-on-first-use)机制。
+- 公证人方案：
 	- [Perspectives](https://en.wikipedia.org/wiki/Transport_Layer_Security#Perspectives_Project)通过主动采集证书来扮演一个第三方公证人角色，即在证书权威CA和证书持有者之外提供一个新的证书源，并提供审计功能。
 	- [Convergence](https://en.wikipedia.org/wiki/Convergence_(SSL))扩展了Perspectives，对来自客户端的证书请求做了匿名化处理来保护用户隐私。	
-	- 这种第三方角色保证了其独立性，但可能由于证书采集问题导致假警报。- 公开日志方案：
+	- 这种第三方角色保证了其独立性，但可能由于证书采集问题导致假警报。
+- 公开日志方案：
 	- 由Google提出的[证书透明(certificate transparency)](https://en.wikipedia.org/wiki/Certificate_Transparency)方案引入了一个基于Merkle树的公开、只可追加日志系统，记载CA颁发过的和证书持有者提交的证书，以支撑对CA审计与问责。日志本身也是可审计的，其远景目标是一个证书被客户端所接受当且仅当该证书已被添加到日志中。
-	- 在[Sovereign Keys](https://www.eff.org/sovereign-keys)方案中，证书持有者对自己的证书签名并存入公开日志中。- [DANE](https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities)（DNS-based Authentication of Named Entities）将多根CA的非层级结构层级化，将多根结构单根化，通过DNSSEC认证域名相应证书，因此，DANE相当于将CA滥用问题转移到DNSSEC滥用问题，权利被集中所带来的好处是攻击面减小，缺点是滥用风险更加突出、危害也更大。
+	- 在[Sovereign Keys](https://www.eff.org/sovereign-keys)方案中，证书持有者对自己的证书签名并存入公开日志中。
+- [DANE](https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities)（DNS-based Authentication of Named Entities）将多根CA的非层级结构层级化，将多根结构单根化，通过DNSSEC认证域名相应证书，因此，DANE相当于将CA滥用问题转移到DNSSEC滥用问题，权利被集中所带来的好处是攻击面减小，缺点是滥用风险更加突出、危害也更大。
 
 ---

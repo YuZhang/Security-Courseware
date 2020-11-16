@@ -46,5 +46,6 @@
 	5. [BGP安全2](internet-security/sidr.md)（Blackholing against DoS，Route Leak，Opt-security）（新幻灯片PART [5](internet-security/bgp-sec-5.pptx), [6](internet-security/bgp-sec-6.pptx), [7](internet-security/bgp-sec-7.pptx))
 	6. [匿名通信](advance/anonymous.md) (Crowds, Mix, Tor and deanonymization)
 	7. [物理基础设施测量](advance/infrastructure.md)（Mapping facilities and IXP）
-	3. [比特币](advance/blockchain.md) (Bitcoin, Selfish-mining)
+	3. [比特币](advance/blockchain.md) (Bitcoin, Selfish-mining，[Bitcoin研究综述](advance/bitcoin-sok.md))
 8. [总结](summary.md)
+

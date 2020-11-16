@@ -121,15 +121,15 @@ Content-type: text/html
 开源web应用安全项目(OWASP)总结的[2013年最关键Web应用安全风险Top 10](OWASP_Top_10_2013-Chinese-V1.2.pdf)：
 
 1. 注入：恶意数据被作为命令或查询语句的一部分
-- 失效的身份认证和会话管理
-- 跨站脚本（XSS）：攻击者在受害者的浏览器上执行脚本
-- 不安全的直接对象引用：网站开放人员暴露一个对内部实现对象的引用
-- 安全配置错误：许多配置的默认值并不安全
-- 敏感信息泄露：未正确保护敏感数据
-- 功能级访问控制缺失：攻击者伪造请求在未经授权时访问
-- 跨站请求伪造（CSRF）：令登录用户的浏览器伪造请求
-- 使用含有已知漏洞的组件
-- 未验证的重定向和转发：重定向受害者到钓鱼/恶意网站或访问未授权页面
+2. 失效的身份认证和会话管理
+3. 跨站脚本（XSS）：攻击者在受害者的浏览器上执行脚本
+4. 不安全的直接对象引用：网站开放人员暴露一个对内部实现对象的引用
+5. 安全配置错误：许多配置的默认值并不安全
+6. 敏感信息泄露：未正确保护敏感数据
+7. 功能级访问控制缺失：攻击者伪造请求在未经授权时访问
+8. 跨站请求伪造（CSRF）：令登录用户的浏览器伪造请求
+9. 使用含有已知漏洞的组件
+10. 未验证的重定向和转发：重定向受害者到钓鱼/恶意网站或访问未授权页面
 
 ---
 
@@ -157,7 +157,9 @@ eval('$result = ' .$exp. ';');
 服务器PHP代码发送一封邮件：
 
 ```php
-$email = $_POST["email"]$subject = $_POST["subject"]system("mail $email –s $subject < /tmp/joinmynetwork")
+$email = $_POST["email"]
+$subject = $_POST["subject"]
+system("mail $email –s $subject < /tmp/joinmynetwork")
 ```
 攻击代码盗窃口令：
 
@@ -477,7 +479,7 @@ www.attacker.com                          Browser                       wwww.ban
 ```
 
 ### 5.2 uTorrent CSRF漏洞
- 
+
 - [uTorrent](https://en.wikipedia.org/wiki/ΜTorrent) 是仅次于迅雷的最流行的BT客户端
 - WebUI是一个插件，允许用户从一台计算机的浏览器上通过网络控制另一台计算机上的uTorrent，可通过`localhost:8080 `访问本机上的WebUI服务
 - [CVE-2008-6586](http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2008-6586)：在WebUI 0.315中gui/index.php存在CSRF漏洞，攻击者可以强制下载任意torrent文件，或者更改管理员账号
