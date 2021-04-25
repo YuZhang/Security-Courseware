@@ -4,6 +4,8 @@
 
 ---
 
+课件：[PPT](supplyments/bitcoin.pptx)
+
 ## 1. 比特币(Bitcoin)与区块链(Blockchain)
 
 ### 1.1. 介绍
@@ -52,7 +54,7 @@ From: Alice  To: Bob  Amount: 10
 - 完整性：某一个人篡改账簿，则另一个人会发现。满足！
 - 不可否认性：若Alice否认交易，则Bob也无计可施。反之一样。或者说此时，二者之间的不可否认性没有意义！
 
-为了满足不可否认性，Alice和Bob一致同意引入一个双方都信任的公证人Charlie。Charlie做公正的方法是对每笔交易做记录，当Alice和Bob发生争议时，以Charlie自己的账簿为准。不可否认性也得到了满足！同时，Charlie也可以检查真实性与完整性。这种三个人的记账方法被称为“三式记账法”(triple-entry bookkeeping)。
+为了满足不可否认性，Alice和Bob一致同意引入一个双方都信任的公证人Charlie。Charlie做公正的方法是对每笔交易做记录，当Alice和Bob发生争议时，以Charlie自己的账簿为准。不可否认性也得到了满足！同时，Charlie也可以检查真实性与完整性。
 
 Alice真的有10元钱吗？把这个问题先放一边，考虑这次交易如果成功，则Bob的账户多了10元钱，此后Bob可支出10元钱。如果能证明Alice在之前的交易中获得了超过10元钱，并且到此次交易之前账户余额仍超过10元钱，则意味着Alice也能够支付10元钱。Bob在交易前可以向Charlie询问关于Alice的账户是否多余10元钱。
 
