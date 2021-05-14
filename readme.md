@@ -43,7 +43,7 @@
 	2. [互联网体系结构与安全](internet-security/arch-sec.pptx) (from D. Clark "Design an internet")
 	3. [DNS安全](internet-security/dns-sec.pptx) (Root issue, Cache Poisoning, DNSSEC) (新幻灯片PART [1](internet-security/dns-sec-1.pptx), [2](internet-security/dns-sec-2.pptx), [3](internet-security/dns-sec-3.pptx), [4](internet-security/dns-sec-4.pptx), [5](internet-security/dns-sec-5.pptx), [6](internet-security/dns-sec-6.pptx))
 	4. [BGP安全1](internet-security/bgp-sec.pptx) (Prefix Hijack, RPKI，BGPSec)（新幻灯片PART [1](internet-security/bgp-sec-1.pptx), [2](internet-security/bgp-sec-2.pptx), [3](internet-security/bgp-sec-3.pptx), [4](internet-security/bgp-sec-4.pptx))
-	5. [BGP安全2](internet-security/sidr.md)（Blackholing against DoS，Route Leak，Opt-security）（新幻灯片PART [5](internet-security/bgp-sec-5.pptx), [6](internet-security/bgp-sec-6.pptx), [7](internet-security/bgp-sec-7.pptx))
+	5. [BGP安全2](internet-security/sidr.md)（Blackholing against DoS，Route Leak，Opt-security）（新幻灯片PART [5](internet-security/bgp-sec-5.pptx), [6](internet-security/bgp-sec-6.pptx), [7](internet-security/bgp-sec-7.pptx)) (ICANN OCTO RPKI技术分析[译文](internet-security/RPKI技术分析-1209.pdf))
 	6. [匿名通信](advance/anonymous.md) (Crowds, Mix, Tor and deanonymization)
 	7. [物理基础设施测量](advance/infrastructure.md)（Mapping facilities and IXP）
 	3. [比特币](advance/blockchain.md) (Bitcoin, Selfish-mining，[Bitcoin研究综述](advance/bitcoin-sok.md))（[幻灯片](advance/supplyments/bitcoin.pptx)）
