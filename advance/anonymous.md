@@ -230,7 +230,7 @@ Tor特点（相对于第一代洋葱路由）：
 - [How Tor Works](https://jordan-wright.com/blog/2015/02/28/how-tor-works-part-one/) 【[中文](https://www.anquanke.com/post/id/84680)】
 
 #### 4.2.0 基本概念
- 
+
 - Onion Router：洋葱路由器，也称中继Relay
 	- 每个OR都维持着一个长期身份密钥。
 	- 以及一个短期的洋葱密钥（建立虚电路时使用）。
@@ -388,7 +388,7 @@ HS通过它随机选取的几个introduction point（TP）作为它的联系点�
 #### 4.3.1 Cell计数攻击
 
 cell计数攻击 [论文：Ling, Zhen, et al. "A new cell counter based attack against tor." ACM Conference on Computer and Communications Security ACM, 2009:578-589.](http://delivery.acm.org/10.1145/1660000/1653732/p578-ling.pdf)
- 
+
 - 目的：关联发送者与接收者 
 - 原理：当OR接收到数据流时，经过传输层的解析后，得到chunk的序列，一个chunk中可能包含一个或多个cell，每个cell经过OR的处理后，得到新的cell保存在输出缓冲区中，此时cell需要被重新打包成chunk，然后输出。因此可以通过对cell采用不同的打包方式，在流量中插入编码。
 - 前提：攻击者已经控制入口节点和出口节点。
