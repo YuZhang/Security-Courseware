@@ -36,7 +36,6 @@
 5. [网络安全1](network-security)
 	1. [TCP/IP安全1](network-security/tcp-ip-sec.md) (TCP Hijack)
 	2. [TCP/IP安全2](network-security/ip-sec.md) (Idle Scan, LSRR)
-	3. [分布式拒绝服务(DDoS)](network-security/ddos.md) (Shrew, IP-Traceback)
 	4. [入侵检测系统(IDS)](network-security/ids.md) (Bro，ML-based Anomaly Detection)
 6. [网络安全2 - 互联网基础设施安全](internet-security)
 	1. [互联网基础设施安全课程简介](internet-security/intro.pptx)
@@ -47,5 +46,6 @@
 	6. [匿名通信](advance/anonymous.md) (Crowds, Mix, Tor and deanonymization) （[幻灯片](advance/supplyments/anonymous.pptx)）
 	7. [物理基础设施测量](advance/infrastructure.md)（Mapping facilities and IXP）
 	8. [比特币](advance/blockchain.md) (Bitcoin, Selfish-mining，[Bitcoin研究综述](advance/bitcoin-sok.md))（[幻灯片](advance/supplyments/bitcoin.pptx)）
+	9. [分布式拒绝服务(DDoS)](network-security/ddos.md) (Shrew, IP-Traceback)（[幻灯片](network-security/ddos.pptx)）
 8. [总结](summary.md)
 
