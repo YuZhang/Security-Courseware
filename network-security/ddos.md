@@ -28,7 +28,7 @@ US-CERT定义的DoS攻击症状：网络性能恶化、特定网站不可用、�
 
 - 直接发送大量流量令链路拥塞，导致关键服务或路由故障
 
-### 攻击末端系统
+### 攻击终端系统
 
 - 利用软件漏洞
 	- [Ping of death](https://en.wikipedia.org/wiki/Ping_of_death)攻击发送大于65535字节的ping包（ICMP echo request），导致接收方在IP分片重组时缓冲区溢出
