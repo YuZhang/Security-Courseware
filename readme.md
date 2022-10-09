@@ -47,5 +47,6 @@
 	7. [物理基础设施测量](advance/infrastructure.md)（Mapping facilities and IXP）
 	8. [比特币](advance/blockchain.md) (Bitcoin, Selfish-mining，[Bitcoin研究综述](advance/bitcoin-sok.md))（[幻灯片](advance/supplyments/bitcoin.pptx)）
 	9. [分布式拒绝服务(DDoS)](network-security/ddos.md) (Shrew, IP-Traceback)（[幻灯片](network-security/ddos.pptx)）
+	10. [互联网体系演进与革命](internet-security/arch-discuss.pptx)（IPv6，NDN，evolution vs. clean-slate）
 8. [总结](summary.md)
 
